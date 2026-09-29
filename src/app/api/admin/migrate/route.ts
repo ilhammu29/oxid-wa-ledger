@@ -430,16 +430,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const pgUrl = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING;
-  if (!pgUrl) {
+  const rawPgUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL;
+  if (!rawPgUrl) {
     return NextResponse.json(
       { error: "POSTGRES_URL is not configured in the server environment" },
       { status: 500 }
     );
   }
 
+  // Strip query parameters so pg does not enforce strict sslmode CA checks
+  const cleanPgUrl = rawPgUrl.replace(/\?.*$/, "");
   const client = new Client({
-    connectionString: pgUrl,
+    connectionString: cleanPgUrl,
     ssl: { rejectUnauthorized: false },
   });
 
