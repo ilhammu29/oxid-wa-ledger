@@ -1,288 +1,339 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
 
-export interface Database {
-  public: {
-    Tables: {
-      businesses: {
-        Row: {
-          id: string;
-          name: string;
-          slug: string;
-          currency: string;
-          timezone: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          slug: string;
-          currency?: string;
-          timezone?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          slug?: string;
-          currency?: string;
-          timezone?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      business_users: {
-        Row: {
-          id: string;
-          business_id: string;
-          user_id: string;
-          role: "owner" | "admin" | "member";
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          business_id: string;
-          user_id: string;
-          role?: "owner" | "admin" | "member";
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          business_id?: string;
-          user_id?: string;
-          role?: "owner" | "admin" | "member";
-          created_at?: string;
-        };
-      };
-      products: {
-        Row: {
-          id: string;
-          business_id: string;
-          name: string;
-          code: string | null;
-          aliases: string[];
-          unit: string;
-          default_price_idr: number;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          business_id: string;
-          name: string;
-          code?: string | null;
-          aliases?: string[];
-          unit: string;
-          default_price_idr: number;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          business_id?: string;
-          name?: string;
-          code?: string | null;
-          aliases?: string[];
-          unit?: string;
-          default_price_idr?: number;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      whatsapp_connections: {
-        Row: {
-          id: string;
-          business_id: string;
-          phone_number_id: string;
-          phone_number: string;
-          display_name: string | null;
-          provider: "meta_cloud_api" | "baileys" | "waba";
-          status: "connected" | "disconnected" | "pending_verification" | "rate_limited";
-          webhook_verified_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          business_id: string;
-          phone_number_id: string;
-          phone_number: string;
-          display_name?: string | null;
-          provider?: "meta_cloud_api" | "baileys" | "waba";
-          status?: "connected" | "disconnected" | "pending_verification" | "rate_limited";
-          webhook_verified_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          business_id?: string;
-          phone_number_id?: string;
-          phone_number?: string;
-          display_name?: string | null;
-          provider?: "meta_cloud_api" | "baileys" | "waba";
-          status?: "connected" | "disconnected" | "pending_verification" | "rate_limited";
-          webhook_verified_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      transactions: {
-        Row: {
-          id: string;
-          business_id: string;
-          whatsapp_connection_id: string | null;
-          source: "whatsapp" | "manual" | "api";
-          status: "pending" | "confirmed" | "cancelled";
-          customer_identifier: string | null;
-          raw_message: string | null;
-          total_amount_idr: number;
-          notes: string | null;
-          recorded_at: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          business_id: string;
-          whatsapp_connection_id?: string | null;
-          source?: "whatsapp" | "manual" | "api";
-          status?: "pending" | "confirmed" | "cancelled";
-          customer_identifier?: string | null;
-          raw_message?: string | null;
-          total_amount_idr: number;
-          notes?: string | null;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          business_id?: string;
-          whatsapp_connection_id?: string | null;
-          source?: "whatsapp" | "manual" | "api";
-          status?: "pending" | "confirmed" | "cancelled";
-          customer_identifier?: string | null;
-          raw_message?: string | null;
-          total_amount_idr?: number;
-          notes?: string | null;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      transaction_items: {
-        Row: {
-          id: string;
-          transaction_id: string;
-          product_id: string | null;
-          product_name: string;
-          quantity: number;
-          unit: string;
-          unit_price_idr: number;
-          total_price_idr: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          transaction_id: string;
-          product_id?: string | null;
-          product_name: string;
-          quantity: number;
-          unit: string;
-          unit_price_idr: number;
-          total_price_idr: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          transaction_id?: string;
-          product_id?: string | null;
-          product_name?: string;
-          quantity?: number;
-          unit?: string;
-          unit_price_idr?: number;
-          total_price_idr?: number;
-          created_at?: string;
-        };
-      };
-      settings: {
-        Row: {
-          business_id: string;
-          auto_reply_whatsapp: boolean;
-          default_currency: string;
-          default_timezone: string;
-          reply_template_confirmed: string | null;
-          reply_template_clarification: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          business_id: string;
-          auto_reply_whatsapp?: boolean;
-          default_currency?: string;
-          default_timezone?: string;
-          reply_template_confirmed?: string | null;
-          reply_template_clarification?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          business_id?: string;
-          auto_reply_whatsapp?: boolean;
-          default_currency?: string;
-          default_timezone?: string;
-          reply_template_confirmed?: string | null;
-          reply_template_clarification?: string | null;
-          updated_at?: string;
-        };
-      };
-      integrations: {
-        Row: {
-          id: string;
-          business_id: string;
-          type: "google_sheets" | "webhook";
-          is_enabled: boolean;
-          config: Json;
-          last_sync_at: string | null;
-          sync_status: "idle" | "in_progress" | "success" | "error";
-          error_message: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          business_id: string;
-          type: "google_sheets" | "webhook";
-          is_enabled?: boolean;
-          config?: Json;
-          last_sync_at?: string | null;
-          sync_status?: "idle" | "in_progress" | "success" | "error";
-          error_message?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          business_id?: string;
-          type?: "google_sheets" | "webhook";
-          is_enabled?: boolean;
-          config?: Json;
-          last_sync_at?: string | null;
-          sync_status?: "idle" | "in_progress" | "success" | "error";
-          error_message?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-    };
-  };
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export type Database = {
+  
+  "public": {
+          Tables: {
+            "business_daily_status": {
+                  Row: {
+                    "business_id": string,"created_at": string,"id": string,"local_date": string,"note": string | null,"source": string,"status": string,"updated_at": string
+                  }
+                  Insert: {
+                    "business_id": string,"created_at"?: string,"id"?: string,"local_date": string,"note"?: string | null,"source"?: string,"status": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "business_id"?: string,"created_at"?: string,"id"?: string,"local_date"?: string,"note"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "business_daily_status_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"business_settings": {
+                  Row: {
+                    "business_id": string,"confirmation_mode": string,"created_at": string,"daily_report_enabled": boolean,"owner_display_name": string | null,"reminder_enabled": boolean,"reminder_local_time": string,"updated_at": string
+                  }
+                  Insert: {
+                    "business_id": string,"confirmation_mode"?: string,"created_at"?: string,"daily_report_enabled"?: boolean,"owner_display_name"?: string | null,"reminder_enabled"?: boolean,"reminder_local_time"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "business_id"?: string,"confirmation_mode"?: string,"created_at"?: string,"daily_report_enabled"?: boolean,"owner_display_name"?: string | null,"reminder_enabled"?: boolean,"reminder_local_time"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "business_settings_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: true
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"business_users": {
+                  Row: {
+                    "business_id": string,"created_at": string,"role": string,"user_id": string
+                  }
+                  Insert: {
+                    "business_id": string,"created_at"?: string,"role": string,"user_id": string
+                  }
+                  Update: {
+                    "business_id"?: string,"created_at"?: string,"role"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "business_users_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"businesses": {
+                  Row: {
+                    "created_at": string,"created_by": string,"currency": string,"id": string,"name": string,"status": string,"timezone": string,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"name": string,"status"?: string,"timezone"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"name"?: string,"status"?: string,"timezone"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"notification_logs": {
+                  Row: {
+                    "business_id": string,"channel": string,"created_at": string,"error_code": string | null,"id": string,"local_date": string,"notification_type": string,"provider_message_id": string | null,"sent_at": string | null,"status": string
+                  }
+                  Insert: {
+                    "business_id": string,"channel"?: string,"created_at"?: string,"error_code"?: string | null,"id"?: string,"local_date": string,"notification_type": string,"provider_message_id"?: string | null,"sent_at"?: string | null,"status": string
+                  }
+                  Update: {
+                    "business_id"?: string,"channel"?: string,"created_at"?: string,"error_code"?: string | null,"id"?: string,"local_date"?: string,"notification_type"?: string,"provider_message_id"?: string | null,"sent_at"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_logs_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"processed_whatsapp_messages": {
+                  Row: {
+                    "business_id": string,"message_id": string,"message_type": string,"payload_hash": string | null,"processed_at": string | null,"processing_status": string,"received_at": string,"sender_phone": string
+                  }
+                  Insert: {
+                    "business_id": string,"message_id": string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"sender_phone": string
+                  }
+                  Update: {
+                    "business_id"?: string,"message_id"?: string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"sender_phone"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "processed_whatsapp_messages_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"products": {
+                  Row: {
+                    "active": boolean,"aliases": (string)[],"business_id": string,"created_at": string,"default_price": number,"id": string,"is_default": boolean,"name": string,"unit": string,"updated_at": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"aliases"?: (string)[],"business_id": string,"created_at"?: string,"default_price": number,"id"?: string,"is_default"?: boolean,"name": string,"unit"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"aliases"?: (string)[],"business_id"?: string,"created_at"?: string,"default_price"?: number,"id"?: string,"is_default"?: boolean,"name"?: string,"unit"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "products_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"transaction_events": {
+                  Row: {
+                    "actor_user_id": string | null,"business_id": string,"created_at": string,"event_type": string,"id": string,"new_values": Json | null,"old_values": Json | null,"source": string,"transaction_id": string
+                  }
+                  Insert: {
+                    "actor_user_id"?: string | null,"business_id": string,"created_at"?: string,"event_type": string,"id"?: string,"new_values"?: Json | null,"old_values"?: Json | null,"source"?: string,"transaction_id": string
+                  }
+                  Update: {
+                    "actor_user_id"?: string | null,"business_id"?: string,"created_at"?: string,"event_type"?: string,"id"?: string,"new_values"?: Json | null,"old_values"?: Json | null,"source"?: string,"transaction_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "transaction_events_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transaction_events_transaction_id_fkey"
+      columns: ["transaction_id"]
+isOneToOne: false
+      referencedRelation: "transactions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"transactions": {
+                  Row: {
+                    "business_id": string,"created_at": string,"created_by_user_id": string | null,"id": string,"product_id": string | null,"quantity": number,"raw_message": string | null,"sender_phone": string | null,"source": string,"status": string,"supersedes_transaction_id": string | null,"total_amount": number,"transaction_at": string,"transaction_type": string,"unit": string,"unit_price": number,"updated_at": string
+                  }
+                  Insert: {
+                    "business_id": string,"created_at"?: string,"created_by_user_id"?: string | null,"id"?: string,"product_id"?: string | null,"quantity": number,"raw_message"?: string | null,"sender_phone"?: string | null,"source"?: string,"status"?: string,"supersedes_transaction_id"?: string | null,"total_amount": number,"transaction_at"?: string,"transaction_type"?: string,"unit": string,"unit_price": number,"updated_at"?: string
+                  }
+                  Update: {
+                    "business_id"?: string,"created_at"?: string,"created_by_user_id"?: string | null,"id"?: string,"product_id"?: string | null,"quantity"?: number,"raw_message"?: string | null,"sender_phone"?: string | null,"source"?: string,"status"?: string,"supersedes_transaction_id"?: string | null,"total_amount"?: number,"transaction_at"?: string,"transaction_type"?: string,"unit"?: string,"unit_price"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_transactions_product_tenant"
+      columns: ["product_id","business_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id","business_id"]
+    },{
+      foreignKeyName: "transactions_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "transactions_supersedes_transaction_id_fkey"
+      columns: ["supersedes_transaction_id"]
+isOneToOne: false
+      referencedRelation: "transactions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"whatsapp_connections": {
+                  Row: {
+                    "business_id": string,"created_at": string,"id": string,"phone_number": string,"phone_number_id": string,"status": string,"updated_at": string,"waba_id": string | null
+                  }
+                  Insert: {
+                    "business_id": string,"created_at"?: string,"id"?: string,"phone_number": string,"phone_number_id": string,"status"?: string,"updated_at"?: string,"waba_id"?: string | null
+                  }
+                  Update: {
+                    "business_id"?: string,"created_at"?: string,"id"?: string,"phone_number"?: string,"phone_number_id"?: string,"status"?: string,"updated_at"?: string,"waba_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "whatsapp_connections_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            [_ in never]: never
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        }
 }
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  "public": {
+          Enums: {
+            
+          }
+        }
+} as const
+
