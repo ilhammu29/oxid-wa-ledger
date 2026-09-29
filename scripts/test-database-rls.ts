@@ -61,11 +61,16 @@ async function runTests() {
       GRANT SELECT ON auth.users TO authenticated, service_role;
     `);
 
-    console.log("2. Applying Step 2 Migration...");
-    const migrationPath = path.join(__dirname, "../supabase/migrations/20260929221542_step2_core_database.sql");
-    const migrationSql = fs.readFileSync(migrationPath, "utf8");
-    await client.query(migrationSql);
-    console.log("✓ Migration applied cleanly!\n");
+    console.log("2. Applying Migrations...");
+    const migrationsDir = path.join(__dirname, "../supabase/migrations");
+    const migrationFiles = fs.readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+    for (const file of migrationFiles) {
+      const filePath = path.join(migrationsDir, file);
+      const sql = fs.readFileSync(filePath, "utf8");
+      await client.query(sql);
+      console.log(`✓ Applied ${file}`);
+    }
+    console.log("✓ All migrations applied cleanly!\n");
 
     console.log("3. Inserting Test Users & Businesses (as superuser)...");
     const userOwnerA = "11111111-1111-1111-1111-111111111111";
@@ -280,6 +285,18 @@ async function runTests() {
       record("Audit events cannot be arbitrarily rewritten", "RLS", true);
     }
 
+    // Test 12b: Authenticated user cannot delete transaction_events
+    try {
+      let deleted = false;
+      await asUser(userOwnerA, "authenticated", async (c) => {
+        await c.query("DELETE FROM public.transaction_events WHERE id = $1", [evA]);
+        deleted = true;
+      });
+      record("Authenticated user cannot delete transaction_events", "RLS", false, "Delete succeeded unexpectedly");
+    } catch (e: any) {
+      record("Authenticated user cannot delete transaction_events", "RLS", true);
+    }
+
     // Test 13: Processed WhatsApp messages cannot be written by ordinary browser users
     try {
       let inserted = false;
@@ -462,6 +479,113 @@ async function runTests() {
     } catch (e: any) {
       record("Deleting/replacing WhatsApp connection preserves transactions", "Integrity", false, e.message);
     }
+
+    // Integrity 10: Privileged delete of transaction with audit event is blocked by FK
+    const txHardId = "8888aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    const evHardId = "8888eeee-eeee-eeee-eeee-eeeeeeeeeeee";
+    await client.query(`
+      INSERT INTO public.transactions (id, business_id, product_id, quantity, unit, unit_price, total_amount, status)
+      VALUES ('${txHardId}', '${bizA}', '${prodA}', 1.000, 'kg', 28000, 28000, 'confirmed')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`
+      INSERT INTO public.transaction_events (id, business_id, transaction_id, event_type, new_values)
+      VALUES ('${evHardId}', '${bizA}', '${txHardId}', 'created', '{"status": "confirmed"}'::jsonb)
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    try {
+      await client.query(`DELETE FROM public.transactions WHERE id = '${txHardId}';`);
+      record("Privileged delete of transaction with audit event is blocked by FK", "Integrity", false, "Delete unexpectedly succeeded");
+    } catch (e: any) {
+      const isFkBlock = e.code === "23503" || e.message.includes("violates foreign key constraint");
+      record("Privileged delete of transaction with audit event is blocked by FK", "Integrity", isFkBlock, e.message);
+    }
+
+    // Integrity 11: Privileged delete of business with audit event is blocked by FK
+    try {
+      await client.query(`DELETE FROM public.businesses WHERE id = '${bizA}';`);
+      record("Privileged delete of business with audit event is blocked by FK", "Integrity", false, "Delete business unexpectedly succeeded");
+    } catch (e: any) {
+      const isFkBlock = e.code === "23503" || e.message.includes("violates foreign key constraint");
+      record("Privileged delete of business with audit event is blocked by FK", "Integrity", isFkBlock, e.message);
+    }
+
+    // Integrity 12: Deleting product referenced by transaction is blocked
+    try {
+      await client.query(`DELETE FROM public.products WHERE id = '${prodA}';`);
+      record("Deleting product referenced by transaction is blocked", "Integrity", false, "Delete product unexpectedly succeeded");
+    } catch (e: any) {
+      const isFkBlock = e.code === "23503" || e.message.includes("violates foreign key constraint");
+      record("Deleting product referenced by transaction is blocked", "Integrity", isFkBlock, e.message);
+    }
+
+    // Integrity 13: Deleting auth user does not erase transaction history (ON DELETE SET NULL)
+    const userTempAuthor = "99999999-9999-9999-9999-999999999999";
+    const txAuthorTestId = "7777aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    const evAuthorTestId = "7777eeee-eeee-eeee-eeee-eeeeeeeeeeee";
+    await client.query(`
+      INSERT INTO auth.users (id, email) VALUES ('${userTempAuthor}', 'tempauthor@oxid.local')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`
+      INSERT INTO public.transactions (id, business_id, product_id, quantity, unit, unit_price, total_amount, created_by_user_id)
+      VALUES ('${txAuthorTestId}', '${bizA}', '${prodA}', 3.000, 'kg', 28000, 84000, '${userTempAuthor}')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`
+      INSERT INTO public.transaction_events (id, business_id, transaction_id, event_type, actor_user_id)
+      VALUES ('${evAuthorTestId}', '${bizA}', '${txAuthorTestId}', 'created', '${userTempAuthor}')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`DELETE FROM auth.users WHERE id = '${userTempAuthor}';`);
+    const txAfterUserDel = await client.query("SELECT created_by_user_id FROM public.transactions WHERE id = $1", [txAuthorTestId]);
+    const evAfterUserDel = await client.query("SELECT actor_user_id FROM public.transaction_events WHERE id = $1", [evAuthorTestId]);
+    const userDeletedPreserved = txAfterUserDel.rows.length === 1 && txAfterUserDel.rows[0].created_by_user_id === null &&
+                                evAfterUserDel.rows.length === 1 && evAfterUserDel.rows[0].actor_user_id === null;
+    record("Deleting auth user does not erase transaction history", "Integrity", userDeletedPreserved);
+
+    // Integrity 14: Transaction correction workflow preserves history and maintains valid FK references
+    const txOriginal = "6666aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    const txCorrected = "5555aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    await client.query(`
+      INSERT INTO public.transactions (id, business_id, product_id, quantity, unit, unit_price, total_amount, status)
+      VALUES ('${txOriginal}', '${bizA}', '${prodA}', 2.000, 'kg', 28000, 56000, 'confirmed')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`
+      INSERT INTO public.transaction_events (business_id, transaction_id, event_type, new_values)
+      VALUES ('${bizA}', '${txOriginal}', 'created', '{"status": "confirmed"}'::jsonb);
+    `);
+    // Perform correction: original status becomes 'corrected', new transaction supersedes it
+    await client.query(`UPDATE public.transactions SET status = 'corrected' WHERE id = '${txOriginal}';`);
+    await client.query(`
+      INSERT INTO public.transaction_events (business_id, transaction_id, event_type, old_values, new_values)
+      VALUES ('${bizA}', '${txOriginal}', 'corrected', '{"status": "confirmed"}'::jsonb, '{"status": "corrected"}'::jsonb);
+    `);
+    await client.query(`
+      INSERT INTO public.transactions (id, business_id, product_id, quantity, unit, unit_price, total_amount, status, supersedes_transaction_id)
+      VALUES ('${txCorrected}', '${bizA}', '${prodA}', 3.000, 'kg', 28000, 84000, 'confirmed', '${txOriginal}')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await client.query(`
+      INSERT INTO public.transaction_events (business_id, transaction_id, event_type, new_values)
+      VALUES ('${bizA}', '${txCorrected}', 'created', '{"status": "confirmed", "supersedes": "${txOriginal}"}'::jsonb);
+    `);
+    // Verify supersedes link and immutability
+    const corrCheck = await client.query("SELECT supersedes_transaction_id, status FROM public.transactions WHERE id = $1", [txCorrected]);
+    const origCheck = await client.query("SELECT status FROM public.transactions WHERE id = $1", [txOriginal]);
+    // Try to delete superseded original transaction: should fail due to supersedes_transaction_id FK constraint (and audit FK)
+    let origDeleteBlocked = false;
+    try {
+      await client.query(`DELETE FROM public.transactions WHERE id = '${txOriginal}';`);
+    } catch (e: any) {
+      origDeleteBlocked = e.code === "23503";
+    }
+    const correctionValid = corrCheck.rows[0]?.supersedes_transaction_id === txOriginal &&
+                            corrCheck.rows[0]?.status === "confirmed" &&
+                            origCheck.rows[0]?.status === "corrected" &&
+                            origDeleteBlocked;
+    record("Transaction correction references remain valid and deletion blocked", "Integrity", correctionValid);
 
     // Summary
     console.log("\n=== Test Results Summary ===");
