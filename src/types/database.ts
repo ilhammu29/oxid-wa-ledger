@@ -213,7 +213,55 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            cancel_last_sale: {
+              Args: {
+                p_business_id: string
+                p_actor_user_id?: string | null
+                p_source?: string
+              }
+              Returns: Json
+            }
+            correct_last_sale: {
+              Args: {
+                p_business_id: string
+                p_corrected_quantity: number
+                p_actor_user_id?: string | null
+                p_source?: string
+                p_raw_message?: string | null
+              }
+              Returns: Json
+            }
+            get_business_sales_report: {
+              Args: {
+                p_business_id: string
+                p_start_at: string
+                p_end_at: string
+              }
+              Returns: Json
+            }
+            record_sale: {
+              Args: {
+                p_business_id: string
+                p_quantity: number
+                p_unit?: string
+                p_source?: string
+                p_raw_message?: string | null
+                p_sender_phone?: string | null
+                p_actor_user_id?: string | null
+                p_transaction_at?: string
+              }
+              Returns: Json
+            }
+            set_business_daily_status: {
+              Args: {
+                p_business_id: string
+                p_local_date: string
+                p_status: string
+                p_note?: string | null
+                p_source?: string
+              }
+              Returns: Json
+            }
           }
           Enums: {
             [_ in never]: never
