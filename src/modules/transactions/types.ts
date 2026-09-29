@@ -1,48 +1,121 @@
-export type TransactionStatus = "pending" | "confirmed" | "cancelled";
-export type TransactionSource = "whatsapp" | "manual" | "api";
+/**
+ * Transaction Domain & Execution Context Types for OXID WA Ledger.
+ * Step 4: Connecting deterministic parser to domain services and Supabase.
+ */
 
-export interface TransactionItem {
-  id: string;
-  transactionId: string;
-  productId?: string;
-  productName: string; // Snapshotted name at time of sale
-  quantity: number; // Supports decimal values (e.g., 2.5 kg, 15.75 kg)
-  unit: string; // e.g. "kg", "pcs"
-  unitPriceIdr: number; // Integer IDR to prevent float calculation issues
-  totalPriceIdr: number; // Integer IDR (quantity * unitPriceIdr rounded/exact)
-}
+import { ParsedMessage, ConversationActionType } from "../parser/types";
 
-export interface Transaction {
-  id: string;
-  businessId: string; // Tenant boundary
-  whatsappConnectionId?: string; // Optional link to originating connection
-  source: TransactionSource;
-  status: TransactionStatus;
-  customerIdentifier?: string; // e.g. WhatsApp sender phone or customer name
-  rawMessage?: string; // Raw input message for auditing & parser optimization
-  totalAmountIdr: number; // Integer IDR sum of all items
-  notes?: string;
-  recordedAt: string; // Transaction timestamp
-  createdAt: string;
-  updatedAt: string;
-  items?: TransactionItem[];
-}
+export type TransactionStatus = "confirmed" | "cancelled" | "corrected";
+export type TransactionSource = "whatsapp" | "dashboard" | "system";
 
-export interface CreateTransactionDTO {
+/**
+ * Execution context carrying trusted tenant and actor identity.
+ * NEVER derived directly from raw message text.
+ */
+export interface ExecutionContext {
+  /** Verified tenant identifier */
   businessId: string;
-  whatsappConnectionId?: string;
+  /** Authenticated Supabase user ID if originating from dashboard/session */
+  authenticatedUserId?: string | null;
+  /** Channel or subsystem originating the action */
   source: TransactionSource;
-  status?: TransactionStatus;
-  customerIdentifier?: string;
+  /** Caller or sender phone number (treated as sensitive operational metadata) */
+  senderPhone?: string | null;
+  /** Reference timestamp (defaults to current date/time) */
+  now?: Date;
+}
+
+export interface CreateSaleParams {
+  /** Numeric or decimal string quantity (e.g. 15, "15.000", 2.5) */
+  quantity: number | string;
+  /** Unit of measure (canonical "kg") */
+  unit?: string;
+  /** Original unparsed message for auditing */
   rawMessage?: string;
-  recordedAt?: string;
-  notes?: string;
-  items: Array<{
-    productId?: string;
-    productName: string;
-    quantity: number;
-    unit: string;
-    unitPriceIdr: number;
-    totalPriceIdr: number;
-  }>;
+  /** Timestamp when the sale occurred */
+  transactionAt?: Date | string;
+}
+
+export interface TodaySummaryDTO {
+  localDate: string;
+  transactionCount: number;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface SaleResultDTO {
+  transactionId: string;
+  businessId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalAmount: number;
+  status: "confirmed";
+  transactionAt: string;
+  todaySummary: TodaySummaryDTO;
+}
+
+export interface CancelResultDTO {
+  transactionId: string;
+  businessId: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalAmount: number;
+  status: "cancelled";
+  cancelledAt: string;
+}
+
+export interface CorrectResultDTO {
+  originalTransactionId: string;
+  originalQuantity: number;
+  originalTotalAmount: number;
+  newTransactionId: string;
+  newQuantity: number;
+  unit: string;
+  unitPrice: number;
+  newTotalAmount: number;
+  correctedAt: string;
+}
+
+export interface DailyStatusDTO {
+  id: string;
+  businessId: string;
+  localDate: string;
+  status: "NO_SALE" | "CLOSED" | "ACTIVE";
+  isDuplicate: boolean;
+}
+
+export interface ReportResultDTO {
+  businessId: string;
+  period: "today" | "week" | "month";
+  startAt: string;
+  endAt: string;
+  transactionCount: number;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface ExecutionResultDTO {
+  action: ConversationActionType;
+  status: "SUCCESS" | "CONFIRMATION_REQUIRED" | "ERROR";
+  replyText: string;
+  parsed: ParsedMessage;
+  data?:
+    | SaleResultDTO
+    | CancelResultDTO
+    | CorrectResultDTO
+    | DailyStatusDTO
+    | ReportResultDTO
+    | {
+        proposedIntent: string;
+        proposedQuantity: string | null;
+        proposedUnit: string | null;
+        reason?: string;
+      }
+    | null;
+  errorCode?: string;
+  errorMessage?: string;
 }

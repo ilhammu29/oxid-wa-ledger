@@ -27,6 +27,11 @@ async function runTests() {
   try {
     console.log("1. Setting up Supabase Auth emulation & roles...");
     await client.query(`
+      DROP SCHEMA IF EXISTS public CASCADE;
+      CREATE SCHEMA public;
+      GRANT ALL ON SCHEMA public TO postgres;
+      GRANT ALL ON SCHEMA public TO public;
+
       CREATE SCHEMA IF NOT EXISTS auth;
       
       DO $$
