@@ -215,6 +215,30 @@ function createPgSupabaseAdapter(pgClient: Client): SupabaseClient {
 
           return queryBuilder;
         },
+        insert: (rows: any) => {
+          const insertRows = Array.isArray(rows) ? rows : [rows];
+          const executeInsert = async () => {
+            try {
+              for (const row of insertRows) {
+                const keys = Object.keys(row);
+                const cols = keys.map((k) => `"${k}"`).join(", ");
+                const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
+                const vals = keys.map((k) => (typeof row[k] === "object" && row[k] !== null ? JSON.stringify(row[k]) : row[k]));
+                await pgClient.query(`INSERT INTO public."${table}" (${cols}) VALUES (${placeholders});`, vals);
+              }
+              return { data: insertRows, error: null };
+            } catch (err: any) {
+              return { data: null, error: { message: err.message, code: err.code } };
+            }
+          };
+          const b: any = {
+            select: () => b,
+            single: async () => ({ data: insertRows[0] || null, error: null }),
+            maybeSingle: async () => ({ data: insertRows[0] || null, error: null }),
+            then: (resolve: any, reject: any) => executeInsert().then(resolve, reject),
+          };
+          return b;
+        },
       };
     },
   } as unknown as SupabaseClient;

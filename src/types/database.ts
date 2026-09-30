@@ -64,13 +64,13 @@ isOneToOne: false
                   ]
                 },"businesses": {
                   Row: {
-                    "created_at": string,"created_by": string,"currency": string,"id": string,"name": string,"status": string,"timezone": string,"updated_at": string
+                    "created_at": string,"created_by": string,"currency": string,"id": string,"name": string,"onboarding_completed_at": string | null,"status": string,"timezone": string,"updated_at": string
                   }
                   Insert: {
-                    "created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"name": string,"status"?: string,"timezone"?: string,"updated_at"?: string
+                    "created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"name": string,"onboarding_completed_at"?: string | null,"status"?: string,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"name"?: string,"status"?: string,"timezone"?: string,"updated_at"?: string
+                    "created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"name"?: string,"onboarding_completed_at"?: string | null,"status"?: string,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -172,13 +172,13 @@ isOneToOne: false
                   ]
                 },"telegram_authorized_users": {
                   Row: {
-                    "active": boolean,"business_id": string,"created_at": string,"display_label": string | null,"id": string,"telegram_user_id": number,"updated_at": string
+                    "active": boolean,"business_id": string,"created_at": string,"display_label": string | null,"id": string,"receive_reminders": boolean,"telegram_user_id": number,"updated_at": string
                   }
                   Insert: {
-                    "active"?: boolean,"business_id": string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"telegram_user_id": number,"updated_at"?: string
+                    "active"?: boolean,"business_id": string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"receive_reminders"?: boolean,"telegram_user_id": number,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"business_id"?: string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"telegram_user_id"?: number,"updated_at"?: string
+                    "active"?: boolean,"business_id"?: string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"receive_reminders"?: boolean,"telegram_user_id"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -283,12 +283,133 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"conversation_failures": {
+                  Row: {
+                    "business_id": string,"channel": string,"created_at": string,"failure_type": string,"id": string,"message_text": string,"normalized_text": string | null,"parser_intent": string | null,"review_status": string,"reviewed_at": string | null,"reviewed_by": string | null,"sender_reference": string | null
+                  }
+                  Insert: {
+                    "business_id": string,"channel": string,"created_at"?: string,"failure_type": string,"id"?: string,"message_text": string,"normalized_text"?: string | null,"parser_intent"?: string | null,"review_status"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sender_reference"?: string | null
+                  }
+                  Update: {
+                    "business_id"?: string,"channel"?: string,"created_at"?: string,"failure_type"?: string,"id"?: string,"message_text"?: string,"normalized_text"?: string | null,"parser_intent"?: string | null,"review_status"?: string,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"sender_reference"?: string | null
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "conversation_failures_business_id_fkey"
+                      columns: ["business_id"]
+                      isOneToOne: false
+                      referencedRelation: "businesses"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"business_reminder_settings": {
+                  Row: {
+                    "business_id": string,"channel": string,"days_of_week": number[],"enabled": boolean,"reminder_time": string,"timezone": string,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "business_id": string,"channel"?: string,"days_of_week"?: number[],"enabled"?: boolean,"reminder_time"?: string,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "business_id"?: string,"channel"?: string,"days_of_week"?: number[],"enabled"?: boolean,"reminder_time"?: string,"timezone"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "business_reminder_settings_business_id_fkey"
+                      columns: ["business_id"]
+                      isOneToOne: true
+                      referencedRelation: "businesses"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"system_job_runs": {
+                  Row: {
+                    "businesses_checked": number,"created_at": string,"error_message": string | null,"finished_at": string | null,"id": string,"job_name": string,"notifications_failed": number,"notifications_sent": number,"started_at": string,"status": string
+                  }
+                  Insert: {
+                    "businesses_checked"?: number,"created_at"?: string,"error_message"?: string | null,"finished_at"?: string | null,"id"?: string,"job_name": string,"notifications_failed"?: number,"notifications_sent"?: number,"started_at"?: string,"status": string
+                  }
+                  Update: {
+                    "businesses_checked"?: number,"created_at"?: string,"error_message"?: string | null,"finished_at"?: string | null,"id"?: string,"job_name"?: string,"notifications_failed"?: number,"notifications_sent"?: number,"started_at"?: string,"status"?: string
+                  }
+                  Relationships: []
+                },"client_onboarding_invites": {
+                  Row: {
+                    "active": boolean,"created_at": string,"created_by": string,"email": string,"expires_at": string,"id": string,"token_hash": string,"used_at": string | null
+                  }
+                  Insert: {
+                    "active"?: boolean,"created_at"?: string,"created_by": string,"email": string,"expires_at": string,"id"?: string,"token_hash": string,"used_at"?: string | null
+                  }
+                  Update: {
+                    "active"?: boolean,"created_at"?: string,"created_by"?: string,"email"?: string,"expires_at"?: string,"id"?: string,"token_hash"?: string,"used_at"?: string | null
+                  }
+                  Relationships: []
+                },"integration_events": {
+                  Row: {
+                    "business_id": string | null,"channel": string,"created_at": string,"direction": string,"error_code": string | null,"event_type": string,"id": string,"metadata": Json,"status": string
+                  }
+                  Insert: {
+                    "business_id"?: string | null,"channel": string,"created_at"?: string,"direction": string,"error_code"?: string | null,"event_type": string,"id"?: string,"metadata"?: Json,"status": string
+                  }
+                  Update: {
+                    "business_id"?: string | null,"channel"?: string,"created_at"?: string,"direction"?: string,"error_code"?: string | null,"event_type"?: string,"id"?: string,"metadata"?: Json,"status"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "integration_events_business_id_fkey"
+                      columns: ["business_id"]
+                      isOneToOne: false
+                      referencedRelation: "businesses"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"business_channel_settings": {
+                  Row: {
+                    "business_id": string,"primary_channel": string,"reminder_channel": string,"telegram_enabled": boolean,"updated_at": string,"updated_by": string | null,"whatsapp_enabled": boolean
+                  }
+                  Insert: {
+                    "business_id": string,"primary_channel"?: string,"reminder_channel"?: string,"telegram_enabled"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"whatsapp_enabled"?: boolean
+                  }
+                  Update: {
+                    "business_id"?: string,"primary_channel"?: string,"reminder_channel"?: string,"telegram_enabled"?: boolean,"updated_at"?: string,"updated_by"?: string | null,"whatsapp_enabled"?: boolean
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "business_channel_settings_business_id_fkey"
+                      columns: ["business_id"]
+                      isOneToOne: true
+                      referencedRelation: "businesses"
+                      referencedColumns: ["id"]
+                    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
+            "complete_client_onboarding": {
+              Args: {
+                "p_invite_token_hash": string;
+                "p_business_name": string;
+                "p_timezone"?: string;
+                "p_currency"?: string;
+                "p_product_name"?: string;
+                "p_product_unit"?: string;
+                "p_product_price"?: number;
+                "p_channel"?: string;
+                "p_telegram_user_id"?: number;
+                "p_enable_reminder"?: boolean;
+                "p_reminder_time"?: string;
+                "p_reminder_days"?: number[];
+              };
+              Returns: Json;
+            };
+            "cleanup_old_telemetry": {
+              Args: {
+                "p_days"?: number;
+              };
+              Returns: Json;
+            };
             "cancel_last_sale":
 { Args: { "p_actor_user_id"?: string,"p_business_id": string,"p_source"?: string }; Returns: Json
                            },

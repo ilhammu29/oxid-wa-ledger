@@ -8,6 +8,8 @@ import { normalizePhoneNumber, maskPhoneNumber } from "./phone";
 import { sendMetaTextMessage } from "./meta-client";
 import { executeConversationAction } from "../conversation/executor";
 import { ExecutionContext } from "../transactions/types";
+import { captureConversationFailure, FailureType } from "../pilot-hardening";
+import { recordIntegrationEvent } from "../monitoring/telemetry";
 
 export interface ProcessWebhookOptions {
   sendOutbound?: boolean;
@@ -170,6 +172,33 @@ export async function processIncomingWhatsAppWebhook(
     };
   }
 
+  // Channel switch guard: Check if WhatsApp is enabled for this business
+  const { data: channelSettings } = await client
+    .from("business_channel_settings")
+    .select("whatsapp_enabled")
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  if (channelSettings && channelSettings.whatsapp_enabled === false) {
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "whatsapp",
+      direction: "inbound",
+      eventType: "channel.disabled_ignored",
+      status: "ignored",
+      metadata: { sender: maskPhoneNumber(normalizedSender) },
+    });
+
+    return {
+      acknowledged: true,
+      type: "channel_disabled",
+      messageId,
+      businessId,
+      senderPhone: maskPhoneNumber(normalizedSender),
+      reason: "WhatsApp channel is disabled for this business",
+    };
+  }
+
   // 7. Non-text message handling
   if (msg.type !== "text") {
     // Claim message ID to prevent processing loops
@@ -235,6 +264,15 @@ export async function processIncomingWhatsAppWebhook(
     };
   }
 
+  await recordIntegrationEvent(client, {
+    businessId,
+    channel: "whatsapp",
+    direction: "inbound",
+    eventType: "whatsapp.inbound.received",
+    status: "success",
+    metadata: { sender: maskPhoneNumber(normalizedSender) },
+  });
+
   // 9. Execute Deterministic Conversation Action
   const timestampSeconds = Number(msg.timestamp);
   const messageDate = !isNaN(timestampSeconds) && timestampSeconds > 0
@@ -253,12 +291,55 @@ export async function processIncomingWhatsAppWebhook(
     rawMessageText
   );
 
+  // Pilot Hardening: Capture unhandled / unparseable operator messages
+  if (
+    executionResult.status === "ERROR" ||
+    executionResult.action === "SHOW_UNKNOWN_HELP" ||
+    executionResult.action === "ASK_CONFIRMATION"
+  ) {
+    let failureType: FailureType = "UNKNOWN_INTENT";
+    if (executionResult.errorCode === "MULTI_PRODUCT_DETECTED") failureType = "MULTI_PRODUCT";
+    else if (executionResult.errorCode === "AMBIGUOUS_PRODUCT") failureType = "AMBIGUOUS_PRODUCT";
+    else if (executionResult.errorCode === "UNKNOWN_PRODUCT") failureType = "UNKNOWN_PRODUCT";
+    else if (executionResult.errorCode === "UNSUPPORTED_FORMAT") failureType = "UNSUPPORTED_FORMAT";
+    else if (executionResult.action === "ASK_CONFIRMATION") failureType = "AMBIGUOUS_QUANTITY";
+
+    await captureConversationFailure(client, {
+      businessId,
+      channel: "whatsapp",
+      senderReference: maskPhoneNumber(normalizedSender),
+      messageText: rawMessageText,
+      normalizedText: rawMessageText,
+      failureType,
+      parserIntent: executionResult.parsed?.intent,
+    });
+
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "whatsapp",
+      direction: "internal",
+      eventType: "parser.review_required",
+      status: "warning",
+      errorCode: failureType,
+    });
+  }
+
   // 10. Mark Message Processed (Financial Idempotency committed)
   await client.rpc("complete_whatsapp_message", {
     p_message_id: messageId,
     p_processing_status: "processed",
     p_response_text: executionResult.replyText,
     p_error_message: executionResult.errorMessage || null,
+  });
+
+  await recordIntegrationEvent(client, {
+    businessId,
+    channel: "whatsapp",
+    direction: "inbound",
+    eventType: "whatsapp.inbound.processed",
+    status: executionResult.status === "ERROR" ? "failed" : "success",
+    errorCode: executionResult.errorMessage,
+    metadata: { action: executionResult.action },
   });
 
   // 11. Send Outbound WhatsApp Reply
@@ -287,6 +368,15 @@ export async function processIncomingWhatsAppWebhook(
         errorMessage: errorMsg,
       };
     }
+
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "whatsapp",
+      direction: "outbound",
+      eventType: sendResult?.success ? "whatsapp.outbound.sent" : "whatsapp.outbound.failed",
+      status: sendResult?.success ? "success" : "failed",
+      errorCode: sendResult?.errorCode,
+    });
   }
 
   return {

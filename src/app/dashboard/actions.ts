@@ -390,6 +390,181 @@ export async function deleteProductAliasAction(aliasId: string): Promise<ActionR
 }
 
 /**
+ * Marks a conversation failure as reviewed by an owner or admin.
+ */
+export async function markFailureReviewedAction(failureId: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat meninjau pesan." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("conversation_failures")
+      .update({
+        review_status: "reviewed",
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: session.user.id,
+      })
+      .eq("id", failureId)
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal meninjau pesan: ${msg}` };
+  }
+}
+
+/**
+ * Saves reminder settings and updates designated recipient operators.
+ */
+export async function saveReminderSettingsAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah pengaturan pengingat." };
+  }
+
+  const enabled = formData.get("enabled") === "true";
+  const reminderTime = (formData.get("reminderTime") as string) || "18:00";
+  const daysOfWeek = formData.getAll("daysOfWeek").map(Number);
+  const selectedRecipients = formData.getAll("recipients").map(String);
+
+  if (enabled && selectedRecipients.length === 0) {
+    return {
+      success: false,
+      error: "Pilih minimal satu operator penerima sebelum mengaktifkan pengingat.",
+    };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    // 1. Update telegram_authorized_users recipient flags
+    // First, clear receive_reminders for this business
+    await supabase
+      .from("telegram_authorized_users")
+      .update({ receive_reminders: false })
+      .eq("business_id", session.business.id);
+
+    // Then enable for selected recipients
+    if (selectedRecipients.length > 0) {
+      await supabase
+        .from("telegram_authorized_users")
+        .update({ receive_reminders: true })
+        .eq("business_id", session.business.id)
+        .in("id", selectedRecipients);
+    }
+
+    // 2. Upsert reminder settings
+    const { error: settingsErr } = await supabase
+      .from("business_reminder_settings")
+      .upsert({
+        business_id: session.business.id,
+        enabled,
+        reminder_time: reminderTime,
+        days_of_week: daysOfWeek.length > 0 ? daysOfWeek : [1, 2, 3, 4, 5, 6, 0],
+        channel: "telegram",
+        timezone: session.business.timezone || "Asia/Jakarta",
+        updated_at: new Date().toISOString(),
+        updated_by: session.user.id,
+      });
+
+    if (settingsErr) throw settingsErr;
+
+    revalidatePath("/dashboard/settings/reminders");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menyimpan pengaturan: ${msg}` };
+  }
+}
+
+/**
+ * Sends a harmless test reminder to a designated Telegram operator.
+ */
+export async function sendTestReminderAction(recipientTelegramUserId: number): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengirim pesan uji coba." };
+  }
+
+  const supabase = await createClient();
+  const { sendTestReminder } = await import("@/modules/reminders");
+
+  const result = await sendTestReminder(supabase, {
+    businessId: session.business.id,
+    telegramUserId: recipientTelegramUserId,
+  });
+
+  if (!result.success) {
+    return { success: false, error: result.error || "Gagal mengirim pesan uji coba." };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Saves channel switch settings with WhatsApp readiness and reminder blocks.
+ */
+export async function saveChannelSettingsAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah pengaturan channel." };
+  }
+
+  const telegramEnabled = formData.get("telegramEnabled") === "true";
+  const whatsappEnabled = formData.get("whatsappEnabled") === "true";
+  const primaryChannel = (formData.get("primaryChannel") as "telegram" | "whatsapp") || "telegram";
+  const reminderChannel = (formData.get("reminderChannel") as "telegram" | "whatsapp") || "telegram";
+
+  const supabase = await createClient();
+  const { updateBusinessChannelSettings } = await import("@/modules/channels");
+
+  const result = await updateBusinessChannelSettings(
+    supabase,
+    session.business.id,
+    {
+      telegramEnabled,
+      whatsappEnabled,
+      primaryChannel,
+      reminderChannel,
+    },
+    session.user.id
+  );
+
+  if (!result.success) {
+    return { success: false, error: result.error || "Gagal menyimpan pengaturan channel." };
+  }
+
+  revalidatePath("/dashboard/settings/channels");
+  revalidatePath("/dashboard/monitoring");
+  return { success: true };
+}
+
+/**
  * Signs out the currently authenticated user and redirects to login.
  */
 export async function logoutAction() {
@@ -397,3 +572,4 @@ export async function logoutAction() {
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
 }
+

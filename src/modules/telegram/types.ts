@@ -84,6 +84,7 @@ export interface TelegramWebhookProcessingResult {
     | "unauthorized_user"
     | "ambiguous_business_mapping"
     | "duplicate_ignored"
+    | "channel_disabled"
     | "unsupported_update"
     | "unsupported_chat_type"
     | "unsupported_message_type"

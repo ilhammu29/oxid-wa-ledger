@@ -13,6 +13,9 @@ import {
   Menu,
   X,
   Plus,
+  Activity,
+  Bell,
+  Radio,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -53,6 +56,9 @@ export function DashboardShell({
     { name: "Transaksi", href: "/dashboard/transactions", icon: Receipt },
     { name: "Produk", href: "/dashboard/products", icon: Package },
     { name: "Status Harian", href: "/dashboard/status", icon: CalendarCheck },
+    { name: "Monitoring & Bot", href: "/dashboard/monitoring", icon: Activity },
+    { name: "Pengingat Harian", href: "/dashboard/settings/reminders", icon: Bell },
+    { name: "Kanal Pesan", href: "/dashboard/settings/channels", icon: Radio },
   ];
 
   const currentDateFormatted = new Intl.DateTimeFormat("id-ID", {

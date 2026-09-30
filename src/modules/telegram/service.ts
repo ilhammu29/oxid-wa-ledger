@@ -8,6 +8,8 @@ import { maskTelegramUserId, normalizeTelegramCommand } from "./normalizer";
 import { sendTelegramText } from "./telegram-client";
 import { executeConversationAction } from "../conversation/executor";
 import { ExecutionContext } from "../transactions/types";
+import { captureConversationFailure, FailureType } from "../pilot-hardening";
+import { recordIntegrationEvent } from "../monitoring/telemetry";
 
 export interface ProcessTelegramWebhookOptions {
   sendOutbound?: boolean;
@@ -223,6 +225,41 @@ export async function processIncomingTelegramWebhook(
   // CASE C: Authorized Business Operator
   const businessId = userRecords[0].business_id;
 
+  // Channel switch guard: Check if Telegram is enabled for this business
+  const { data: channelSettings } = await client
+    .from("business_channel_settings")
+    .select("telegram_enabled")
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  if (channelSettings && channelSettings.telegram_enabled === false) {
+    const disabledReply = "Channel Telegram untuk bisnis ini sedang dinonaktifkan di dashboard.";
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "telegram",
+      direction: "inbound",
+      eventType: "channel.disabled_ignored",
+      status: "ignored",
+      metadata: { telegramUserId },
+    });
+
+    if (options.sendOutbound !== false) {
+      await telegramSend({
+        chatId: replyChatId,
+        text: disabledReply,
+      });
+    }
+
+    return {
+      acknowledged: true,
+      type: "channel_disabled",
+      updateId,
+      businessId,
+      telegramUserId: String(telegramUserId),
+      reason: "Telegram channel is disabled for this business",
+    };
+  }
+
   // Handle Authorized /start
   if (isStart) {
     const startReply = `OXID Ledger aktif.\n\nKamu bisa kirim:\n• Kejual 15kg\n• laporan hari ini\n• minggu ini dapat berapa\n• batal terakhir\n• ubah terakhir jadi 20kg\n• help`;
@@ -288,6 +325,15 @@ export async function processIncomingTelegramWebhook(
     };
   }
 
+  await recordIntegrationEvent(client, {
+    businessId,
+    channel: "telegram",
+    direction: "inbound",
+    eventType: "telegram.inbound.received",
+    status: "success",
+    metadata: { telegramUserId },
+  });
+
   // 8. Execute Deterministic Conversation Action
   const dateSeconds = Number(msg.date);
   const messageDate =
@@ -307,6 +353,39 @@ export async function processIncomingTelegramWebhook(
     normalizedText
   );
 
+  // Pilot Hardening: Capture unhandled / unparseable operator messages
+  if (
+    executionResult.status === "ERROR" ||
+    executionResult.action === "SHOW_UNKNOWN_HELP" ||
+    executionResult.action === "ASK_CONFIRMATION"
+  ) {
+    let failureType: FailureType = "UNKNOWN_INTENT";
+    if (executionResult.errorCode === "MULTI_PRODUCT_DETECTED") failureType = "MULTI_PRODUCT";
+    else if (executionResult.errorCode === "AMBIGUOUS_PRODUCT") failureType = "AMBIGUOUS_PRODUCT";
+    else if (executionResult.errorCode === "UNKNOWN_PRODUCT") failureType = "UNKNOWN_PRODUCT";
+    else if (executionResult.errorCode === "UNSUPPORTED_FORMAT") failureType = "UNSUPPORTED_FORMAT";
+    else if (executionResult.action === "ASK_CONFIRMATION") failureType = "AMBIGUOUS_QUANTITY";
+
+    await captureConversationFailure(client, {
+      businessId,
+      channel: "telegram",
+      senderReference: maskTelegramUserId(telegramUserId),
+      messageText: rawText,
+      normalizedText,
+      failureType,
+      parserIntent: executionResult.parsed?.intent,
+    });
+
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "telegram",
+      direction: "internal",
+      eventType: "parser.review_required",
+      status: "warning",
+      errorCode: failureType,
+    });
+  }
+
   // 9. Mark Telegram Update Processed (Financial Idempotency committed)
   await client.rpc("complete_telegram_update", {
     p_update_id: updateId,
@@ -314,6 +393,16 @@ export async function processIncomingTelegramWebhook(
     p_business_id: businessId,
     p_response_text: executionResult.replyText,
     p_error_message: executionResult.errorMessage || null,
+  });
+
+  await recordIntegrationEvent(client, {
+    businessId,
+    channel: "telegram",
+    direction: "inbound",
+    eventType: "telegram.inbound.processed",
+    status: executionResult.status === "ERROR" ? "failed" : "success",
+    errorCode: executionResult.errorMessage,
+    metadata: { action: executionResult.action },
   });
 
   // 10. Send Outbound Telegram Reply
@@ -341,6 +430,15 @@ export async function processIncomingTelegramWebhook(
         errorMessage: errorMsg,
       };
     }
+
+    await recordIntegrationEvent(client, {
+      businessId,
+      channel: "telegram",
+      direction: "outbound",
+      eventType: sendResult?.success ? "telegram.outbound.sent" : "telegram.outbound.failed",
+      status: sendResult?.success ? "success" : "failed",
+      errorCode: sendResult?.errorCode,
+    });
   }
 
   return {

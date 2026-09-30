@@ -128,6 +128,7 @@ export interface WebhookProcessingResult {
     | "unknown_connection"
     | "unauthorized_sender"
     | "duplicate_ignored"
+    | "channel_disabled"
     | "message_processed"
     | "malformed_payload"
     | "verification_succeeded"
