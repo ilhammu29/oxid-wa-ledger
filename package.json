@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-parser.ts && tsx scripts/test-database-rls.ts && tsx scripts/test-step4.ts && tsx scripts/test-consistency-hardening.ts && tsx scripts/test-step5-webhook.ts && tsx scripts/test-telegram-adapter.ts",
+    "test": "tsx scripts/test-parser.ts && tsx scripts/test-database-rls.ts && tsx scripts/test-step4.ts && tsx scripts/test-consistency-hardening.ts && tsx scripts/test-step5-webhook.ts && tsx scripts/test-telegram-adapter.ts && tsx scripts/test-step6b-dashboard.ts",
     "verify:whatsapp": "tsx scripts/verify-whatsapp.ts",
     "setup:whatsapp": "tsx scripts/setup-whatsapp.ts",
     "verify:telegram": "tsx scripts/verify-telegram.ts",
@@ -17,14 +17,18 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.49.0",
     "next": "16.3.7",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/exceljs": "^0.5.3",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",

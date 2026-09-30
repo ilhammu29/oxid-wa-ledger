@@ -28,11 +28,13 @@ export default function Home() {
               <p className="text-xs text-zinc-400">Foundation Core v1.0.0</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Foundation Active
-            </span>
+          <div className="flex items-center gap-3">
+            <a
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-colors shadow-xs"
+            >
+              Buka Dashboard
+            </a>
           </div>
         </div>
       </header>

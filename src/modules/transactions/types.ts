@@ -32,6 +32,8 @@ export interface CreateSaleParams {
   unit?: string;
   /** Original unparsed message for auditing */
   rawMessage?: string;
+  /** Optional specific product ID (defaults to active default product if omitted) */
+  productId?: string | null;
   /** Timestamp when the sale occurred */
   transactionAt?: Date | string;
 }

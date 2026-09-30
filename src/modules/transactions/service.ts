@@ -178,6 +178,7 @@ export async function recordSale(
     p_sender_phone: context.senderPhone || null,
     p_actor_user_id: context.authenticatedUserId || null,
     p_transaction_at: params.transactionAt ? new Date(params.transactionAt).toISOString() : new Date().toISOString(),
+    p_product_id: params.productId || null,
   });
 
   if (error) {
@@ -364,3 +365,106 @@ export async function getSalesReport(
     totalRevenue: Number(result.total_revenue || 0),
   };
 }
+
+export interface OverviewKPIsDTO {
+  todayRevenue: number;
+  todayQuantity: number;
+  todayTransactionCount: number;
+  weekRevenue: number;
+  monthRevenue: number;
+  timezone: string;
+}
+
+export interface DailySalesPointDTO {
+  date: string;
+  revenue: number;
+  quantity: number;
+  transactionCount: number;
+}
+
+/**
+ * Retrieves today, week, and month sales aggregates in a single optimized RPC call.
+ */
+export async function getOverviewKPIs(
+  client: SupabaseClient,
+  businessId: string
+): Promise<OverviewKPIsDTO> {
+  const { data, error } = await client.rpc("get_business_overview_kpis", {
+    p_business_id: businessId,
+  });
+
+  if (error) {
+    throw mapDatabaseError(error);
+  }
+
+  const res = data as unknown as {
+    today_revenue: number | string;
+    today_quantity: number | string;
+    today_transaction_count: number | string;
+    week_revenue: number | string;
+    month_revenue: number | string;
+    timezone: string;
+  };
+
+  return {
+    todayRevenue: Number(res.today_revenue || 0),
+    todayQuantity: Number(res.today_quantity || 0),
+    todayTransactionCount: Number(res.today_transaction_count || 0),
+    weekRevenue: Number(res.week_revenue || 0),
+    monthRevenue: Number(res.month_revenue || 0),
+    timezone: res.timezone || "Asia/Jakarta",
+  };
+}
+
+/**
+ * Retrieves daily sales time-series (e.g. 14 days) zero-filled for charting and reporting.
+ */
+export async function getDailySalesSeries(
+  client: SupabaseClient,
+  businessId: string,
+  days: number = 14
+): Promise<DailySalesPointDTO[]> {
+  const { data, error } = await client.rpc("get_business_daily_sales_series", {
+    p_business_id: businessId,
+    p_days: days,
+  });
+
+  if (error) {
+    throw mapDatabaseError(error);
+  }
+
+  const rows = (data || []) as unknown as {
+    local_date: string;
+    revenue: number | string;
+    quantity: number | string;
+    transaction_count: number | string;
+  }[];
+
+  return rows.map((r) => ({
+    date: r.local_date,
+    revenue: Number(r.revenue || 0),
+    quantity: Number(r.quantity || 0),
+    transactionCount: Number(r.transaction_count || 0),
+  }));
+}
+
+/**
+ * Atomically marks one product as the default for the business, clearing previous default.
+ */
+export async function setDefaultProduct(
+  client: SupabaseClient,
+  businessId: string,
+  productId: string
+): Promise<{ success: boolean; productId: string; businessId: string }> {
+  const { data, error } = await client.rpc("set_default_product", {
+    p_business_id: businessId,
+    p_product_id: productId,
+  });
+
+  if (error) {
+    throw mapDatabaseError(error);
+  }
+
+  return data as { success: boolean; productId: string; businessId: string };
+}
+
