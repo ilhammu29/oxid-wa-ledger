@@ -18,7 +18,7 @@ import {
 } from "../src/modules/transactions";
 import { ExecutionContext } from "../src/modules/transactions/types";
 
-const PG_URL = process.env.TEST_DB_URL || "postgres://postgres:postgres@127.0.0.1:55440/postgres";
+const PG_URL = process.env.TEST_DB_URL || "postgres://postgres:postgres@127.0.0.1:55435/postgres";
 
 interface TestReport {
   num: number;
