@@ -95,15 +95,26 @@ function createPgSupabaseAdapter(pgClient: Client): SupabaseClient {
     from: (table: string) => {
       return {
         select: (columns: string = "*") => {
-          const conditions: Array<{ col: string; val: any }> = [];
+          const conditions: Array<{ col: string; op: string; val: any }> = [];
+          const orders: string[] = [];
+
           const executeQuery = async () => {
             try {
-              const whereClause =
-                conditions.length > 0
-                  ? "WHERE " + conditions.map((c, i) => `"${c.col}" = $${i + 1}`).join(" AND ")
-                  : "";
-              const values = conditions.map((c) => c.val);
-              const sql = `SELECT ${columns} FROM public."${table}" ${whereClause};`;
+              let whereClause = "";
+              const values: any[] = [];
+              if (conditions.length > 0) {
+                whereClause =
+                  "WHERE " +
+                  conditions
+                    .map((c, i) => {
+                      values.push(c.val);
+                      return `"${c.col}" ${c.op} $${i + 1}`;
+                    })
+                    .join(" AND ");
+              }
+              const orderClause = orders.length > 0 ? `ORDER BY ${orders.join(", ")}` : "";
+              const cleanCols = columns.includes("(") ? columns : columns.split(",").map((c) => c.trim()).join(", ");
+              const sql = `SELECT ${cleanCols} FROM public."${table}" ${whereClause} ${orderClause};`;
               const res = await pgClient.query(sql, values);
               return { data: res.rows, error: null };
             } catch (err: any) {
@@ -113,11 +124,20 @@ function createPgSupabaseAdapter(pgClient: Client): SupabaseClient {
 
           const queryBuilder: any = {
             eq: (col: string, val: any) => {
-              conditions.push({ col, val });
+              conditions.push({ col, op: "=", val });
               return queryBuilder;
             },
-            then: (onfulfilled: any, onrejected: any) => {
-              return executeQuery().then(onfulfilled, onrejected);
+            gte: (col: string, val: any) => {
+              conditions.push({ col, op: ">=", val });
+              return queryBuilder;
+            },
+            lte: (col: string, val: any) => {
+              conditions.push({ col, op: "<=", val });
+              return queryBuilder;
+            },
+            order: (col: string, { ascending }: { ascending: boolean } = { ascending: true }) => {
+              orders.push(`"${col}" ${ascending ? "ASC" : "DESC"}`);
+              return queryBuilder;
             },
             maybeSingle: async () => {
               const res = await executeQuery();
@@ -127,7 +147,9 @@ function createPgSupabaseAdapter(pgClient: Client): SupabaseClient {
               const res = await executeQuery();
               return { data: res.data?.[0] || null, error: res.error };
             },
+            then: (resolve: any, reject: any) => executeQuery().then(resolve, reject),
           };
+
           return queryBuilder;
         },
       };

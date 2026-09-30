@@ -10,11 +10,14 @@ import {
   X,
   AlertCircle,
   CheckCircle2,
+  Tag,
 } from "lucide-react";
 import {
   addProductAction,
   updateProductAction,
   setDefaultProductAction,
+  addProductAliasAction,
+  deleteProductAliasAction,
 } from "@/app/dashboard/actions";
 
 export interface ProductRecord {
@@ -25,6 +28,10 @@ export interface ProductRecord {
   active: boolean;
   is_default: boolean;
   created_at: string;
+  aliases?: Array<{
+    id: string;
+    alias: string;
+  }>;
 }
 
 interface ProductsViewProps {
@@ -35,6 +42,8 @@ interface ProductsViewProps {
 export function ProductsView({ products, canManage }: ProductsViewProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductRecord | null>(null);
+  const [aliasModalProduct, setAliasModalProduct] = useState<ProductRecord | null>(null);
+  const [newAliasText, setNewAliasText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -101,6 +110,36 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     }
   };
 
+  const handleAddAliasSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!aliasModalProduct || !newAliasText.trim()) return;
+
+    setLoading(true);
+    const res = await addProductAliasAction(aliasModalProduct.id, newAliasText);
+    setLoading(false);
+
+    if (!res.success) {
+      showNotification(res.error || "Gagal menambah alias produk.", true);
+    } else {
+      showNotification(`Alias '${newAliasText.trim()}' berhasil ditambahkan!`);
+      setNewAliasText("");
+      setAliasModalProduct(null);
+    }
+  };
+
+  const handleDeleteAlias = async (aliasId: string) => {
+    if (!confirm("Hapus alias kata kunci ini?")) return;
+    setLoading(true);
+    const res = await deleteProductAliasAction(aliasId);
+    setLoading(false);
+
+    if (!res.success) {
+      showNotification(res.error || "Gagal menghapus alias.", true);
+    } else {
+      showNotification("Alias berhasil dihapus.");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Notifications */}
@@ -130,7 +169,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
             className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Tambah Produk
+            <span>Tambah Produk</span>
           </button>
         )}
       </div>
@@ -143,6 +182,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
               <th className="py-3 px-4">Nama Produk</th>
               <th className="py-3 px-4">Satuan</th>
               <th className="py-3 px-4">Harga Satuan (IDR)</th>
+              <th className="py-3 px-4">Kata Kunci & Alias Bot</th>
               <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4">Default Master</th>
               {canManage && <th className="py-3 px-4 text-right">Aksi</th>}
@@ -162,6 +202,43 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                 </td>
                 <td className="py-3.5 px-4 font-mono font-bold text-zinc-900 whitespace-nowrap">
                   Rp{new Intl.NumberFormat("id-ID").format(p.default_price)}
+                </td>
+                <td className="py-3.5 px-4 min-w-[200px]">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Canonical name badge */}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200" title="Nama resmi komoditas">
+                      {p.name}
+                    </span>
+                    {/* Additional aliases badges */}
+                    {(p.aliases || []).map((al) => (
+                      <span
+                        key={al.id}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                      >
+                        {al.alias}
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAlias(al.id)}
+                            className="hover:text-red-600 transition-colors"
+                            title="Hapus alias"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                    {canManage && (
+                      <button
+                        type="button"
+                        onClick={() => setAliasModalProduct(p)}
+                        className="inline-flex items-center gap-0.5 text-[11px] text-blue-600 hover:text-blue-800 hover:underline font-medium ml-1"
+                        title="Tambah alias baru"
+                      >
+                        <Plus className="w-3 h-3" /> Alias
+                      </button>
+                    )}
+                  </div>
                 </td>
                 <td className="py-3.5 px-4 whitespace-nowrap">
                   {p.active ? (
@@ -262,39 +339,26 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   type="number"
                   required
                   min="0"
-                  step="100"
+                  step="1"
                   placeholder="Contoh: 28000"
                   className="w-full px-3 py-2 rounded-lg border border-zinc-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  name="isDefault"
-                  id="addIsDefault"
-                  type="checkbox"
-                  value="true"
-                  className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4"
-                />
-                <label htmlFor="addIsDefault" className="text-xs text-zinc-700 select-none">
-                  Jadikan produk default transaksi tanpa nama
-                </label>
-              </div>
-
-              <div className="pt-3 flex justify-end gap-2 border-t border-zinc-100">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50"
                 >
-                  {loading ? "Menyimpan..." : "Tambah Produk"}
+                  {loading ? "Menyimpan..." : "Simpan Produk"}
                 </button>
               </div>
             </form>
@@ -353,40 +417,106 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   type="number"
                   required
                   min="0"
-                  step="100"
+                  step="1"
                   defaultValue={editingProduct.default_price}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-1">
                 <input
+                  id="active"
                   name="active"
-                  id="editActive"
                   type="checkbox"
-                  value="true"
                   defaultChecked={editingProduct.active}
-                  className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                  className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
                 />
-                <label htmlFor="editActive" className="text-xs text-zinc-700 select-none">
-                  Produk aktif untuk transaksi
+                <label htmlFor="active" className="text-xs font-medium text-zinc-700">
+                  Produk Aktif untuk Pencatatan Transaksi
                 </label>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2 border-t border-zinc-100">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2 rounded-lg border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50"
                 >
-                  {loading ? "Menyimpan..." : "Simpan Perubahan"}
+                  {loading ? "Menyimpan..." : "Perbarui Produk"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Alias Modal (Section 10) */}
+      {aliasModalProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-2xl max-w-sm w-full overflow-hidden text-zinc-900 animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/70">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-blue-600" />
+                  Tambah Alias Bot
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Untuk produk: <span className="font-semibold text-zinc-800">{aliasModalProduct.name}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setAliasModalProduct(null);
+                  setNewAliasText("");
+                }}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddAliasSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 mb-1.5">
+                  Nama Alias / Sinonim
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newAliasText}
+                  onChange={(e) => setNewAliasText(e.target.value)}
+                  placeholder="Contoh: ikan nila, tilapia"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-[11px] text-zinc-400 mt-1.5">
+                  Bot WhatsApp & Telegram akan otomatis mengenali kata kunci ini saat dicatat di pesan.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAliasModalProduct(null);
+                    setNewAliasText("");
+                  }}
+                  className="px-3.5 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? "Menyimpan..." : "Simpan Alias"}
                 </button>
               </div>
             </form>

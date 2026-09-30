@@ -1,13 +1,14 @@
 /**
  * Conversation Engine Public Exports for OXID WA Ledger.
- * Step 4: Coordinates deterministic parsing with domain business execution.
+ * Step 6C: Coordinates deterministic parsing, tenant product resolution, and standardized copy.
  */
 
 export { executeConversationAction } from "./executor";
+export * from "./response-formatter";
 export {
   formatSaleSuccessResponse,
   formatCancelSuccessResponse,
   formatCorrectSuccessResponse,
   formatReportResponse,
-  formatConfirmationInquiry,
+  formatConfirmationInquiry as formatConfirmationInquiryLegacy,
 } from "./formatter";

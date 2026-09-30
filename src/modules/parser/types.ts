@@ -70,6 +70,12 @@ export interface ParsedMessage {
   reason: string;
   /** Indicates if multiple distinct quantities were detected in a single message */
   multipleQuantitiesDetected: boolean;
+  /** Resolved active product ID if matched */
+  productId?: string | null;
+  /** Resolved active product canonical name if matched */
+  productName?: string | null;
+  /** Whether the default product was used as fallback */
+  isDefaultProductUsed?: boolean;
 }
 
 export interface ConversationActionResult {

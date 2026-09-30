@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@/modules/transactions";
+import { normalizeProductTerm } from "@/modules/products";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -301,6 +302,90 @@ export async function setDefaultProductAction(productId: string): Promise<Action
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: `Gagal mengatur produk default: ${msg}` };
+  }
+}
+
+/**
+ * Adds an alias for an existing product within the authenticated tenant.
+ */
+export async function addProductAliasAction(
+  productId: string,
+  alias: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat menambah alias produk." };
+  }
+
+  const trimmedAlias = (alias || "").trim();
+  if (!trimmedAlias || trimmedAlias.length < 2) {
+    return { success: false, error: "Nama alias minimal 2 karakter." };
+  }
+
+  const normalized = normalizeProductTerm(trimmedAlias);
+  if (!normalized) {
+    return { success: false, error: "Format alias tidak valid." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase.from("product_aliases").insert({
+      business_id: session.business.id,
+      product_id: productId,
+      alias: trimmedAlias,
+      normalized_alias: normalized,
+      active: true,
+    });
+
+    if (error) {
+      if (error.code === "23505") {
+        return { success: false, error: "Alias tersebut sudah digunakan di produk lain." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/dashboard/products");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menambah alias: ${msg}` };
+  }
+}
+
+/**
+ * Removes an alias for a product within the authenticated tenant.
+ */
+export async function deleteProductAliasAction(aliasId: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat menghapus alias produk." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("product_aliases")
+      .delete()
+      .eq("id", aliasId)
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/products");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menghapus alias: ${msg}` };
   }
 }
 

@@ -1,6 +1,7 @@
 /**
  * Conversation Action Executor for OXID WA Ledger.
- * Step 4: Coordinates intent decisions with atomic database execution.
+ * Step 6C: Coordinates intent decisions, dynamic tenant product resolution,
+ * and atomic database execution with standardized Indonesian conversational copy.
  */
 
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -19,19 +20,71 @@ import {
   getSalesReport,
 } from "../transactions/service";
 import {
-  formatSaleSuccessResponse,
-  formatCancelSuccessResponse,
-  formatCorrectSuccessResponse,
-  formatReportResponse,
+  formatSaleSuccess,
+  formatDailyReport,
+  formatPeriodReport,
+  formatHelp,
+  formatFriendlyError,
+  formatCancelSuccess,
+  formatCorrectSuccess,
   formatConfirmationInquiry,
-} from "./formatter";
+} from "./response-formatter";
+import { resolveProductForSale, getActiveProductNames } from "../products";
+
+/**
+ * Safely fetches breakdown of today's sales by product in a single query.
+ */
+async function getSalesBreakdownByProduct(
+  client: SupabaseClient,
+  businessId: string,
+  startAt: string,
+  endAt: string
+): Promise<Array<{ productName: string; quantity: number; unit: string }>> {
+  try {
+    const { data: txData, error: txErr } = await client
+      .from("transactions")
+      .select("quantity, unit, product_id")
+      .eq("business_id", businessId)
+      .eq("status", "confirmed")
+      .gte("transaction_at", startAt)
+      .lte("transaction_at", endAt);
+
+    if (txErr || !txData || txData.length === 0) return [];
+
+    const { data: prodData } = await client
+      .from("products")
+      .select("id, name")
+      .eq("business_id", businessId);
+
+    const nameMap = new Map<string, string>();
+    (prodData || []).forEach((p: { id: string; name: string }) => nameMap.set(p.id, p.name));
+
+    const map = new Map<string, { productName: string; quantity: number; unit: string }>();
+    for (const row of txData as Array<{ quantity: number | string; unit?: string | null; product_id?: string | null }>) {
+      const prodName = (row.product_id && nameMap.get(row.product_id)) || "Lainnya";
+      const existing = map.get(prodName) || {
+        productName: prodName,
+        quantity: 0,
+        unit: row.unit || "kg",
+      };
+      existing.quantity += Number(row.quantity);
+      map.set(prodName, existing);
+    }
+    return Array.from(map.values());
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Executes a conversational command against business domain services.
  *
- * CRITICAL SAFETY INVARIANT:
+ * CRITICAL SAFETY INVARIANTS:
  * - Ambiguous sales, low/medium confidence messages, or multi-quantity messages
  *   are strictly BLOCKED from performing financial writes.
+ * - Multi-product messages ("lele 10kg dan nila 5kg") are strictly BLOCKED from writes.
+ * - Explicit unknown products ("Kejual mujair 10kg") NEVER silently fall back to default product.
+ * - Product prices come strictly from database configuration.
  */
 export async function executeConversationAction(
   client: SupabaseClient,
@@ -42,7 +95,7 @@ export async function executeConversationAction(
     return {
       action: "SHOW_UNKNOWN_HELP",
       status: "ERROR",
-      replyText: "Konteks bisnis tidak valid atau tidak ditemukan.",
+      replyText: formatFriendlyError("UNAUTHORIZED"),
       errorCode: "UNAUTHORIZED",
       errorMessage: "Missing businessId in execution context",
       parsed: parseMessage(rawMessage),
@@ -54,9 +107,29 @@ export async function executeConversationAction(
 
   try {
     // ------------------------------------------------------------------------
-    // DEFENSE-IN-DEPTH: Ambiguous Sale Protection
+    // Intent: SALE Execution with Dynamic Product Resolution
     // ------------------------------------------------------------------------
-    if (evaluated.action === "CREATE_SALE") {
+    if (evaluated.action === "CREATE_SALE" || parsed.intent === "SALE") {
+      // 1. Dynamic Product Resolution (Section 1, 5, 6, 7, 9)
+      const resolution = await resolveProductForSale(
+        client,
+        context.businessId,
+        rawMessage
+      );
+
+      // Handle Multi-Product Rejection (Section 9) before generic confirmation inquiry!
+      if (resolution.status === "MULTI_PRODUCT_DETECTED") {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText: resolution.replyText!,
+          errorCode: "MULTI_PRODUCT_DETECTED",
+          parsed,
+          data: null,
+        };
+      }
+
+      // 2. Ambiguous Quantity or Low Confidence Protection
       if (
         parsed.confidence !== "HIGH" ||
         parsed.requiresConfirmation ||
@@ -76,19 +149,89 @@ export async function executeConversationAction(
         };
       }
 
-      // High-confidence sale: execute atomic write
+      // Handle Other Non-Resolvable Product Cases (ZERO financial writes)
+      if (resolution.status === "AMBIGUOUS_PRODUCT") {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText: resolution.replyText!,
+          errorCode: "AMBIGUOUS_PRODUCT",
+          parsed,
+          data: null,
+        };
+      }
+
+      if (resolution.status === "UNKNOWN_PRODUCT") {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText: resolution.replyText!,
+          errorCode: "UNKNOWN_PRODUCT",
+          parsed,
+          data: null,
+        };
+      }
+
+      if (resolution.status === "NO_DEFAULT_CONFIGURED") {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText: resolution.replyText!,
+          errorCode: "DEFAULT_PRODUCT_NOT_CONFIGURED",
+          parsed,
+          data: null,
+        };
+      }
+
+      if (resolution.status === "NO_ACTIVE_PRODUCTS") {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText: resolution.replyText!,
+          errorCode: "NO_ACTIVE_PRODUCTS",
+          parsed,
+          data: null,
+        };
+      }
+
+      // 3. Product Resolved (Single active product or authorized default fallback)
+      const isDefaultUsed = resolution.status === "DEFAULT_USED";
+      const resolvedProductId = resolution.product?.id || null;
+
       const saleResult = await recordSale(client, context, {
         quantity: parsed.quantity!,
         unit: parsed.unit || "kg",
         rawMessage,
+        productId: resolvedProductId,
         transactionAt: context.now,
+      });
+
+      const replyText = formatSaleSuccess({
+        product: {
+          name: saleResult.productName,
+          unitPrice: saleResult.unitPrice,
+          unit: saleResult.unit,
+          isDefaultUsed,
+        },
+        quantity: saleResult.quantity,
+        totalAmount: saleResult.totalAmount,
+        todaySummary: {
+          totalRevenue: saleResult.todaySummary.totalRevenue,
+          totalQuantity: saleResult.todaySummary.totalQuantity,
+          transactionCount: saleResult.todaySummary.transactionCount,
+        },
       });
 
       return {
         action: "CREATE_SALE",
         status: "SUCCESS",
-        replyText: formatSaleSuccessResponse(saleResult),
-        parsed,
+        replyText,
+        parsed: {
+          ...parsed,
+          productId: saleResult.productId,
+          productName: saleResult.productName,
+          isDefaultProductUsed: isDefaultUsed,
+        },
         data: saleResult,
       };
     }
@@ -112,14 +255,20 @@ export async function executeConversationAction(
     }
 
     // ------------------------------------------------------------------------
-    // Reports
+    // Reports (Today, Week, Month)
     // ------------------------------------------------------------------------
     if (evaluated.action === "SHOW_REPORT_TODAY") {
       const report = await getSalesReport(client, context, "today");
+      const breakdown = await getSalesBreakdownByProduct(
+        client,
+        context.businessId,
+        report.startAt,
+        report.endAt
+      );
       return {
         action: "SHOW_REPORT_TODAY",
         status: "SUCCESS",
-        replyText: formatReportResponse(report),
+        replyText: formatDailyReport(report, breakdown),
         parsed,
         data: report,
       };
@@ -130,7 +279,7 @@ export async function executeConversationAction(
       return {
         action: "SHOW_REPORT_WEEK",
         status: "SUCCESS",
-        replyText: formatReportResponse(report),
+        replyText: formatPeriodReport("week", report),
         parsed,
         data: report,
       };
@@ -141,7 +290,7 @@ export async function executeConversationAction(
       return {
         action: "SHOW_REPORT_MONTH",
         status: "SUCCESS",
-        replyText: formatReportResponse(report),
+        replyText: formatPeriodReport("month", report),
         parsed,
         data: report,
       };
@@ -180,7 +329,7 @@ export async function executeConversationAction(
       return {
         action: "REQUEST_CANCEL_LAST",
         status: "SUCCESS",
-        replyText: formatCancelSuccessResponse(cancelResult),
+        replyText: formatCancelSuccess(cancelResult),
         parsed,
         data: cancelResult,
       };
@@ -199,14 +348,28 @@ export async function executeConversationAction(
       return {
         action: "REQUEST_CORRECT_LAST",
         status: "SUCCESS",
-        replyText: formatCorrectSuccessResponse(correctResult),
+        replyText: formatCorrectSuccess(correctResult),
         parsed,
         data: correctResult,
       };
     }
 
     // ------------------------------------------------------------------------
-    // Informational / Non-mutating (Help / Unknown)
+    // Help Command
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_HELP") {
+      const activeProducts = await getActiveProductNames(client, context.businessId);
+      return {
+        action: "SHOW_HELP",
+        status: "SUCCESS",
+        replyText: formatHelp(activeProducts),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Unknown Command
     // ------------------------------------------------------------------------
     return {
       action: evaluated.action,
@@ -220,7 +383,7 @@ export async function executeConversationAction(
       return {
         action: evaluated.action,
         status: "ERROR",
-        replyText: err.userMessage,
+        replyText: formatFriendlyError(err.code, err.userMessage),
         errorCode: err.code,
         errorMessage: err.message,
         parsed,
@@ -231,7 +394,7 @@ export async function executeConversationAction(
     return {
       action: evaluated.action,
       status: "ERROR",
-      replyText: "Terjadi kendala saat memproses permintaan. Silakan coba kembali.",
+      replyText: formatFriendlyError("DATABASE_OPERATION_FAILED"),
       errorCode: "DATABASE_OPERATION_FAILED",
       errorMessage: msg,
       parsed,

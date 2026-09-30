@@ -132,6 +132,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"product_aliases": {
+                  Row: {
+                    "active": boolean,"alias": string,"business_id": string,"created_at": string,"id": string,"normalized_alias": string,"product_id": string,"updated_at": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"alias": string,"business_id": string,"created_at"?: string,"id"?: string,"normalized_alias": string,"product_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"alias"?: string,"business_id"?: string,"created_at"?: string,"id"?: string,"normalized_alias"?: string,"product_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "fk_product_aliases_product_tenant"
+                      columns: ["product_id", "business_id"]
+                      isOneToOne: false
+                      referencedRelation: "products"
+                      referencedColumns: ["id", "business_id"]
+                    }
+                  ]
                 },"products": {
                   Row: {
                     "active": boolean,"aliases": (string)[],"business_id": string,"created_at": string,"default_price": number,"id": string,"is_default": boolean,"name": string,"unit": string,"updated_at": string
