@@ -57,7 +57,23 @@ export async function processIncomingWhatsAppWebhook(
     };
   }
 
-  // 2. Ignore Status-only callbacks (sent, delivered, read, failed)
+  // 2. Safe structured logging for Status callbacks (sent, delivered, read, failed)
+  if (value.statuses && value.statuses.length > 0) {
+    for (const st of value.statuses) {
+      const err = (st.errors?.[0] as Record<string, any>) || undefined;
+      const errCode = err?.code ?? "none";
+      const errSubcode = err?.error_data?.details ? "details_provided" : (err?.subcode ?? "none");
+      const errTitle = err?.title ? String(err.title).slice(0, 150) : "none";
+      const rawDetails = err?.error_data?.details || err?.message || "none";
+      const errDetails = String(rawDetails).replace(/[A-Za-z0-9_-]{25,}/g, "[REDACTED]").slice(0, 200);
+
+      console.info(
+        `[WebhookStatus] wamid: ${st.id} | status: ${st.status} | recipient: ${maskPhoneNumber(st.recipient_id)} | errCode: ${errCode} | subcode: ${errSubcode} | title: ${errTitle} | details: ${errDetails}`
+      );
+    }
+  }
+
+  // Ignore Status-only callbacks safely without invoking financial parsers
   if (value.statuses && value.statuses.length > 0 && (!value.messages || value.messages.length === 0)) {
     const firstStatus = value.statuses[0];
     return {
