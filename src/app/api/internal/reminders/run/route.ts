@@ -35,10 +35,11 @@ function verifyBearerToken(
  * Authenticated via Authorization: Bearer REMINDER_CRON_SECRET.
  */
 export async function POST(request: NextRequest) {
-  const expectedSecret = process.env.REMINDER_CRON_SECRET;
+  const expectedSecret =
+    process.env.REMINDER_CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!expectedSecret) {
-    console.error("[ReminderCron] REMINDER_CRON_SECRET is not configured on the server runtime.");
+    console.error("[ReminderCron] No authorization secret configured on the server runtime.");
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
