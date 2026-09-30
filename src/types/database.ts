@@ -96,13 +96,13 @@ isOneToOne: false
                   ]
                 },"processed_whatsapp_messages": {
                   Row: {
-                    "business_id": string,"message_id": string,"message_type": string,"payload_hash": string | null,"processed_at": string | null,"processing_status": string,"received_at": string,"sender_phone": string
+                    "business_id": string,"error_message": string | null,"message_id": string,"message_type": string,"payload_hash": string | null,"processed_at": string | null,"processing_status": string,"received_at": string,"response_text": string | null,"sender_phone": string
                   }
                   Insert: {
-                    "business_id": string,"message_id": string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"sender_phone": string
+                    "business_id": string,"error_message"?: string | null,"message_id": string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"response_text"?: string | null,"sender_phone": string
                   }
                   Update: {
-                    "business_id"?: string,"message_id"?: string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"sender_phone"?: string
+                    "business_id"?: string,"error_message"?: string | null,"message_id"?: string,"message_type"?: string,"payload_hash"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"received_at"?: string,"response_text"?: string | null,"sender_phone"?: string
                   }
                   Relationships: [
                     {
@@ -188,6 +188,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"whatsapp_authorized_senders": {
+                  Row: {
+                    "active": boolean,"business_id": string,"created_at": string,"display_label": string | null,"id": string,"phone_number": string,"updated_at": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"business_id": string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"phone_number": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"business_id"?: string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"phone_number"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "whatsapp_authorized_senders_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"whatsapp_connections": {
                   Row: {
                     "business_id": string,"created_at": string,"id": string,"phone_number": string,"phone_number_id": string,"status": string,"updated_at": string,"waba_id": string | null
@@ -213,55 +232,27 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            cancel_last_sale: {
-              Args: {
-                p_business_id: string
-                p_actor_user_id?: string | null
-                p_source?: string
-              }
-              Returns: Json
-            }
-            correct_last_sale: {
-              Args: {
-                p_business_id: string
-                p_corrected_quantity: number
-                p_actor_user_id?: string | null
-                p_source?: string
-                p_raw_message?: string | null
-              }
-              Returns: Json
-            }
-            get_business_sales_report: {
-              Args: {
-                p_business_id: string
-                p_start_at: string
-                p_end_at: string
-              }
-              Returns: Json
-            }
-            record_sale: {
-              Args: {
-                p_business_id: string
-                p_quantity: number
-                p_unit?: string
-                p_source?: string
-                p_raw_message?: string | null
-                p_sender_phone?: string | null
-                p_actor_user_id?: string | null
-                p_transaction_at?: string
-              }
-              Returns: Json
-            }
-            set_business_daily_status: {
-              Args: {
-                p_business_id: string
-                p_local_date: string
-                p_status: string
-                p_note?: string | null
-                p_source?: string
-              }
-              Returns: Json
-            }
+            "cancel_last_sale":
+{ Args: { "p_actor_user_id"?: string,"p_business_id": string,"p_source"?: string }; Returns: Json
+                           },
+"claim_whatsapp_message":
+{ Args: { "p_business_id": string,"p_message_id": string,"p_message_type"?: string,"p_payload_hash"?: string,"p_sender_phone": string }; Returns: Json
+                           },
+"complete_whatsapp_message":
+{ Args: { "p_error_message"?: string,"p_message_id": string,"p_processing_status": string,"p_response_text"?: string }; Returns: undefined
+                           },
+"correct_last_sale":
+{ Args: { "p_actor_user_id"?: string,"p_business_id": string,"p_corrected_quantity": number,"p_raw_message"?: string,"p_source"?: string }; Returns: Json
+                           },
+"get_business_sales_report":
+{ Args: { "p_business_id": string,"p_end_at": string,"p_start_at": string }; Returns: Json
+                           },
+"record_sale":
+{ Args: { "p_actor_user_id"?: string,"p_business_id": string,"p_quantity": number,"p_raw_message"?: string,"p_sender_phone"?: string,"p_source"?: string,"p_transaction_at"?: string,"p_unit"?: string }; Returns: Json
+                           },
+"set_business_daily_status":
+{ Args: { "p_business_id": string,"p_local_date": string,"p_note"?: string,"p_source"?: string,"p_status": string }; Returns: Json
+                           }
           }
           Enums: {
             [_ in never]: never

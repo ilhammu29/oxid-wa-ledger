@@ -365,6 +365,72 @@ async function runTests() {
       record("Membership policies query cleanly without recursion", "RLS", false, e.message);
     }
 
+    // Step 5 Test: Owner A can insert and read authorized sender for Business A
+    try {
+      const inserted = await asUser(userOwnerA, "authenticated", async (c) => {
+        const ins = await c.query(
+          "INSERT INTO public.whatsapp_authorized_senders (business_id, phone_number, display_label) VALUES ($1, $2, $3) RETURNING id, phone_number",
+          [bizA, "6281234567890", "Owner Personal"]
+        );
+        const sel = await c.query(
+          "SELECT * FROM public.whatsapp_authorized_senders WHERE business_id = $1",
+          [bizA]
+        );
+        return sel.rows.length === 1 && ins.rows[0]?.phone_number === "6281234567890";
+      });
+      record("Owner A can insert and read authorized sender for Business A", "RLS", inserted);
+    } catch (e: any) {
+      record("Owner A can insert and read authorized sender for Business A", "RLS", false, e.message);
+    }
+
+    // Step 5 Test: Owner A cannot read authorized sender for Business B
+    try {
+      await client.query(`
+        INSERT INTO public.whatsapp_authorized_senders (business_id, phone_number, display_label)
+        VALUES ('${bizB}', '6289999999999', 'Owner B Personal')
+      `);
+      const isolated = await asUser(userOwnerA, "authenticated", async (c) => {
+        const sel = await c.query(
+          "SELECT * FROM public.whatsapp_authorized_senders WHERE business_id = $1",
+          [bizB]
+        );
+        return sel.rows.length === 0;
+      });
+      record("Owner A cannot read authorized sender of Business B", "RLS", isolated);
+    } catch (e: any) {
+      record("Owner A cannot read authorized sender of Business B", "RLS", false, e.message);
+    }
+
+    // Step 5 Test: Member A can read authorized sender of Business A but cannot delete it
+    try {
+      const memberCheck = await asUser(userMemberA, "authenticated", async (c) => {
+        const sel = await c.query(
+          "SELECT * FROM public.whatsapp_authorized_senders WHERE business_id = $1",
+          [bizA]
+        );
+        const canRead = sel.rows.length === 1;
+        const del = await c.query(
+          "DELETE FROM public.whatsapp_authorized_senders WHERE business_id = $1 RETURNING id",
+          [bizA]
+        );
+        const deleteBlocked = del.rowCount === 0;
+        return canRead && deleteBlocked;
+      });
+      record("Member A can read authorized senders of Business A but cannot delete them", "RLS", memberCheck);
+    } catch (e: any) {
+      record("Member A can read authorized senders of Business A but cannot delete them", "RLS", false, e.message);
+    }
+
+    // Step 5 Test: Anonymous access is denied to whatsapp_authorized_senders
+    try {
+      await asUser(null, "anon", async (c) => {
+        await c.query("SELECT * FROM public.whatsapp_authorized_senders");
+      });
+      record("Anonymous access is denied to whatsapp_authorized_senders", "Security", false, "Anon could read rows");
+    } catch (e: any) {
+      record("Anonymous access is denied to whatsapp_authorized_senders", "Security", true);
+    }
+
     console.log("\n5. Running Data Integrity Tests...");
 
     // Integrity 1: Negative quantity rejected
@@ -442,6 +508,21 @@ async function runTests() {
       record("Duplicate WhatsApp message ID rejected", "Integrity", false, "Allowed duplicate WA message");
     } catch (e: any) {
       record("Duplicate WhatsApp message ID rejected", "Integrity", true);
+    }
+
+    // Step 5 Integrity: Duplicate authorized sender for same business rejected by unique constraint
+    try {
+      await client.query(`
+        INSERT INTO public.whatsapp_authorized_senders (business_id, phone_number, display_label)
+        VALUES ('${bizA}', '6281111111111', 'Sender 1');
+      `);
+      await client.query(`
+        INSERT INTO public.whatsapp_authorized_senders (business_id, phone_number, display_label)
+        VALUES ('${bizA}', '6281111111111', 'Sender 1 Duplicate');
+      `);
+      record("Duplicate authorized sender for same business rejected", "Integrity", false, "Allowed duplicate sender");
+    } catch (e: any) {
+      record("Duplicate authorized sender for same business rejected", "Integrity", true);
     }
 
     // Integrity 7: Duplicate daily reminder identity rejected (business_id + notification_type + local_date)

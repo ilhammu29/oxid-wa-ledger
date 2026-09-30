@@ -7,6 +7,15 @@ export interface ServerEnv {
   NODE_ENV: "development" | "production" | "test";
 }
 
+export interface WhatsAppEnv {
+  WHATSAPP_ACCESS_TOKEN: string;
+  WHATSAPP_PHONE_NUMBER_ID: string;
+  WHATSAPP_WABA_ID: string;
+  META_APP_SECRET: string;
+  WHATSAPP_VERIFY_TOKEN: string;
+  META_GRAPH_API_VERSION: string;
+}
+
 export interface EnvValidationResult {
   isValid: boolean;
   missingVariables: string[];
@@ -14,7 +23,7 @@ export interface EnvValidationResult {
 }
 
 /**
- * Validates whether required server-side environment variables are present.
+ * Validates whether required server-side Supabase environment variables are present.
  */
 export function checkServerEnv(): EnvValidationResult {
   const missingVariables: string[] = [];
@@ -44,6 +53,41 @@ export function checkServerEnv(): EnvValidationResult {
 }
 
 /**
+ * Validates Meta WhatsApp Cloud API server-side environment variables.
+ * CRITICAL SECURITY: Never prints, logs, or exposes secret values.
+ */
+export function checkWhatsAppEnv(): EnvValidationResult {
+  const missingVariables: string[] = [];
+
+  if (!process.env.WHATSAPP_ACCESS_TOKEN) {
+    missingVariables.push("WHATSAPP_ACCESS_TOKEN");
+  }
+  if (!process.env.WHATSAPP_PHONE_NUMBER_ID) {
+    missingVariables.push("WHATSAPP_PHONE_NUMBER_ID");
+  }
+  if (!process.env.WHATSAPP_WABA_ID) {
+    missingVariables.push("WHATSAPP_WABA_ID");
+  }
+  if (!process.env.META_APP_SECRET) {
+    missingVariables.push("META_APP_SECRET");
+  }
+  if (!process.env.WHATSAPP_VERIFY_TOKEN) {
+    missingVariables.push("WHATSAPP_VERIFY_TOKEN");
+  }
+
+  const isValid = missingVariables.length === 0;
+  const message = isValid
+    ? "WhatsApp environment variables are properly configured."
+    : `Missing WhatsApp environment variables: ${missingVariables.join(", ")}.`;
+
+  return {
+    isValid,
+    missingVariables,
+    message,
+  };
+}
+
+/**
  * Retrieves validated server-side environment variables.
  * Throws a descriptive error when required variables are missing in runtime operations.
  */
@@ -60,5 +104,27 @@ export function getServerEnv(): ServerEnv {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
     NODE_ENV: (process.env.NODE_ENV || "development") as ServerEnv["NODE_ENV"],
+  };
+}
+
+/**
+ * Retrieves validated Meta WhatsApp environment variables.
+ * Throws a descriptive error when required variables are missing.
+ */
+export function getWhatsAppEnv(): WhatsAppEnv {
+  const check = checkWhatsAppEnv();
+  if (!check.isValid) {
+    throw new Error(
+      `[OXID WA Ledger] WhatsApp Configuration Error: ${check.message}`
+    );
+  }
+
+  return {
+    WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN!,
+    WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID!,
+    WHATSAPP_WABA_ID: process.env.WHATSAPP_WABA_ID!,
+    META_APP_SECRET: process.env.META_APP_SECRET!,
+    WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN!,
+    META_GRAPH_API_VERSION: process.env.META_GRAPH_API_VERSION || "v21.0",
   };
 }

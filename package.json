@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "verify:whatsapp": "tsx scripts/verify-whatsapp.ts",
+    "setup:whatsapp": "tsx scripts/setup-whatsapp.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -20,6 +20,11 @@ export async function GET() {
       supabaseUrl: "configured" | "missing";
       supabaseAnonKey: "configured" | "missing";
       supabaseServiceRoleKey: "configured" | "missing";
+      whatsappAccessToken: "configured" | "missing";
+      whatsappPhoneNumberId: "configured" | "missing";
+      whatsappWabaId: "configured" | "missing";
+      metaAppSecret: "configured" | "missing";
+      whatsappVerifyToken: "configured" | "missing";
     };
     supabaseConnectivity: {
       reachable: boolean;
@@ -32,6 +37,11 @@ export async function GET() {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? "configured" : "missing",
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "configured" : "missing",
       supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? "configured" : "missing",
+      whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN ? "configured" : "missing",
+      whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ? "configured" : "missing",
+      whatsappWabaId: process.env.WHATSAPP_WABA_ID ? "configured" : "missing",
+      metaAppSecret: process.env.META_APP_SECRET ? "configured" : "missing",
+      whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN ? "configured" : "missing",
     },
     supabaseConnectivity: {
       reachable: false,
