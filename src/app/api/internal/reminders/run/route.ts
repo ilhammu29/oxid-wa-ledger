@@ -35,11 +35,11 @@ function verifyBearerToken(
  * Authenticated via Authorization: Bearer REMINDER_CRON_SECRET.
  */
 export async function POST(request: NextRequest) {
-  const expectedSecret =
-    process.env.REMINDER_CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const expectedSecret = process.env.REMINDER_CRON_SECRET;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!expectedSecret) {
-    console.error("[ReminderCron] No authorization secret configured on the server runtime.");
+  if (!expectedSecret || (serviceKey && expectedSecret === serviceKey)) {
+    console.error("[ReminderCron] Valid dedicated REMINDER_CRON_SECRET is not configured on the server runtime.");
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json(
