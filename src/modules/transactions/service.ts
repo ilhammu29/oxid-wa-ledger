@@ -111,6 +111,12 @@ function mapDatabaseError(err: unknown): DomainError {
   if (msg.includes("NO_TRANSACTION_TO_CORRECT")) {
     return new DomainError("NO_TRANSACTION_TO_CORRECT", msg);
   }
+  if (msg.includes("DAY_STATUS_HAS_SALES")) {
+    return new DomainError("DAY_STATUS_HAS_SALES", msg);
+  }
+  if (msg.includes("DAY_STATUS_CONFLICT")) {
+    return new DomainError("DAY_STATUS_CONFLICT", msg);
+  }
   if (msg.includes("DAILY_STATUS_CONFLICT")) {
     return new DomainError("DAILY_STATUS_CONFLICT", msg);
   }

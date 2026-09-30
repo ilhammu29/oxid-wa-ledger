@@ -13,6 +13,8 @@ export type DomainErrorCode =
   | "NO_TRANSACTION_TO_CANCEL"
   | "NO_TRANSACTION_TO_CORRECT"
   | "DAILY_STATUS_CONFLICT"
+  | "DAY_STATUS_HAS_SALES"
+  | "DAY_STATUS_CONFLICT"
   | "TRANSACTION_ALREADY_CANCELLED"
   | "TRANSACTION_ALREADY_CORRECTED"
   | "DATABASE_OPERATION_FAILED"
@@ -55,6 +57,10 @@ export function getUserFriendlyErrorMessage(code: DomainErrorCode): string {
       return "Tidak ada transaksi aktif yang dapat dikoreksi.";
     case "DAILY_STATUS_CONFLICT":
       return "Status harian bertentangan dengan status yang sudah dicatat sebelumnya.";
+    case "DAY_STATUS_HAS_SALES":
+      return "Hari ini sudah memiliki transaksi penjualan, jadi tidak bisa ditandai sebagai tanpa penjualan atau libur.";
+    case "DAY_STATUS_CONFLICT":
+      return "Hari ini sebelumnya sudah ditandai sebagai tanpa penjualan atau libur. Status tersebut perlu dibatalkan terlebih dahulu sebelum mencatat penjualan.";
     case "TRANSACTION_ALREADY_CANCELLED":
       return "Transaksi ini sudah dibatalkan sebelumnya.";
     case "TRANSACTION_ALREADY_CORRECTED":

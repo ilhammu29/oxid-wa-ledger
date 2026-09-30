@@ -424,11 +424,20 @@ async function runStep4Tests() {
     // ------------------------------------------------------------------------
     // Tests 15-20: NO_SALE & CLOSED (Daily Status)
     // ------------------------------------------------------------------------
+    const ctxANoSales: ExecutionContext = {
+      ...ctxA,
+      now: new Date("2026-10-02T10:00:00+07:00"),
+    };
+    const ctxBNoSales: ExecutionContext = {
+      ...ctxB,
+      now: new Date("2026-10-02T11:00:00+08:00"),
+    };
+
     try {
-      const statusRes = await setDailyStatus(sbClient, ctxA, "NO_SALE");
+      const statusRes = await setDailyStatus(sbClient, ctxANoSales, "NO_SALE");
       const passed =
         statusRes.status === "NO_SALE" &&
-        statusRes.localDate === "2026-09-30" &&
+        statusRes.localDate === "2026-10-02" &&
         statusRes.isDuplicate === false;
       record(15, "NO_SALE records daily status for today", "DAILY_STATUS", passed);
     } catch (err: any) {
@@ -436,7 +445,7 @@ async function runStep4Tests() {
     }
 
     try {
-      const statusRes2 = await setDailyStatus(sbClient, ctxA, "NO_SALE");
+      const statusRes2 = await setDailyStatus(sbClient, ctxANoSales, "NO_SALE");
       const passed =
         statusRes2.status === "NO_SALE" &&
         statusRes2.isDuplicate === true;
@@ -448,7 +457,7 @@ async function runStep4Tests() {
     try {
       let threw = false;
       try {
-        await setDailyStatus(sbClient, ctxA, "CLOSED");
+        await setDailyStatus(sbClient, ctxANoSales, "CLOSED");
       } catch (err: any) {
         threw = err.code === "DAILY_STATUS_CONFLICT";
       }
@@ -459,10 +468,10 @@ async function runStep4Tests() {
 
     // Test CLOSED on Business B
     try {
-      const statusB = await setDailyStatus(sbClient, ctxB, "CLOSED");
+      const statusB = await setDailyStatus(sbClient, ctxBNoSales, "CLOSED");
       const passed =
         statusB.status === "CLOSED" &&
-        statusB.localDate === "2026-09-30" &&
+        statusB.localDate === "2026-10-02" &&
         statusB.isDuplicate === false;
       record(18, "CLOSED records daily status", "DAILY_STATUS", passed);
     } catch (err: any) {
@@ -470,7 +479,7 @@ async function runStep4Tests() {
     }
 
     try {
-      const statusB2 = await setDailyStatus(sbClient, ctxB, "CLOSED");
+      const statusB2 = await setDailyStatus(sbClient, ctxBNoSales, "CLOSED");
       const passed =
         statusB2.status === "CLOSED" &&
         statusB2.isDuplicate === true;
@@ -482,7 +491,7 @@ async function runStep4Tests() {
     try {
       let threw = false;
       try {
-        await setDailyStatus(sbClient, ctxB, "NO_SALE");
+        await setDailyStatus(sbClient, ctxBNoSales, "NO_SALE");
       } catch (err: any) {
         threw = err.code === "DAILY_STATUS_CONFLICT";
       }
