@@ -85,6 +85,8 @@ VALUES ('${MIGRATION_VERSION}', '${MIGRATION_NAME}')
 ON CONFLICT (version) DO NOTHING;
 `;
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   const adminSecret = request.headers.get("x-admin-secret");
   const expectedSecret = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const cleanPgUrl = rawPgUrl.replace(/\\?.*$/, "");
+  const cleanPgUrl = rawPgUrl.replace(/\?.*$/, "");
   const client = new Client({
     connectionString: cleanPgUrl,
     ssl: { rejectUnauthorized: false },
