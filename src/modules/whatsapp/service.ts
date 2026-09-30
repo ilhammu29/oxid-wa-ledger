@@ -60,11 +60,12 @@ export async function processIncomingWhatsAppWebhook(
   // 2. Safe structured logging for Status callbacks (sent, delivered, read, failed)
   if (value.statuses && value.statuses.length > 0) {
     for (const st of value.statuses) {
-      const err = (st.errors?.[0] as Record<string, any>) || undefined;
-      const errCode = err?.code ?? "none";
-      const errSubcode = err?.error_data?.details ? "details_provided" : (err?.subcode ?? "none");
+      const err = (st.errors?.[0] as Record<string, unknown>) || undefined;
+      const errCode = (err?.code as string | number) ?? "none";
+      const errData = err?.error_data as Record<string, unknown> | undefined;
+      const errSubcode = errData?.details ? "details_provided" : ((err?.subcode as string | number) ?? "none");
       const errTitle = err?.title ? String(err.title).slice(0, 150) : "none";
-      const rawDetails = err?.error_data?.details || err?.message || "none";
+      const rawDetails = errData?.details || err?.message || "none";
       const errDetails = String(rawDetails).replace(/[A-Za-z0-9_-]{25,}/g, "[REDACTED]").slice(0, 200);
 
       console.info(

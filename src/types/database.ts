@@ -94,6 +94,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"processed_telegram_updates": {
+                  Row: {
+                    "business_id": string | null,"created_at": string,"error_message": string | null,"processed_at": string | null,"processing_status": string,"response_text": string | null,"telegram_user_id": number | null,"update_id": number
+                  }
+                  Insert: {
+                    "business_id"?: string | null,"created_at"?: string,"error_message"?: string | null,"processed_at"?: string | null,"processing_status": string,"response_text"?: string | null,"telegram_user_id"?: number | null,"update_id": number
+                  }
+                  Update: {
+                    "business_id"?: string | null,"created_at"?: string,"error_message"?: string | null,"processed_at"?: string | null,"processing_status"?: string,"response_text"?: string | null,"telegram_user_id"?: number | null,"update_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "processed_telegram_updates_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"processed_whatsapp_messages": {
                   Row: {
                     "business_id": string,"error_message": string | null,"message_id": string,"message_type": string,"payload_hash": string | null,"processed_at": string | null,"processing_status": string,"received_at": string,"response_text": string | null,"sender_phone": string
@@ -126,6 +145,25 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "products_business_id_fkey"
+      columns: ["business_id"]
+isOneToOne: false
+      referencedRelation: "businesses"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"telegram_authorized_users": {
+                  Row: {
+                    "active": boolean,"business_id": string,"created_at": string,"display_label": string | null,"id": string,"telegram_user_id": number,"updated_at": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"business_id": string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"telegram_user_id": number,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"business_id"?: string,"created_at"?: string,"display_label"?: string | null,"id"?: string,"telegram_user_id"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "telegram_authorized_users_business_id_fkey"
       columns: ["business_id"]
 isOneToOne: false
       referencedRelation: "businesses"
@@ -235,8 +273,14 @@ isOneToOne: false
             "cancel_last_sale":
 { Args: { "p_actor_user_id"?: string,"p_business_id": string,"p_source"?: string }; Returns: Json
                            },
+"claim_telegram_update":
+{ Args: { "p_business_id"?: string,"p_telegram_user_id"?: number,"p_update_id": number }; Returns: Json
+                           },
 "claim_whatsapp_message":
 { Args: { "p_business_id": string,"p_message_id": string,"p_message_type"?: string,"p_payload_hash"?: string,"p_sender_phone": string }; Returns: Json
+                           },
+"complete_telegram_update":
+{ Args: { "p_business_id"?: string,"p_error_message"?: string,"p_processing_status": string,"p_response_text"?: string,"p_update_id": number }; Returns: undefined
                            },
 "complete_whatsapp_message":
 { Args: { "p_error_message"?: string,"p_message_id": string,"p_processing_status": string,"p_response_text"?: string }; Returns: undefined

@@ -128,3 +128,52 @@ export function getWhatsAppEnv(): WhatsAppEnv {
     META_GRAPH_API_VERSION: process.env.META_GRAPH_API_VERSION || "v21.0",
   };
 }
+
+export interface TelegramEnv {
+  TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_WEBHOOK_SECRET: string;
+}
+
+/**
+ * Validates Telegram Bot server-side environment variables.
+ * CRITICAL SECURITY: Never prints, logs, or exposes secret values.
+ */
+export function checkTelegramEnv(): EnvValidationResult {
+  const missingVariables: string[] = [];
+
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    missingVariables.push("TELEGRAM_BOT_TOKEN");
+  }
+  if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
+    missingVariables.push("TELEGRAM_WEBHOOK_SECRET");
+  }
+
+  const isValid = missingVariables.length === 0;
+  const message = isValid
+    ? "Telegram environment variables are properly configured."
+    : `Missing Telegram environment variables: ${missingVariables.join(", ")}.`;
+
+  return {
+    isValid,
+    missingVariables,
+    message,
+  };
+}
+
+/**
+ * Retrieves validated Telegram environment variables.
+ * Throws a descriptive error when required variables are missing.
+ */
+export function getTelegramEnv(): TelegramEnv {
+  const check = checkTelegramEnv();
+  if (!check.isValid) {
+    throw new Error(
+      `[OXID WA Ledger] Telegram Configuration Error: ${check.message}`
+    );
+  }
+
+  return {
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN!,
+    TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET!,
+  };
+}

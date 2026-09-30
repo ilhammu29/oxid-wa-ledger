@@ -6,7 +6,7 @@
 import { ParsedMessage, ConversationActionType } from "../parser/types";
 
 export type TransactionStatus = "confirmed" | "cancelled" | "corrected";
-export type TransactionSource = "whatsapp" | "dashboard" | "system";
+export type TransactionSource = "whatsapp" | "telegram" | "dashboard" | "system";
 
 /**
  * Execution context carrying trusted tenant and actor identity.

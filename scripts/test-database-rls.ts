@@ -431,6 +431,72 @@ async function runTests() {
       record("Anonymous access is denied to whatsapp_authorized_senders", "Security", true);
     }
 
+    // Step 6A Test: Owner A can insert and read authorized Telegram user for Business A
+    try {
+      const inserted = await asUser(userOwnerA, "authenticated", async (c) => {
+        const ins = await c.query(
+          "INSERT INTO public.telegram_authorized_users (business_id, telegram_user_id, display_label) VALUES ($1, $2, $3) RETURNING id, telegram_user_id",
+          [bizA, 123456789, "Telegram Owner"]
+        );
+        const sel = await c.query(
+          "SELECT * FROM public.telegram_authorized_users WHERE business_id = $1",
+          [bizA]
+        );
+        return sel.rows.length === 1 && String(ins.rows[0]?.telegram_user_id) === "123456789";
+      });
+      record("Owner A can insert and read authorized Telegram user for Business A", "RLS", inserted);
+    } catch (e: any) {
+      record("Owner A can insert and read authorized Telegram user for Business A", "RLS", false, e.message);
+    }
+
+    // Step 6A Test: Owner A cannot read authorized Telegram user of Business B
+    try {
+      await client.query(`
+        INSERT INTO public.telegram_authorized_users (business_id, telegram_user_id, display_label)
+        VALUES ('${bizB}', 987654321, 'Telegram Owner B')
+      `);
+      const isolated = await asUser(userOwnerA, "authenticated", async (c) => {
+        const sel = await c.query(
+          "SELECT * FROM public.telegram_authorized_users WHERE business_id = $1",
+          [bizB]
+        );
+        return sel.rows.length === 0;
+      });
+      record("Owner A cannot read authorized Telegram user of Business B", "RLS", isolated);
+    } catch (e: any) {
+      record("Owner A cannot read authorized Telegram user of Business B", "RLS", false, e.message);
+    }
+
+    // Step 6A Test: Member A can read authorized Telegram user of Business A but cannot delete it
+    try {
+      const memberCheck = await asUser(userMemberA, "authenticated", async (c) => {
+        const sel = await c.query(
+          "SELECT * FROM public.telegram_authorized_users WHERE business_id = $1",
+          [bizA]
+        );
+        const canRead = sel.rows.length === 1;
+        const del = await c.query(
+          "DELETE FROM public.telegram_authorized_users WHERE business_id = $1 RETURNING id",
+          [bizA]
+        );
+        const deleteBlocked = del.rowCount === 0;
+        return canRead && deleteBlocked;
+      });
+      record("Member A can read authorized Telegram users of Business A but cannot delete them", "RLS", memberCheck);
+    } catch (e: any) {
+      record("Member A can read authorized Telegram users of Business A but cannot delete them", "RLS", false, e.message);
+    }
+
+    // Step 6A Test: Anonymous access is denied to telegram_authorized_users
+    try {
+      await asUser(null, "anon", async (c) => {
+        await c.query("SELECT * FROM public.telegram_authorized_users");
+      });
+      record("Anonymous access is denied to telegram_authorized_users", "Security", false, "Anon could read rows");
+    } catch (e: any) {
+      record("Anonymous access is denied to telegram_authorized_users", "Security", true);
+    }
+
     console.log("\n5. Running Data Integrity Tests...");
 
     // Integrity 1: Negative quantity rejected
@@ -523,6 +589,36 @@ async function runTests() {
       record("Duplicate authorized sender for same business rejected", "Integrity", false, "Allowed duplicate sender");
     } catch (e: any) {
       record("Duplicate authorized sender for same business rejected", "Integrity", true);
+    }
+
+    // Step 6A Integrity: Duplicate authorized Telegram user for same business rejected by unique constraint
+    try {
+      await client.query(`
+        INSERT INTO public.telegram_authorized_users (business_id, telegram_user_id, display_label)
+        VALUES ('${bizA}', 555555555, 'User 1');
+      `);
+      await client.query(`
+        INSERT INTO public.telegram_authorized_users (business_id, telegram_user_id, display_label)
+        VALUES ('${bizA}', 555555555, 'User 1 Duplicate');
+      `);
+      record("Duplicate authorized Telegram user for same business rejected", "Integrity", false, "Allowed duplicate Telegram user");
+    } catch (e: any) {
+      record("Duplicate authorized Telegram user for same business rejected", "Integrity", true);
+    }
+
+    // Step 6A Integrity: Duplicate Telegram update_id rejected
+    try {
+      await client.query(`
+        INSERT INTO public.processed_telegram_updates (update_id, business_id, telegram_user_id, processing_status)
+        VALUES (88888, '${bizA}', 555555555, 'processed');
+      `);
+      await client.query(`
+        INSERT INTO public.processed_telegram_updates (update_id, business_id, telegram_user_id, processing_status)
+        VALUES (88888, '${bizA}', 555555555, 'processed');
+      `);
+      record("Duplicate Telegram update ID rejected", "Integrity", false, "Allowed duplicate Telegram update");
+    } catch (e: any) {
+      record("Duplicate Telegram update ID rejected", "Integrity", true);
     }
 
     // Integrity 7: Duplicate daily reminder identity rejected (business_id + notification_type + local_date)

@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "verify:whatsapp": "tsx scripts/verify-whatsapp.ts",
-    "setup:whatsapp": "tsx scripts/setup-whatsapp.ts"
+    "setup:whatsapp": "tsx scripts/setup-whatsapp.ts",
+    "verify:telegram": "tsx scripts/verify-telegram.ts",
+    "setup:telegram": "tsx scripts/setup-telegram.ts",
+    "setup:telegram-webhook": "tsx scripts/setup-telegram-webhook.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

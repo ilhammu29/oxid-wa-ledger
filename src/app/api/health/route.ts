@@ -25,6 +25,8 @@ export async function GET() {
       whatsappWabaId: "configured" | "missing";
       metaAppSecret: "configured" | "missing";
       whatsappVerifyToken: "configured" | "missing";
+      telegramBotToken: "configured" | "missing";
+      telegramWebhookSecret: "configured" | "missing";
     };
     supabaseConnectivity: {
       reachable: boolean;
@@ -42,6 +44,8 @@ export async function GET() {
       whatsappWabaId: process.env.WHATSAPP_WABA_ID ? "configured" : "missing",
       metaAppSecret: process.env.META_APP_SECRET ? "configured" : "missing",
       whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN ? "configured" : "missing",
+      telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ? "configured" : "missing",
+      telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET ? "configured" : "missing",
     },
     supabaseConnectivity: {
       reachable: false,
