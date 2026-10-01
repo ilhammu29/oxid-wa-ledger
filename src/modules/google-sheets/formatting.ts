@@ -95,6 +95,16 @@ export function buildManagedSheetsFormattingRequests(
     sheetMap.set(s.title, s);
   }
 
+  // 0. SPREADSHEET LOCALE: Set Indonesian locale (id_ID) for thousands separator (.) and standard date parsing
+  requests.push({
+    updateSpreadsheetProperties: {
+      properties: {
+        locale: "id_ID",
+      },
+      fields: "locale",
+    },
+  });
+
   // 1. IDEMPOTENT CLEANUP: Clear existing basicFilter, bandings, charts, conditional formats on managed sheets
   for (const managedName of MANAGED_SHEET_NAMES) {
     const sheet = sheetMap.get(managedName);
@@ -241,11 +251,11 @@ export function buildManagedSheetsFormattingRequests(
   if (txSheet && txData) {
     const dataEndRow = Math.max(5, txData.length);
 
-    // Tanggal (col 1): Date yyyy-mm-dd
+    // Tanggal (col 1): Date dd/mm/yyyy
     requests.push({
       repeatCell: {
         range: { sheetId: txSheet.id, startRowIndex: 4, endRowIndex: dataEndRow, startColumnIndex: 1, endColumnIndex: 2 },
-        cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } },
+        cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "dd/mm/yyyy" } } },
         fields: "userEnteredFormat(horizontalAlignment,numberFormat)",
       },
     });
@@ -552,11 +562,11 @@ export function buildManagedSheetsFormattingRequests(
   if (dailySheet && dailyData) {
     const dataEndRow = Math.max(5, dailyData.length);
 
-    // Tanggal (col 0): Date yyyy-mm-dd
+    // Tanggal (col 0): Date dd/mm/yyyy
     requests.push({
       repeatCell: {
         range: { sheetId: dailySheet.id, startRowIndex: 4, endRowIndex: dataEndRow, startColumnIndex: 0, endColumnIndex: 1 },
-        cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } },
+        cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "dd/mm/yyyy" } } },
         fields: "userEnteredFormat(horizontalAlignment,numberFormat)",
       },
     });
@@ -752,11 +762,11 @@ export function buildManagedSheetsFormattingRequests(
     if (dashData.length > 14) {
       const dailyEndRow = dashData.length;
 
-      // Tanggal (col 0): Date yyyy-mm-dd
+      // Tanggal (col 0): Date dd/mm/yyyy
       requests.push({
         repeatCell: {
           range: { sheetId: dashSheet.id, startRowIndex: 14, endRowIndex: dailyEndRow, startColumnIndex: 0, endColumnIndex: 1 },
-          cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } } },
+          cell: { userEnteredFormat: { horizontalAlignment: "CENTER", numberFormat: { type: "DATE", pattern: "dd/mm/yyyy" } } },
           fields: "userEnteredFormat(horizontalAlignment,numberFormat)",
         },
       });

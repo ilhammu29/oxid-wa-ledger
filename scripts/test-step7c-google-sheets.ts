@@ -485,10 +485,13 @@ async function runStep7cTests() {
 
   record(
     "7C_FORMATTERS",
-    "Dashboard sheet contains automated warning banner and KPI indicators",
+    "Dashboard sheet contains automated warning banner and KPI indicators with Minggu Berjalan period",
     dashboardSheet[0][0] === SHEET_BANNER_ROW_1 &&
       dashboardSheet[1][0] === SHEET_BANNER_ROW_2 &&
-      dashboardSheet.some((row) => row.includes(560000))
+      dashboardSheet.some((row) => row.includes(560000)) &&
+      dashboardSheet.some((row) => row[0] === "Omzet Minggu Ini" && row[2] === "Minggu Berjalan") &&
+      dashboardSheet.some((row) => row[0] === "Omzet Bulan Ini" && row[2] === "Bulan Berjalan") &&
+      dashboardSheet.some((row) => row[0] === "Omzet Hari Ini" && row[2] === "Hari Ini")
   );
 
   record(
@@ -1070,14 +1073,22 @@ async function runStep7cTests() {
       dimProps.some((r) => r.updateDimensionProperties.range.sheetId === 102 && r.updateDimensionProperties.properties.pixelSize === 320)
   );
 
-  // 4. Number formats (Currency IDR, Date, Time)
+  // 4. Number formats (Currency IDR, Date dd/mm/yyyy, Time)
   const cellRepeats = formattingRequests.filter((r) => r.repeatCell);
   record(
     "7C_PRESENTATION",
-    "Cell formats: Currency (Rp#,##0), Date (yyyy-mm-dd), and Time (hh:mm:ss) formats present",
+    "Cell formats: Currency (Rp#,##0), Date (dd/mm/yyyy), and Time (hh:mm:ss) formats present",
     cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === '"Rp"#,##0') &&
-      cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === "yyyy-mm-dd") &&
+      cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === "dd/mm/yyyy") &&
       cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === "hh:mm:ss")
+  );
+
+  // 4b. Spreadsheet Locale
+  const updateSpreadsheetProps = formattingRequests.filter((r) => r.updateSpreadsheetProperties);
+  record(
+    "7C_PRESENTATION",
+    "Spreadsheet locale is set to id_ID for Indonesian number and date formatting",
+    updateSpreadsheetProps.some((r) => (r.updateSpreadsheetProperties as any)?.properties?.locale === "id_ID")
   );
 
   // 5. Zebra Banding & Filters
@@ -1132,6 +1143,152 @@ async function runStep7cTests() {
     "Custom client sheets strictly preserved: no deletion or alteration requests generated for Custom User Sheet (id 999)",
     !formattingRequests.some((r) => r.updateSheetProperties?.properties?.sheetId === 999) &&
       !formattingRequests.some((r) => r.deleteSheet?.sheetId === 999)
+  );
+
+  // --------------------------------------------------------------------------
+  // 9. Running Data Consistency & Full Reconciliation Tests
+  // --------------------------------------------------------------------------
+  console.log("\n9. Running Data Consistency & Full Reconciliation Tests...");
+
+  // Clean existing transactions for testBizId
+  await pgClient.query(`
+    DELETE FROM public.transaction_events WHERE transaction_id IN (
+      SELECT id FROM public.transactions WHERE business_id = '${testBizId}'
+    );
+  `);
+  await pgClient.query(`DELETE FROM public.transactions WHERE business_id = '${testBizId}';`);
+  await pgClient.query(`DELETE FROM public.products WHERE business_id = '${testBizId}';`);
+
+  // Insert default product and extra product
+  const defaultProdRes = await pgClient.query(`
+    INSERT INTO public.products (business_id, name, unit, default_price, active, is_default)
+    VALUES ('${testBizId}', 'Lele Konsumsi', 'kg', 25000, true, true)
+    RETURNING id;
+  `);
+  const defaultProdId = defaultProdRes.rows[0].id;
+
+  const extraProdRes = await pgClient.query(`
+    INSERT INTO public.products (business_id, name, unit, default_price, active, is_default)
+    VALUES ('${testBizId}', 'Bibit Lele', 'ekor', 500, true, false)
+    RETURNING id;
+  `);
+  const extraProdId = extraProdRes.rows[0].id;
+
+  // Insert 4 transactions:
+  // 1. Confirmed transaction with extraProdId
+  // 2. Confirmed transaction with defaultProdId
+  // 3. Confirmed transaction with NULL product_id (standard fallback to default product)
+  // 4. Cancelled transaction (must be retained in historical export)
+  await pgClient.query(`
+    INSERT INTO public.transactions (business_id, product_id, quantity, unit, unit_price, total_amount, source, status, raw_message, transaction_at)
+    VALUES
+      ('${testBizId}', '${extraProdId}', 100, 'ekor', 500, 50000, 'telegram', 'confirmed', '100 bibit', NOW() - interval '1 hour'),
+      ('${testBizId}', '${defaultProdId}', 10, 'kg', 25000, 250000, 'telegram', 'confirmed', '10 kg lele', NOW() - interval '2 hours'),
+      ('${testBizId}', NULL, 5, 'kg', 25000, 125000, 'dashboard', 'confirmed', '5 kg tanpa id', NOW() - interval '3 hours'),
+      ('${testBizId}', '${defaultProdId}', 8, 'kg', 25000, 200000, 'telegram', 'cancelled', 'batal 8 kg', NOW() - interval '4 hours');
+  `);
+
+  // Track what writeManagedSheets receives
+  const lastWrittenValues: Record<string, any[][]> = {};
+  const trackingMockFetcher: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const urlStr = input.toString();
+    if (urlStr.includes("oauth2.googleapis.com/token")) {
+      return new Response(JSON.stringify({ access_token: "mock-access-token-123", expires_in: 3600 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (urlStr.includes("fields=properties.title")) {
+      return new Response(
+        JSON.stringify({
+          properties: { title: "OXID WA Ledger - Lele Pilot" },
+          sheets: [
+            { properties: { sheetId: 100, title: "Dashboard" } },
+            { properties: { sheetId: 101, title: "Config" } },
+            { properties: { sheetId: 102, title: "Transactions" } },
+            { properties: { sheetId: 103, title: "Products" } },
+            { properties: { sheetId: 104, title: "Daily_Status" } },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    if (urlStr.includes("values:batchClear")) {
+      return new Response(JSON.stringify({ clearedRanges: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (urlStr.includes("values:batchUpdate")) {
+      const payload = JSON.parse(String(init?.body || "{}"));
+      for (const item of payload.data || []) {
+        const rangeName = item.range.replace(/'/g, "").replace(/!A1$/, "");
+        lastWrittenValues[rangeName] = item.values;
+      }
+      return new Response(JSON.stringify({ totalUpdatedRows: 100 }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (urlStr.endsWith(":batchUpdate")) {
+      return new Response(JSON.stringify({ replies: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
+  };
+
+  const trackingConfig: GoogleSheetsClientConfig = {
+    ...fakeConfig,
+    fetchFn: trackingMockFetcher,
+  };
+
+  const syncResult = await executeBusinessSync(supabase, testBizId, { config: trackingConfig });
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "executeBusinessSync queries transaction_at and reconciles all 4 transaction rows (not 0)",
+    syncResult.summary.rowsTransactions === 4 && syncResult.success === true
+  );
+
+  const txSheetRows = lastWrittenValues["Transactions"] || [];
+  // Row 0, 1: Banners, Row 2: Empty, Row 3: Header, Rows 4+: Data
+  const dataRows = txSheetRows.slice(4);
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "Transactions sheet contains all 4 rows including confirmed and cancelled transactions",
+    dataRows.length === 4 &&
+      dataRows.some((r) => r[9] === "confirmed") &&
+      dataRows.some((r) => r[9] === "cancelled")
+  );
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "Null product_id safely falls back to default product name ('Lele Konsumsi') and never drops row",
+    dataRows.some((r) => r[3] === "Lele Konsumsi" && r[4] === 5 && r[7] === 125000)
+  );
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "Date cells are formatted as dd/mm/yyyy string in Indonesian format",
+    dataRows.every((r) => /^\d{2}\/\d{2}\/\d{4}$/.test(String(r[1])))
+  );
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "Financial and quantity cells remain pure numeric values (not quoted strings)",
+    dataRows.every((r) => typeof r[4] === "number" && typeof r[6] === "number" && typeof r[7] === "number")
+  );
+
+  // Check sync runs record
+  const syncRunsRes = await pgClient.query(`
+    SELECT rows_transactions, rows_products, status
+    FROM public.google_sheets_sync_runs
+    WHERE business_id = '${testBizId}'
+    ORDER BY started_at DESC
+    LIMIT 1;
+  `);
+
+  record(
+    "7C_DATA_CONSISTENCY",
+    "google_sheets_sync_runs reports accurate rows_transactions count matching written rows",
+    syncRunsRes.rows.length === 1 &&
+      syncRunsRes.rows[0].rows_transactions === 4 &&
+      syncRunsRes.rows[0].rows_products === 2 &&
+      syncRunsRes.rows[0].status === "success"
   );
 
   // Clean up test data

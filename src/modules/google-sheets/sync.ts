@@ -68,18 +68,33 @@ async function fetchBusinessDataForSync(
   }));
 
   const dailyPoints = await getDailySalesSeries(client, businessId, 14).catch(() => []);
-  const dailySeries = dailyPoints.map((p) => ({
-    date: p.date,
-    revenue: p.revenue,
-    transactionCount: p.transactionCount,
-  }));
+  const dailySeries = dailyPoints.map((p) => {
+    let formattedDate = p.date;
+    try {
+      const parts = p.date.split("-");
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    } catch {
+      // fallback
+    }
+    return {
+      date: formattedDate,
+      revenue: p.revenue,
+      transactionCount: p.transactionCount,
+    };
+  });
 
   // 4. Products & Aliases
-  const { data: productsData } = await client
+  const { data: productsData, error: prodErr } = await client
     .from("products")
     .select("id, name, unit, default_price, active, is_default")
     .eq("business_id", businessId)
     .order("name", { ascending: true });
+
+  if (prodErr) {
+    throw new Error(`Gagal memuat produk dari database: ${prodErr.message}`);
+  }
 
   const productsList = productsData || [];
   const productIds = productsList.map((p) => p.id);
@@ -107,6 +122,9 @@ async function fetchBusinessDataForSync(
     productMap.set(p.id, p.name);
   }
 
+  const defaultProduct = productsList.find((p) => p.is_default);
+  const defaultProductName = defaultProduct ? defaultProduct.name : "Standar";
+
   const productsFormatted: ProductRowData[] = productsList.map((p) => ({
     name: p.name,
     unit: p.unit,
@@ -116,16 +134,20 @@ async function fetchBusinessDataForSync(
     aliases: aliasesByProductId[p.id] || [],
   }));
 
-  // 5. Transactions
-  const { data: transactionsData } = await client
+  // 5. Transactions (Full Historical Snapshot)
+  const { data: transactionsData, error: txErr } = await client
     .from("transactions")
-    .select("id, transaction_time, source, product_id, quantity, unit, unit_price, total_amount, status, raw_message")
+    .select("id, transaction_at, source, product_id, quantity, unit, unit_price, total_amount, status, raw_message")
     .eq("business_id", businessId)
-    .order("transaction_time", { ascending: false });
+    .order("transaction_at", { ascending: false });
+
+  if (txErr) {
+    throw new Error(`Gagal memuat transaksi dari database: ${txErr.message}`);
+  }
 
   const transactionsList = transactionsData || [];
   const transactionsFormatted: TransactionRowData[] = transactionsList.map((tx) => {
-    const dt = new Date(tx.transaction_time);
+    const dt = new Date(tx.transaction_at);
     const dateStr = dt.toLocaleDateString("id-ID", {
       timeZone: timezone,
       year: "numeric",
@@ -140,7 +162,12 @@ async function fetchBusinessDataForSync(
       hour12: false,
     });
 
-    const productName = tx.product_id ? productMap.get(tx.product_id) || "Produk Terhapus" : "Standar";
+    let productName: string;
+    if (tx.product_id) {
+      productName = productMap.get(tx.product_id) || "Produk Terhapus";
+    } else {
+      productName = defaultProductName;
+    }
 
     return {
       id: tx.id,
@@ -158,18 +185,34 @@ async function fetchBusinessDataForSync(
   });
 
   // 6. Daily Statuses
-  const { data: dailyStatusData } = await client
+  const { data: dailyStatusData, error: dsErr } = await client
     .from("business_daily_status")
     .select("local_date, status, source, note")
     .eq("business_id", businessId)
     .order("local_date", { ascending: false });
 
-  const dailyStatusesFormatted: DailyStatusRowData[] = (dailyStatusData || []).map((ds) => ({
-    date: ds.local_date,
-    status: ds.status,
-    source: ds.source,
-    notes: ds.note,
-  }));
+  if (dsErr) {
+    throw new Error(`Gagal memuat status harian dari database: ${dsErr.message}`);
+  }
+
+  const dailyStatusesFormatted: DailyStatusRowData[] = (dailyStatusData || []).map((ds) => {
+    let formattedDate = ds.local_date;
+    try {
+      const parts = ds.local_date.split("-");
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    } catch {
+      // fallback
+    }
+
+    return {
+      date: formattedDate,
+      status: ds.status,
+      source: ds.source,
+      notes: ds.note,
+    };
+  });
 
   return {
     business: {
