@@ -12,6 +12,7 @@ import {
   XCircle,
   Eye,
   Check,
+  FileSpreadsheet,
 } from "lucide-react";
 import { markFailureReviewedAction } from "@/app/dashboard/actions";
 import { MonitoringData } from "@/modules/monitoring";
@@ -106,8 +107,8 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
         </div>
       )}
 
-      {/* 1. CHANNEL STATUS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 1. CHANNEL STATUS & DOWNSTREAM SYNC */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Telegram Card */}
         <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-4">
           <div className="flex items-center justify-between">
@@ -169,6 +170,58 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
               <span className="text-zinc-500 block">Balasan Terakhir</span>
               <span className="text-zinc-300 font-mono">
                 {formatDateTime(data.channels.whatsapp.lastOutbound)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Google Sheets Card */}
+        <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-100">Google Sheets</h3>
+                <p className="text-xs text-zinc-400">One-Way Sync Mirror</p>
+              </div>
+            </div>
+            {data.googleSheets.status === "CONNECTED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="w-3.5 h-3.5" /> TERHUBUNG
+              </span>
+            )}
+            {data.googleSheets.status === "DISABLED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                <XCircle className="w-3.5 h-3.5" /> NONAKTIF
+              </span>
+            )}
+            {data.googleSheets.status === "ERROR" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <ShieldAlert className="w-3.5 h-3.5" /> GANGGUAN
+              </span>
+            )}
+            {data.googleSheets.status === "NOT CONFIGURED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                <AlertTriangle className="w-3.5 h-3.5" /> BELUM TERHUBUNG
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-zinc-300 bg-zinc-950/60 p-2.5 rounded-lg border border-zinc-800 truncate">
+            {data.googleSheets.spreadsheetTitle || (data.googleSheets.status === "NOT CONFIGURED" ? "Belum ada spreadsheet terhubung" : "Spreadsheet mirror")}
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-zinc-800">
+            <div>
+              <span className="text-zinc-500 block">Sinkronisasi Terakhir</span>
+              <span className="text-zinc-300 font-mono">
+                {formatDateTime(data.googleSheets.lastSyncAt)}
+              </span>
+            </div>
+            <div>
+              <span className="text-zinc-500 block">Status Antrean</span>
+              <span className="text-zinc-300 font-mono">
+                {data.googleSheets.pendingSync ? "Menunggu Worker" : "Up to Date"}
               </span>
             </div>
           </div>
@@ -284,7 +337,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
                       {f.channel}
                     </td>
                     <td className="py-3 px-3 font-mono text-zinc-200 max-w-xs truncate">
-                      "{f.messageText}"
+                      &quot;{f.messageText}&quot;
                     </td>
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded bg-zinc-800 text-amber-300 text-[11px] font-mono border border-zinc-700">

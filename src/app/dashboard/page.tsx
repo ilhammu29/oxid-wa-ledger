@@ -5,12 +5,14 @@ import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { getOverviewKPIs, getDailySalesSeries } from "@/modules/transactions";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { RecentTransactionsTable } from "@/components/dashboard/recent-transactions-table";
+import Link from "next/link";
 import {
   TrendingUp,
   Calendar,
   Layers,
   Scale,
   Hash,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +61,13 @@ export default async function DashboardOverviewPage() {
     raw_message: t.raw_message,
   }));
 
+  // 4. Fetch Google Sheets connection status for optional onboarding card (Requirement 44)
+  const { data: sheetsConn } = await supabase
+    .from("google_sheets_connections")
+    .select("enabled, spreadsheet_id")
+    .eq("business_id", business.id)
+    .maybeSingle();
+
   const formatIDR = (amount: number) =>
     `Rp${new Intl.NumberFormat("id-ID").format(amount)}`;
 
@@ -73,6 +82,29 @@ export default async function DashboardOverviewPage() {
           Pantau omzet, volume ikan, dan transaksi terkonfirmasi secara real-time.
         </p>
       </div>
+
+      {/* Optional Google Sheets Onboarding Card */}
+      {(!sheetsConn || !sheetsConn.spreadsheet_id) && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-zinc-900">Hubungkan Google Sheets</p>
+              <p className="text-[11px] text-zinc-600">
+                Buat mirror laporan spreadsheet otomatis satu arah dari buku kas Anda.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/settings/google-sheets"
+            className="text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-xs whitespace-nowrap"
+          >
+            Hubungkan Sekarang &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

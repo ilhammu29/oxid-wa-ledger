@@ -565,6 +565,161 @@ export async function saveChannelSettingsAction(formData: FormData): Promise<Act
 }
 
 /**
+ * Tests connection to a Google Spreadsheet using service account credentials.
+ */
+export async function testGoogleSheetsConnectionAction(
+  spreadsheetInput: string
+): Promise<ActionResult<{ spreadsheetTitle?: string; spreadsheetId?: string }>> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const { parseSpreadsheetId } = await import("@/modules/google-sheets/url-parser");
+  const parsed = parseSpreadsheetId(spreadsheetInput);
+  if (!parsed.success || !parsed.spreadsheetId) {
+    return { success: false, error: parsed.error || "Spreadsheet URL atau ID tidak valid." };
+  }
+
+  const { testSpreadsheetConnection } = await import("@/modules/google-sheets/client");
+  const testRes = await testSpreadsheetConnection(parsed.spreadsheetId);
+
+  if (!testRes.success) {
+    return {
+      success: false,
+      error: testRes.errorMessage || "Koneksi ke Google Sheets gagal.",
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      spreadsheetId: parsed.spreadsheetId,
+      spreadsheetTitle: testRes.spreadsheetTitle,
+    },
+  };
+}
+
+/**
+ * Saves Google Sheets connection settings for the authenticated business.
+ */
+export async function saveGoogleSheetsConnectionAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah pengaturan Google Sheets." };
+  }
+
+  const enabled = formData.get("enabled") === "true";
+  const spreadsheetInput = (formData.get("spreadsheetInput") as string) || "";
+  const syncInterval = parseInt((formData.get("syncIntervalMinutes") as string) || "5", 10);
+  const syncIntervalMinutes = isNaN(syncInterval) || syncInterval < 5 ? 5 : Math.min(syncInterval, 1440);
+
+  const supabase = await createClient();
+  let spreadsheetId: string | null = null;
+  let spreadsheetTitle: string | null = null;
+
+  if (enabled || spreadsheetInput.trim().length > 0) {
+    const { parseSpreadsheetId } = await import("@/modules/google-sheets/url-parser");
+    const parsed = parseSpreadsheetId(spreadsheetInput);
+    if (!parsed.success || !parsed.spreadsheetId) {
+      return { success: false, error: parsed.error || "Spreadsheet URL atau ID tidak valid." };
+    }
+    spreadsheetId = parsed.spreadsheetId;
+
+    // Requirement 37: Ensure one spreadsheet belongs to exactly one business
+    const { data: existingOther } = await supabase
+      .from("google_sheets_connections")
+      .select("business_id")
+      .eq("spreadsheet_id", spreadsheetId)
+      .neq("business_id", session.business.id)
+      .limit(1);
+
+    if (existingOther && existingOther.length > 0) {
+      return {
+        success: false,
+        error: "Spreadsheet ID ini sudah terhubung ke bisnis lain. Gunakan spreadsheet terpisah untuk setiap bisnis.",
+      };
+    }
+
+    // Try fetching title
+    const { getSpreadsheetMetadata } = await import("@/modules/google-sheets/client");
+    const meta = await getSpreadsheetMetadata(spreadsheetId).catch(() => null);
+    if (meta?.title) {
+      spreadsheetTitle = meta.title;
+    }
+  }
+
+  const { error: upsertErr } = await supabase
+    .from("google_sheets_connections")
+    .upsert({
+      business_id: session.business.id,
+      enabled,
+      spreadsheet_id: spreadsheetId,
+      spreadsheet_title: spreadsheetTitle,
+      sync_interval_minutes: syncIntervalMinutes,
+      updated_at: new Date().toISOString(),
+      updated_by: session.user.id,
+    });
+
+  if (upsertErr) {
+    return { success: false, error: `Gagal menyimpan konfigurasi: ${upsertErr.message}` };
+  }
+
+  // Requirement 22: Enqueue initial full sync when enabled
+  if (enabled && spreadsheetId) {
+    const { enqueueSync } = await import("@/modules/google-sheets/queue");
+    await enqueueSync(supabase, session.business.id, "INITIAL_SYNC");
+  }
+
+  revalidatePath("/dashboard/settings/google-sheets");
+  revalidatePath("/dashboard/monitoring");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+/**
+ * Triggers an immediate asynchronous synchronization queue entry.
+ * (Requirement 32: Non-blocking; does not run synchronous sync in browser request).
+ */
+export async function triggerManualSyncAction(): Promise<ActionResult<{ message: string }>> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const supabase = await createClient();
+  const { data: conn } = await supabase
+    .from("google_sheets_connections")
+    .select("enabled, spreadsheet_id")
+    .eq("business_id", session.business.id)
+    .single();
+
+  if (!conn || !conn.enabled || !conn.spreadsheet_id) {
+    return {
+      success: false,
+      error: "Koneksi Google Sheets belum aktif atau belum memiliki Spreadsheet ID.",
+    };
+  }
+
+  const { enqueueSync } = await import("@/modules/google-sheets/queue");
+  const enqueued = await enqueueSync(supabase, session.business.id, "MANUAL_SYNC");
+
+  if (!enqueued) {
+    return { success: false, error: "Gagal menjadwalkan sinkronisasi." };
+  }
+
+  revalidatePath("/dashboard/settings/google-sheets");
+  return {
+    success: true,
+    data: { message: "Sinkronisasi dijadwalkan." },
+  };
+}
+
+/**
  * Signs out the currently authenticated user and redirects to login.
  */
 export async function logoutAction() {
@@ -572,4 +727,5 @@ export async function logoutAction() {
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
 }
+
 

@@ -135,18 +135,18 @@ export async function getConversationFailures(
     return [];
   }
 
-  return data.map((row: any) => ({
-    id: row.id,
-    businessId: row.business_id,
-    channel: row.channel,
-    senderReference: row.sender_reference,
-    messageText: row.message_text,
-    normalizedText: row.normalized_text,
-    failureType: row.failure_type,
-    parserIntent: row.parser_intent,
-    reviewStatus: row.review_status,
-    createdAt: row.created_at,
-    reviewedAt: row.reviewed_at,
-    reviewedBy: row.reviewed_by,
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    businessId: String(row.business_id),
+    channel: String(row.channel) as ConversationFailure["channel"],
+    senderReference: String(row.sender_reference),
+    messageText: String(row.message_text),
+    normalizedText: row.normalized_text ? String(row.normalized_text) : null,
+    failureType: String(row.failure_type) as ConversationFailure["failureType"],
+    parserIntent: row.parser_intent ? String(row.parser_intent) : null,
+    reviewStatus: String(row.review_status) as ConversationFailure["reviewStatus"],
+    createdAt: String(row.created_at),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : null,
+    reviewedBy: row.reviewed_by ? String(row.reviewed_by) : null,
   }));
 }

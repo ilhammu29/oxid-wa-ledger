@@ -16,6 +16,7 @@ import {
   Activity,
   Bell,
   Radio,
+  FileSpreadsheet,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -59,6 +60,7 @@ export function DashboardShell({
     { name: "Monitoring & Bot", href: "/dashboard/monitoring", icon: Activity },
     { name: "Pengingat Harian", href: "/dashboard/settings/reminders", icon: Bell },
     { name: "Kanal Pesan", href: "/dashboard/settings/channels", icon: Radio },
+    { name: "Google Sheets", href: "/dashboard/settings/google-sheets", icon: FileSpreadsheet },
   ];
 
   const currentDateFormatted = new Intl.DateTimeFormat("id-ID", {

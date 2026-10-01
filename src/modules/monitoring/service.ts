@@ -20,6 +20,15 @@ export interface MonitoringData {
       lastOutbound: string | null;
     };
   };
+  googleSheets: {
+    status: "CONNECTED" | "DISABLED" | "ERROR" | "NOT CONFIGURED";
+    enabled: boolean;
+    spreadsheetTitle: string | null;
+    lastSyncAt: string | null;
+    pendingSync: boolean;
+    lastErrorCode: string | null;
+    lastErrorMessage: string | null;
+  };
   lastActivity: {
     lastInbound: string | null;
     lastOutbound: string | null;
@@ -173,6 +182,33 @@ export async function getMonitoringData(
     limit: 20,
   });
 
+  // 7. Google Sheets Connection & Queue Status
+  const { data: sheetsConn } = await client
+    .from("google_sheets_connections")
+    .select("enabled, spreadsheet_id, spreadsheet_title, last_sync_at, last_sync_status, last_error_code, last_error_message")
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  const { data: pendingSheetsJobs } = await client
+    .from("google_sheets_sync_queue")
+    .select("id")
+    .eq("business_id", businessId)
+    .in("status", ["pending", "processing"])
+    .limit(1);
+
+  const hasPendingSheetsSync = Boolean(pendingSheetsJobs && pendingSheetsJobs.length > 0);
+
+  let sheetsStatus: "CONNECTED" | "DISABLED" | "ERROR" | "NOT CONFIGURED" = "NOT CONFIGURED";
+  if (!sheetsConn || !sheetsConn.spreadsheet_id) {
+    sheetsStatus = "NOT CONFIGURED";
+  } else if (!sheetsConn.enabled) {
+    sheetsStatus = "DISABLED";
+  } else if (sheetsConn.last_sync_status === "failed") {
+    sheetsStatus = "ERROR";
+  } else {
+    sheetsStatus = "CONNECTED";
+  }
+
   return {
     channels: {
       telegram: {
@@ -190,6 +226,15 @@ export async function getMonitoringData(
         lastOutbound: waOutbound?.created_at || null,
       },
     },
+    googleSheets: {
+      status: sheetsStatus,
+      enabled: Boolean(sheetsConn?.enabled),
+      spreadsheetTitle: sheetsConn?.spreadsheet_title || null,
+      lastSyncAt: sheetsConn?.last_sync_at || null,
+      pendingSync: hasPendingSheetsSync,
+      lastErrorCode: sheetsConn?.last_error_code || null,
+      lastErrorMessage: sheetsConn?.last_error_message || null,
+    },
     lastActivity: {
       lastInbound: lastInboundEvent?.created_at || null,
       lastOutbound: lastOutboundEvent?.created_at || null,
@@ -203,7 +248,16 @@ export async function getMonitoringData(
       notificationsFailed: lastRun?.notifications_failed || 0,
       status: lastRun?.status || null,
     },
-    recentErrors: (recentErrorsData || []).map((e: any) => ({
+    recentErrors: (recentErrorsData || []).map((e: {
+      id: string;
+      channel: string;
+      direction: string;
+      event_type: string;
+      status: string;
+      error_code: string | null;
+      metadata: unknown;
+      created_at: string;
+    }) => ({
       id: e.id,
       channel: e.channel,
       direction: e.direction,
