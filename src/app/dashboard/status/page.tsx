@@ -49,11 +49,11 @@ export default async function DailyStatusPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
           Status Operasional Harian
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
-          Tandai hari tanpa penjualan atau hari libur untuk menjaga integritas ledger.
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+          Tandai hari tanpa penjualan atau hari libur untuk menjaga integritas ledger dan rekonsiliasi.
         </p>
       </div>
 

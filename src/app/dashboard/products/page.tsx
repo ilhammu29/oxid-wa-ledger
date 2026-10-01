@@ -49,11 +49,11 @@ export default async function ProductsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
           Katalog Produk & Alias
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
-          Kelola master komoditas, harga standar integer IDR, produk default, dan kata kunci alias bot.
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+          Kelola master komoditas, harga standar IDR, produk default, dan kata kunci alias bot Telegram.
         </p>
       </div>
 

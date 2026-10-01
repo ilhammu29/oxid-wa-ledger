@@ -69,10 +69,10 @@ export default async function ChannelsSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
           Kanal Komunikasi & Pesan
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
           Kelola kanal bot aktif, kesiapan WhatsApp Cloud API, dan perutean pengingat otomatis.
         </p>
       </div>

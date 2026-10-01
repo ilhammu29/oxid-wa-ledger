@@ -16,7 +16,7 @@ export default async function MonitoringPage() {
   const monitoringData = await getMonitoringData(supabase, session.business.id);
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto">
+    <div className="space-y-6">
       <MonitoringView
         data={monitoringData}
         role={session.role || "member"}

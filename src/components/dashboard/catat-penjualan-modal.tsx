@@ -91,21 +91,21 @@ export function CatatPenjualanModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl border border-zinc-200 shadow-2xl max-w-md w-full overflow-hidden text-zinc-900 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+      <div className="bg-[#111726] rounded-2xl border border-white/[0.1] shadow-2xl max-w-md w-full overflow-hidden text-slate-100 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+        <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-[#161F33]">
           <div>
-            <h3 className="text-base font-bold text-zinc-900 tracking-tight">
+            <h3 className="text-base font-bold text-white tracking-tight">
               Catat Penjualan Baru
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-slate-400">
               Input manual transaksi penjualan kasir / dashboard
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -114,20 +114,20 @@ export function CatatPenjualanModal({
         {/* Content */}
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {successData && (
-            <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-emerald-900">
+                <p className="font-semibold text-white">
                   Transaksi Berhasil Dicatat!
                 </p>
-                <p className="text-[11px] mt-0.5">
+                <p className="text-[11px] mt-0.5 text-slate-300">
                   {successData.productName} • {successData.quantity}{" "}
                   {successData.unit} = Rp
                   {new Intl.NumberFormat("id-ID").format(
@@ -141,16 +141,16 @@ export function CatatPenjualanModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Product Select */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
                 Produk
               </label>
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl border border-white/[0.08] bg-[#161F33] text-sm text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
               >
                 {products.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} className="bg-[#111726] text-white">
                     {p.name} ({p.unit}) — Rp
                     {new Intl.NumberFormat("id-ID").format(p.default_price)}
                     {p.is_default ? " [Default]" : ""}
@@ -161,7 +161,7 @@ export function CatatPenjualanModal({
 
             {/* Quantity Input */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
                 Jumlah / Kuantitas ({currentProduct?.unit || "kg"})
               </label>
               <input
@@ -170,15 +170,15 @@ export function CatatPenjualanModal({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="Contoh: 15 atau 2,5"
-                className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-sm font-mono placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl border border-white/[0.08] bg-[#161F33] text-sm text-white font-mono placeholder:font-sans placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
               />
             </div>
 
             {/* Price & Total Preview (Read-only reference) */}
-            <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 space-y-1.5 text-xs">
-              <div className="flex justify-between text-zinc-500">
+            <div className="bg-[#161F33] border border-white/[0.06] rounded-xl p-3.5 space-y-1.5 text-xs">
+              <div className="flex justify-between text-slate-400">
                 <span>Harga Resmi Master:</span>
-                <span className="font-mono text-zinc-800">
+                <span className="font-mono text-slate-200">
                   Rp
                   {new Intl.NumberFormat("id-ID").format(
                     currentProduct?.default_price || 0
@@ -186,9 +186,9 @@ export function CatatPenjualanModal({
                   / {currentProduct?.unit || "kg"}
                 </span>
               </div>
-              <div className="flex justify-between font-semibold pt-1 border-t border-zinc-200 text-zinc-900">
+              <div className="flex justify-between font-semibold pt-1.5 border-t border-white/[0.06] text-slate-200">
                 <span>Estimasi Total:</span>
-                <span className="font-mono text-emerald-600 font-bold text-sm">
+                <span className="font-mono text-violet-400 font-bold text-sm">
                   {estimatedTotal !== null
                     ? `Rp${new Intl.NumberFormat("id-ID").format(
                         estimatedTotal
@@ -204,14 +204,14 @@ export function CatatPenjualanModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-lg border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-medium text-slate-300 hover:bg-white/[0.05] transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={loading || !quantity}
-                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold shadow-xs disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-md shadow-violet-900/40 disabled:opacity-50 transition-all border border-violet-400/30"
               >
                 {loading ? "Menyimpan..." : "Simpan Transaksi"}
               </button>
