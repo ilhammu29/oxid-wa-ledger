@@ -18,7 +18,13 @@ export type DomainErrorCode =
   | "TRANSACTION_ALREADY_CANCELLED"
   | "TRANSACTION_ALREADY_CORRECTED"
   | "DATABASE_OPERATION_FAILED"
-  | "UNAUTHORIZED";
+  | "UNAUTHORIZED"
+  | "SUBSCRIPTION_MUTATION_BLOCKED"
+  | "SUBSCRIPTION_SUSPENDED"
+  | "SUBSCRIPTION_CANCELLED"
+  | "SUBSCRIPTION_GRACE_PERIOD"
+  | "SUBSCRIPTION_TRIAL_EXPIRED"
+  | "SUBSCRIPTION_PERIOD_EXPIRED";
 
 export class DomainError extends Error {
   public readonly code: DomainErrorCode;
@@ -67,6 +73,17 @@ export function getUserFriendlyErrorMessage(code: DomainErrorCode): string {
       return "Transaksi ini sudah dikoreksi sebelumnya.";
     case "UNAUTHORIZED":
       return "Anda tidak memiliki izin untuk melakukan aksi pada bisnis ini.";
+    case "SUBSCRIPTION_MUTATION_BLOCKED":
+    case "SUBSCRIPTION_SUSPENDED":
+      return "Pencatatan transaksi dibatasi karena status langganan bisnis ini sedang ditangguhkan. Silakan periksa menu Langganan di dashboard.";
+    case "SUBSCRIPTION_CANCELLED":
+      return "Pencatatan transaksi dibatasi karena langganan telah dibatalkan. Riwayat data tetap tersimpan dengan aman.";
+    case "SUBSCRIPTION_GRACE_PERIOD":
+      return "Pencatatan transaksi dibatasi karena akun berada dalam masa tenggang. Segera lakukan perpanjangan langganan.";
+    case "SUBSCRIPTION_TRIAL_EXPIRED":
+      return "Masa uji coba pilot 14 hari telah habis. Silakan pilih paket langganan untuk melanjutkan.";
+    case "SUBSCRIPTION_PERIOD_EXPIRED":
+      return "Masa aktif langganan telah berakhir. Silakan perpanjang langganan melalui dashboard OXID.";
     case "DATABASE_OPERATION_FAILED":
     default:
       return "Terjadi kendala saat memproses data. Silakan coba kembali sesaat lagi.";

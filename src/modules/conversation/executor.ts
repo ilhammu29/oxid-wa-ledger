@@ -30,6 +30,7 @@ import {
   formatConfirmationInquiry,
 } from "./response-formatter";
 import { resolveProductForSale, getActiveProductNames } from "../products";
+import { canCreateFinancialMutation } from "../subscriptions";
 
 /**
  * Safely fetches breakdown of today's sales by product in a single query.
@@ -106,6 +107,33 @@ export async function executeConversationAction(
   const evaluated = evaluateConversationAction(parsed);
 
   try {
+    // ------------------------------------------------------------------------
+    // Subscription Gate: Enforce server-side guard on financial mutations
+    // ------------------------------------------------------------------------
+    const isMutationAction =
+      evaluated.action === "CREATE_SALE" ||
+      parsed.intent === "SALE" ||
+      evaluated.action === "MARK_NO_SALE" ||
+      evaluated.action === "MARK_CLOSED" ||
+      evaluated.action === "REQUEST_CANCEL_LAST" ||
+      evaluated.action === "REQUEST_CORRECT_LAST";
+
+    if (isMutationAction) {
+      const gate = await canCreateFinancialMutation(client, context.businessId);
+      if (!gate.allowed) {
+        return {
+          action: "SHOW_UNKNOWN_HELP",
+          status: "ERROR",
+          replyText:
+            gate.replyText ||
+            "Pencatatan transaksi dibatasi karena status langganan bisnis ini sedang tidak aktif atau kedaluwarsa. Silakan periksa menu Langganan di dashboard.",
+          errorCode: gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+          parsed,
+          data: null,
+        };
+      }
+    }
+
     // ------------------------------------------------------------------------
     // Intent: SALE Execution with Dynamic Product Resolution
     // ------------------------------------------------------------------------

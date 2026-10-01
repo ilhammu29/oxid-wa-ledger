@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@/modules/transactions";
 import { normalizeProductTerm } from "@/modules/products";
+import { getBusinessSubscription, createPaymentRecord } from "@/modules/subscriptions";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -1038,6 +1039,50 @@ export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
+}
+
+/**
+ * Submits a manual payment confirmation for the business subscription.
+ */
+export async function submitManualPaymentAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengirim konfirmasi pembayaran." };
+  }
+
+  const amountStr = (formData.get("amount") as string) || "0";
+  const amount = parseInt(amountStr.replace(/[^0-9]/g, ""), 10);
+  const paymentMethod = (formData.get("paymentMethod") as string) || "manual_transfer";
+  const reference = (formData.get("reference") as string) || "";
+
+  if (isNaN(amount) || amount <= 0) {
+    return { success: false, error: "Nominal pembayaran tidak valid." };
+  }
+
+  const supabase = await createClient();
+  const sub = await getBusinessSubscription(supabase, session.business.id);
+  if (!sub) {
+    return { success: false, error: "Data langganan bisnis tidak ditemukan." };
+  }
+
+  try {
+    await createPaymentRecord(supabase, {
+      businessId: session.business.id,
+      subscriptionId: sub.id,
+      amountIdr: amount,
+      paymentMethod,
+      reference,
+    });
+
+    revalidatePath("/dashboard/subscription");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Gagal mengirim konfirmasi pembayaran.";
+    return { success: false, error: msg };
+  }
 }
 
 

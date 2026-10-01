@@ -20,6 +20,7 @@ import {
   getWeekUtcRange,
   getMonthUtcRange,
 } from "./timezone";
+import { canCreateFinancialMutation } from "../subscriptions";
 
 interface RpcSaleResult {
   transaction_id: string;
@@ -120,6 +121,9 @@ function mapDatabaseError(err: unknown): DomainError {
   if (msg.includes("DAILY_STATUS_CONFLICT")) {
     return new DomainError("DAILY_STATUS_CONFLICT", msg);
   }
+  if (msg.includes("SUBSCRIPTION_MUTATION_BLOCKED")) {
+    return new DomainError("SUBSCRIPTION_MUTATION_BLOCKED", msg);
+  }
 
   return new DomainError("DATABASE_OPERATION_FAILED", msg, undefined, err);
 }
@@ -169,6 +173,14 @@ export async function recordSale(
     throw new DomainError("INVALID_QUANTITY", "Quantity must be greater than zero");
   }
 
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Pencatatan penjualan dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
   const { data, error } = await client.rpc("record_sale", {
     p_business_id: context.businessId,
     p_quantity: rawQuantity,
@@ -214,6 +226,14 @@ export async function cancelLastSale(
   client: SupabaseClient,
   context: ExecutionContext
 ): Promise<CancelResultDTO> {
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Pembatalan transaksi dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
   const { data, error } = await client.rpc("cancel_last_sale", {
     p_business_id: context.businessId,
     p_actor_user_id: context.authenticatedUserId || null,
@@ -256,6 +276,14 @@ export async function correctLastSale(
     throw new DomainError("INVALID_QUANTITY", "Corrected quantity must be greater than zero");
   }
 
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Koreksi transaksi dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
   const { data, error } = await client.rpc("correct_last_sale", {
     p_business_id: context.businessId,
     p_corrected_quantity: rawQty,
@@ -292,6 +320,14 @@ export async function setDailyStatus(
   status: "NO_SALE" | "CLOSED",
   note?: string
 ): Promise<DailyStatusDTO> {
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Pengaturan status harian dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
   const timezone = await getBusinessTimezone(client, context.businessId);
   const localDate = getBusinessLocalDate(context.now || new Date(), timezone);
 

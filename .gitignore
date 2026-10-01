@@ -49,3 +49,6 @@ next-env.d.ts
 google sheet api/
 *serviceaccount*.json
 gen-lang-client-*.json
+
+# design assets
+ui ux image/
