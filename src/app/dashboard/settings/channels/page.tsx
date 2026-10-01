@@ -15,10 +15,24 @@ export default async function ChannelsSettingsPage() {
   const business = session.business!;
   const supabase = await createClient();
 
-  const [channelSettings, whatsappReadiness] = await Promise.all([
+  const [channelSettings, whatsappReadiness, sendersRes] = await Promise.all([
     getBusinessChannelSettings(supabase, business.id),
     checkWhatsAppReadiness(supabase, business.id),
+    supabase
+      .from("whatsapp_authorized_senders")
+      .select("id, phone_number, display_label, active, receive_reminders, created_at")
+      .eq("business_id", business.id)
+      .order("created_at", { ascending: true }),
   ]);
+
+  const senders = (sendersRes.data || []).map((s) => ({
+    id: s.id,
+    phoneNumber: s.phone_number,
+    displayLabel: s.display_label,
+    active: s.active,
+    receiveReminders: s.receive_reminders ?? false,
+    createdAt: s.created_at,
+  }));
 
   return (
     <div className="space-y-6">
@@ -39,6 +53,7 @@ export default async function ChannelsSettingsPage() {
           reminderChannel: channelSettings.reminderChannel,
         }}
         readiness={whatsappReadiness}
+        senders={senders}
         role={session.role || "member"}
       />
     </div>

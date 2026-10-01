@@ -77,7 +77,7 @@ export async function getMonitoringData(
     .from("whatsapp_connections")
     .select("id, status, phone_number_id")
     .eq("business_id", businessId)
-    .eq("status", "active");
+    .in("status", ["active", "connected"]);
 
   const { data: waSenders } = await client
     .from("whatsapp_authorized_senders")

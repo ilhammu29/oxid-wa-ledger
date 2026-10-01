@@ -116,7 +116,7 @@ export async function processIncomingWhatsAppWebhook(
     .eq("phone_number_id", phoneNumberId)
     .maybeSingle();
 
-  if (connErr || !connection || connection.status !== "connected") {
+  if (connErr || !connection || (connection.status !== "connected" && connection.status !== "active")) {
     console.warn(
       `[Webhook] Connection not found or inactive | phoneNumberId: ${phoneNumberId} | error: ${connErr?.message}`
     );

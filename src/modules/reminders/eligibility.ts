@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import {
-  BusinessReminderSettings,
   ReminderEligibilityResult,
   ReminderRecipient,
 } from "./types";
@@ -86,33 +85,7 @@ export async function checkReminderEligibility(
     };
   }
 
-  // 4. Check whether confirmed sales exist today
-  // Local day window: from start of local day to end of local day in business timezone
-  const startOfDayUtc = new Date(`${localDate}T00:00:00.000+07:00`); // or timezone-aware boundary
-  // Using Supabase/Postgres date comparison or transaction_at range:
-  // To be safe and timezone-precise across any timezone, construct ISO bounds
-  const localStartIso = `${localDate}T00:00:00`;
-  const localEndIso = `${localDate}T23:59:59.999`;
-
-  const { data: activeSales } = await client
-    .from("transactions")
-    .select("id, status")
-    .eq("business_id", businessId)
-    .eq("status", "confirmed")
-    .gte("transaction_at", new Date(`${localDate}T00:00:00Z`).toISOString().replace(/T.*/, `T00:00:00`))
-    .limit(10);
-
-  // In test environments or raw Postgres queries, verify confirmed sales for this local date:
-  const { data: salesCount } = await client
-    .from("transactions")
-    .select("id", { count: "exact" })
-    .eq("business_id", businessId)
-    .eq("status", "confirmed");
-
-  // Let's filter by transaction_at on local_date
-  const filteredSales = (activeSales || []).filter((s) => s.status === "confirmed");
-  // If query returns confirmed sales on this local day:
-  // We can query specific date if transaction_at contains localDate
+  // 4. Check whether confirmed sales exist today in business timezone
   const { data: daySales } = await client
     .from("transactions")
     .select("id, status, transaction_at")
@@ -152,27 +125,95 @@ export async function checkReminderEligibility(
     };
   }
 
-  // 6. Check active reminder recipients in telegram_authorized_users
-  const { data: recipientsData } = await client
-    .from("telegram_authorized_users")
-    .select("telegram_user_id, display_label, receive_reminders, active")
+  // 6. Determine reminder channel and fetch active recipients
+  const { data: channelSettings } = await client
+    .from("business_channel_settings")
+    .select("reminder_channel, whatsapp_enabled, telegram_enabled")
     .eq("business_id", businessId)
-    .eq("active", true)
-    .eq("receive_reminders", true);
+    .maybeSingle();
 
-  if (!recipientsData || recipientsData.length === 0) {
-    return {
-      eligible: false,
-      reason: "NO_ACTIVE_RECIPIENTS",
-      businessId,
-      localDate,
-    };
+  const reminderChannel = (channelSettings?.reminder_channel || settingsData?.channel || "telegram") as "telegram" | "whatsapp";
+
+  let recipients: ReminderRecipient[] = [];
+  let phoneNumberId: string | undefined;
+  let templateName: string | undefined;
+  let templateLanguage: string | undefined;
+
+  if (reminderChannel === "whatsapp") {
+    // WhatsApp Reminder: Verify connection and approved template
+    const { data: waConn } = await client
+      .from("whatsapp_connections")
+      .select("phone_number_id, status, reminder_template_name, reminder_template_language, reminder_template_status")
+      .eq("business_id", businessId)
+      .in("status", ["connected", "active"])
+      .maybeSingle();
+
+    if (!waConn || !waConn.phone_number_id) {
+      return {
+        eligible: false,
+        reason: "NO_ACTIVE_RECIPIENTS",
+        businessId,
+        localDate,
+      };
+    }
+
+    if (!waConn.reminder_template_name || waConn.reminder_template_status !== "approved") {
+      return {
+        eligible: false,
+        reason: "WHATSAPP_TEMPLATE_NOT_READY",
+        businessId,
+        localDate,
+      };
+    }
+
+    phoneNumberId = waConn.phone_number_id;
+    templateName = waConn.reminder_template_name;
+    templateLanguage = waConn.reminder_template_language || "id";
+
+    // Fetch active WhatsApp recipients
+    const { data: waSenders } = await client
+      .from("whatsapp_authorized_senders")
+      .select("phone_number, display_label, receive_reminders")
+      .eq("business_id", businessId)
+      .eq("active", true);
+
+    const eligibleSenders = (waSenders || []).filter((s) => s.receive_reminders !== false);
+    if (eligibleSenders.length === 0) {
+      return {
+        eligible: false,
+        reason: "NO_ACTIVE_RECIPIENTS",
+        businessId,
+        localDate,
+      };
+    }
+
+    recipients = eligibleSenders.map((s) => ({
+      phone: s.phone_number,
+      displayLabel: s.display_label,
+    }));
+  } else {
+    // Telegram Reminder
+    const { data: recipientsData } = await client
+      .from("telegram_authorized_users")
+      .select("telegram_user_id, display_label, receive_reminders, active")
+      .eq("business_id", businessId)
+      .eq("active", true)
+      .eq("receive_reminders", true);
+
+    if (!recipientsData || recipientsData.length === 0) {
+      return {
+        eligible: false,
+        reason: "NO_ACTIVE_RECIPIENTS",
+        businessId,
+        localDate,
+      };
+    }
+
+    recipients = recipientsData.map((r) => ({
+      telegramUserId: Number(r.telegram_user_id),
+      displayLabel: r.display_label,
+    }));
   }
-
-  const recipients: ReminderRecipient[] = recipientsData.map((r) => ({
-    telegramUserId: Number(r.telegram_user_id),
-    displayLabel: r.display_label,
-  }));
 
   // 7. Check idempotency in notification_logs
   const { data: existingLog } = await client
@@ -198,6 +239,10 @@ export async function checkReminderEligibility(
     businessId,
     localDate,
     reminderTime: scheduledTime,
+    channel: reminderChannel,
+    phoneNumberId,
+    templateName,
+    templateLanguage,
     recipients,
   };
 }

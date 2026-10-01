@@ -797,6 +797,241 @@ export async function getGoogleSheetsSyncStatusAction(): Promise<ActionResult<Go
 }
 
 /**
+ * Adds an authorized WhatsApp sender / operator for the business.
+ */
+export async function addWhatsAppAuthorizedSenderAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat menambah operator WhatsApp." };
+  }
+
+  const rawPhone = (formData.get("phoneNumber") as string)?.trim() || "";
+  const displayLabel = (formData.get("displayLabel") as string)?.trim() || null;
+  const receiveReminders = formData.get("receiveReminders") === "true";
+
+  if (!rawPhone) {
+    return { success: false, error: "Nomor WhatsApp wajib diisi." };
+  }
+
+  const { normalizePhoneNumber } = await import("@/modules/whatsapp/phone");
+  let normalized: string;
+  try {
+    normalized = normalizePhoneNumber(rawPhone);
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : "Format nomor telepon tidak valid." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase.from("whatsapp_authorized_senders").insert({
+      business_id: session.business.id,
+      phone_number: normalized,
+      display_label: displayLabel,
+      active: true,
+      receive_reminders: receiveReminders,
+    });
+
+    if (error) {
+      if (error.code === "23505") {
+        return { success: false, error: "Nomor WhatsApp ini sudah terdaftar sebagai operator untuk bisnis ini." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/dashboard/settings/channels");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menambah operator WhatsApp: ${msg}` };
+  }
+}
+
+/**
+ * Updates an authorized WhatsApp operator (active status, reminders, display label).
+ */
+export async function updateWhatsAppAuthorizedSenderAction(
+  senderId: string,
+  updates: { active?: boolean; receiveReminders?: boolean; displayLabel?: string }
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah operator WhatsApp." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const patch: { active?: boolean; receive_reminders?: boolean; display_label?: string } = {};
+    if (updates.active !== undefined) patch.active = updates.active;
+    if (updates.receiveReminders !== undefined) patch.receive_reminders = updates.receiveReminders;
+    if (updates.displayLabel !== undefined) patch.display_label = updates.displayLabel;
+
+    const { error } = await supabase
+      .from("whatsapp_authorized_senders")
+      .update(patch)
+      .eq("id", senderId)
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/settings/channels");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal memperbarui operator: ${msg}` };
+  }
+}
+
+/**
+ * Deletes an authorized WhatsApp operator.
+ */
+export async function deleteWhatsAppAuthorizedSenderAction(senderId: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat menghapus operator WhatsApp." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("whatsapp_authorized_senders")
+      .delete()
+      .eq("id", senderId)
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/settings/channels");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menghapus operator: ${msg}` };
+  }
+}
+
+/**
+ * Saves or updates WhatsApp connection metadata for the business.
+ */
+export async function saveWhatsAppConnectionAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah pengaturan WhatsApp." };
+  }
+
+  const displayPhoneNumber = (formData.get("displayPhoneNumber") as string)?.trim() || null;
+  const verifiedName = (formData.get("verifiedName") as string)?.trim() || null;
+  const phoneNumberId = (formData.get("phoneNumberId") as string)?.trim() || "";
+  const wabaId = (formData.get("wabaId") as string)?.trim() || null;
+  const rawPhoneNumber = (formData.get("phoneNumber") as string)?.trim() || "";
+
+  if (!phoneNumberId) {
+    return { success: false, error: "Phone Number ID wajib diisi." };
+  }
+
+  const { normalizePhoneNumber } = await import("@/modules/whatsapp/phone");
+  let normalizedPhone = rawPhoneNumber;
+  if (rawPhoneNumber) {
+    try {
+      normalizedPhone = normalizePhoneNumber(rawPhoneNumber);
+    } catch {
+      // keep original string if fails
+    }
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("whatsapp_connections")
+      .upsert(
+        {
+          business_id: session.business.id,
+          phone_number: normalizedPhone || "unknown",
+          display_phone_number: displayPhoneNumber || normalizedPhone,
+          verified_name: verifiedName,
+          phone_number_id: phoneNumberId,
+          waba_id: wabaId,
+          status: "connected",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "phone_number_id" }
+      );
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/settings/channels");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menyimpan koneksi WhatsApp: ${msg}` };
+  }
+}
+
+/**
+ * Updates WhatsApp reminder template configuration and approval status.
+ */
+export async function saveWhatsAppTemplateAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah template pengingat." };
+  }
+
+  const templateName = (formData.get("templateName") as string)?.trim() || null;
+  const templateLanguage = (formData.get("templateLanguage") as string)?.trim() || "id";
+  const templateStatus = (formData.get("templateStatus") as string)?.trim() || "unconfigured";
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("whatsapp_connections")
+      .update({
+        reminder_template_name: templateName,
+        reminder_template_language: templateLanguage,
+        reminder_template_status: templateStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/settings/channels");
+    revalidatePath("/dashboard/settings/reminders");
+    revalidatePath("/dashboard/monitoring");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal menyimpan konfigurasi template: ${msg}` };
+  }
+}
+
+/**
  * Signs out the currently authenticated user and redirects to login.
  */
 export async function logoutAction() {

@@ -17,10 +17,12 @@ export type ReminderIneligibilityReason =
   | "HAS_CONFIRMED_SALES"
   | "HAS_DAILY_STATUS"
   | "NO_ACTIVE_RECIPIENTS"
+  | "WHATSAPP_TEMPLATE_NOT_READY"
   | "ALREADY_SENT_TODAY";
 
 export interface ReminderRecipient {
-  telegramUserId: number;
+  telegramUserId?: number;
+  phone?: string;
   displayLabel: string | null;
 }
 
@@ -30,6 +32,10 @@ export interface ReminderEligibilityResult {
   businessId: string;
   localDate: string;
   reminderTime?: string;
+  channel?: "telegram" | "whatsapp";
+  phoneNumberId?: string;
+  templateName?: string;
+  templateLanguage?: string;
   recipients?: ReminderRecipient[];
 }
 

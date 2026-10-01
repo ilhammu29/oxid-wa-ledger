@@ -361,6 +361,8 @@ async function runStep7Tests() {
     console.log("\n3. Running 7B Reminder Automation Tests...");
 
     // Setup reminder settings for bizA
+    await pgClient.query(`UPDATE public.business_reminder_settings SET enabled = false WHERE business_id != '${bizA}';`);
+    await pgClient.query(`DELETE FROM public.notification_logs WHERE business_id = '${bizA}';`);
     await pgClient.query(`
       INSERT INTO public.business_reminder_settings (business_id, enabled, reminder_time, days_of_week, channel, timezone)
       VALUES ('${bizA}', true, '18:00', ARRAY[0,1,2,3,4,5,6]::smallint[], 'telegram', 'Asia/Jakarta')

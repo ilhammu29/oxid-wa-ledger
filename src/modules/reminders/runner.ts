@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { checkReminderEligibility } from "./eligibility";
 import { ReminderRunSummary } from "./types";
 import { sendTelegramText } from "../telegram/telegram-client";
+import { sendMetaTemplateMessage } from "../whatsapp/meta-client";
 import { recordIntegrationEvent } from "../monitoring/telemetry";
 
 export const REMINDER_MESSAGE_TEXT = `Belum ada penjualan yang tercatat hari ini.
@@ -15,6 +16,7 @@ Kalau hari ini libur, kirim:
 export interface RunDueRemindersOptions {
   now?: Date;
   telegramSender?: typeof sendTelegramText;
+  whatsappTemplateSender?: typeof sendMetaTemplateMessage;
 }
 
 /**
@@ -27,6 +29,7 @@ export async function runDueReminders(
 ): Promise<ReminderRunSummary> {
   const now = options.now || new Date();
   const telegramSend = options.telegramSender || sendTelegramText;
+  const whatsappSend = options.whatsappTemplateSender || sendMetaTemplateMessage;
   const startedAt = now.toISOString();
 
   // 1. Create system_job_runs record
@@ -103,6 +106,8 @@ export async function runDueReminders(
         continue;
       }
 
+      const reminderChannel = eligibility.channel || "telegram";
+
       // 4. Atomic Idempotency Claim via notification_logs
       // (business_id, notification_type, local_date) is uniquely constrained
       const { data: claimInsert, error: claimErr } = await client
@@ -111,7 +116,7 @@ export async function runDueReminders(
           business_id: businessId,
           notification_type: "daily_reminder",
           local_date: eligibility.localDate,
-          channel: "telegram",
+          channel: reminderChannel,
           status: "processing",
         })
         .select("id")
@@ -132,15 +137,33 @@ export async function runDueReminders(
       let lastErrorMessage = "";
 
       // 5. Send reminder to each designated recipient
-      for (const recipient of eligibility.recipients || []) {
-        const sendRes = await telegramSend({
-          chatId: recipient.telegramUserId,
-          text: REMINDER_MESSAGE_TEXT,
-        });
+      if (reminderChannel === "whatsapp") {
+        for (const recipient of eligibility.recipients || []) {
+          if (!recipient.phone || !eligibility.phoneNumberId || !eligibility.templateName) continue;
+          const sendRes = await whatsappSend({
+            phoneNumberId: eligibility.phoneNumberId,
+            to: recipient.phone,
+            templateName: eligibility.templateName,
+            languageCode: eligibility.templateLanguage || "id",
+          });
 
-        if (!sendRes.success) {
-          businessSendSuccess = false;
-          lastErrorMessage = sendRes.errorCode || "TELEGRAM_SEND_FAILED";
+          if (!sendRes.success) {
+            businessSendSuccess = false;
+            lastErrorMessage = sendRes.errorCode || "WHATSAPP_SEND_FAILED";
+          }
+        }
+      } else {
+        for (const recipient of eligibility.recipients || []) {
+          if (!recipient.telegramUserId) continue;
+          const sendRes = await telegramSend({
+            chatId: recipient.telegramUserId,
+            text: REMINDER_MESSAGE_TEXT,
+          });
+
+          if (!sendRes.success) {
+            businessSendSuccess = false;
+            lastErrorMessage = sendRes.errorCode || "TELEGRAM_SEND_FAILED";
+          }
         }
       }
 
@@ -159,12 +182,13 @@ export async function runDueReminders(
 
         await recordIntegrationEvent(client, {
           businessId,
-          channel: "telegram",
+          channel: reminderChannel,
           direction: "outbound",
           eventType: "reminder.sent",
           status: "success",
           metadata: {
             localDate: eligibility.localDate,
+            channel: reminderChannel,
             recipientCount: eligibility.recipients?.length || 0,
           },
         });
@@ -187,12 +211,12 @@ export async function runDueReminders(
 
         await recordIntegrationEvent(client, {
           businessId,
-          channel: "telegram",
+          channel: reminderChannel,
           direction: "outbound",
           eventType: "reminder.failed",
           status: "failed",
           errorCode: lastErrorMessage,
-          metadata: { localDate: eligibility.localDate },
+          metadata: { localDate: eligibility.localDate, channel: reminderChannel },
         });
       }
     } catch (bizErr: unknown) {
