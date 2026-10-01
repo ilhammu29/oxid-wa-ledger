@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { getPlatformAdminUser } from "@/modules/subscriptions";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { ShieldCheck, ArrowLeft, ShieldAlert, UserCheck } from "lucide-react";
@@ -19,45 +20,12 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
-          <ShieldAlert className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-zinc-100 mb-1">Akses Ditolak</h1>
-          <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-            Sesi autentikasi belum ditemukan. Silakan masuk terlebih dahulu untuk mengakses Platform Admin OXID.
-          </p>
-          <Link
-            href="/login"
-            className="inline-flex px-5 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 text-xs font-semibold hover:bg-zinc-700 transition-colors"
-          >
-            Menuju Halaman Login
-          </Link>
-        </div>
-      </div>
-    );
+    redirect("/login");
   }
 
   const adminRecord = await getPlatformAdminUser(user, supabase);
   if (!adminRecord || !adminRecord.active) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
-          <ShieldAlert className="w-12 h-12 text-amber-400 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-zinc-100 mb-1">403 Akses Terlarang</h1>
-          <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-            Akun Anda ({user.email}) tidak terdaftar atau tidak memiliki status aktif sebagai administrator platform OXID Ledger.
-          </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali ke Dashboard Usaha
-          </Link>
-        </div>
-      </div>
-    );
+    redirect("/dashboard");
   }
 
   const roleLabelMap: Record<string, string> = {
