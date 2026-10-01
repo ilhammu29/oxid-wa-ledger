@@ -60,7 +60,7 @@ export function TelegramPairingCard({
           </div>
           <div className="space-y-1">
             <h3 className={`text-xs font-bold ${isDark ? "text-zinc-100" : "text-zinc-900"}`}>
-              Gagal Membuat Kode
+              {errorMessage?.includes("Batas operator") ? "Batas Operator Tercapai" : "Gagal Membuat Kode"}
             </h3>
             <p className="text-xs text-rose-500 px-4">
               {errorMessage || "Gagal membuat kode koneksi. Silakan coba lagi."}
@@ -77,16 +77,25 @@ export function TelegramPairingCard({
                     : "border border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                 }`}
               >
-                Batal
+                Tutup
               </button>
             )}
-            <button
-              type="button"
-              onClick={generateNewCode}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors"
-            >
-              Coba Lagi
-            </button>
+            {errorMessage?.includes("Batas operator") ? (
+              <a
+                href="/dashboard/subscription"
+                className="flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors text-center"
+              >
+                Tingkatkan Paket
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={generateNewCode}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors"
+              >
+                Coba Lagi
+              </button>
+            )}
           </div>
         </div>
       )}

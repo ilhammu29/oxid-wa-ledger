@@ -13,6 +13,7 @@ export interface ActionResult<T = unknown> {
   success: boolean;
   error?: string;
   data?: T;
+  result?: T;
 }
 
 /**
@@ -1170,13 +1171,34 @@ export async function generateTelegramPairingCodeAction(): Promise<
 > {
   const session = await getAuthenticatedBusiness();
   if (session.status !== "OK" || !session.business) {
-    return { success: false, error: "Akses bisnis tidak valid." };
+    console.error(
+      JSON.stringify({
+        event: "telegram_pairing_generation_failed",
+        user_id: session.user?.id,
+        error_code: "UNAUTHORIZED",
+        safe_error_message: "Akses bisnis tidak valid atau belum terdaftar.",
+      })
+    );
+    return {
+      success: false,
+      error: "Anda tidak memiliki izin untuk menambahkan operator.",
+    };
   }
 
   if (session.role !== "owner" && session.role !== "admin") {
+    console.error(
+      JSON.stringify({
+        event: "telegram_pairing_generation_failed",
+        business_id: session.business.id,
+        user_id: session.user.id,
+        role: session.role,
+        error_code: "UNAUTHORIZED",
+        safe_error_message: "Hanya pemilik atau admin bisnis yang dapat membuat kode pairing Telegram.",
+      })
+    );
     return {
       success: false,
-      error: "Hanya pemilik atau admin bisnis yang dapat membuat kode pairing Telegram.",
+      error: "Anda tidak memiliki izin untuk menambahkan operator.",
     };
   }
 
@@ -1185,6 +1207,24 @@ export async function generateTelegramPairingCodeAction(): Promise<
   try {
     // 1. Authoritative plan limit check
     const subState = await getBusinessSubscriptionState(supabase, session.business.id);
+
+    // Enforce subscription mutation / operator allowance
+    if (subState.isSuspended || subState.isCancelled) {
+      console.error(
+        JSON.stringify({
+          event: "telegram_pairing_generation_failed",
+          business_id: session.business.id,
+          user_id: session.user.id,
+          error_code: "SUBSCRIPTION_BLOCKED",
+          safe_error_message: subState.warningMessage || "Status langganan tidak aktif",
+        })
+      );
+      return {
+        success: false,
+        error: "Status langganan tidak mengizinkan penambahan operator.",
+      };
+    }
+
     const maxOps = subState.plan.maxOperators ?? 2;
 
     const { count, error: countErr } = await supabase
@@ -1194,10 +1234,31 @@ export async function generateTelegramPairingCodeAction(): Promise<
       .eq("active", true);
 
     if (countErr) {
-      return { success: false, error: "Gagal memeriksa kuota operator." };
+      console.error(
+        JSON.stringify({
+          event: "telegram_pairing_generation_failed",
+          business_id: session.business.id,
+          user_id: session.user.id,
+          error_code: "DATABASE_ERROR",
+          safe_error_message: countErr.message,
+        })
+      );
+      return {
+        success: false,
+        error: "Kode koneksi belum dapat dibuat. Silakan coba lagi.",
+      };
     }
 
     if ((count || 0) >= maxOps) {
+      console.error(
+        JSON.stringify({
+          event: "telegram_pairing_generation_failed",
+          business_id: session.business.id,
+          user_id: session.user.id,
+          error_code: "OPERATOR_LIMIT_REACHED",
+          safe_error_message: `Batas operator tercapai: ${count}/${maxOps}`,
+        })
+      );
       return {
         success: false,
         error: "Batas operator Telegram untuk paket Anda sudah tercapai.",
@@ -1207,19 +1268,41 @@ export async function generateTelegramPairingCodeAction(): Promise<
     // 2. Generate token
     const res = await generateTelegramPairingToken(supabase, session.business.id, session.user.id);
     if (!res.success || !res.result) {
+      console.error(
+        JSON.stringify({
+          event: "telegram_pairing_generation_failed",
+          business_id: session.business.id,
+          user_id: session.user.id,
+          error_code: "DATABASE_ERROR",
+          safe_error_message: res.error || "Gagal membuat kode koneksi Telegram.",
+        })
+      );
       return {
         success: false,
-        error: res.error || "Gagal membuat kode koneksi Telegram.",
+        error: "Kode koneksi belum dapat dibuat. Silakan coba lagi.",
       };
     }
 
     return {
       success: true,
       data: res.result,
+      result: res.result,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: msg || "Terjadi kesalahan sistem saat membuat kode." };
+    console.error(
+      JSON.stringify({
+        event: "telegram_pairing_generation_failed",
+        business_id: session.business.id,
+        user_id: session.user.id,
+        error_code: "DATABASE_ERROR",
+        safe_error_message: msg,
+      })
+    );
+    return {
+      success: false,
+      error: "Kode koneksi belum dapat dibuat. Silakan coba lagi.",
+    };
   }
 }
 

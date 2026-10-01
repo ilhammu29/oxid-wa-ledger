@@ -702,6 +702,67 @@ async function runStep1021TestSuite() {
     }
 
     // -------------------------------------------------------------------------
+    // TEST 18: generateTelegramPairingToken returns both result and data
+    // -------------------------------------------------------------------------
+    try {
+      const dualTok = await generateTelegramPairingToken(supabase, bizA_Id, userA_Id);
+      if (
+        dualTok.success &&
+        dualTok.result &&
+        dualTok.data &&
+        dualTok.result.code === dualTok.data.code &&
+        dualTok.result.code.startsWith("OXID-")
+      ) {
+        record(18, "generateTelegramPairingToken returns both result and data envelopes (client hook compatibility)", true);
+      } else {
+        record(18, "generateTelegramPairingToken failed to provide both result and data", false);
+      }
+    } catch (e: any) {
+      record(18, "Dual envelope test", false, e.message);
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 19: Error mapping preserves exact friendly Indonesian messages
+    // -------------------------------------------------------------------------
+    try {
+      const actionsSrc = fs.readFileSync("src/app/dashboard/actions.ts", "utf8");
+      const hasQuotaMsg = actionsSrc.includes("Batas operator Telegram untuk paket Anda sudah tercapai.");
+      const hasPermMsg = actionsSrc.includes("Anda tidak memiliki izin untuk menambahkan operator.");
+      const hasSubMsg = actionsSrc.includes("Status langganan tidak mengizinkan penambahan operator.");
+      const hasDbMsg = actionsSrc.includes("Kode koneksi belum dapat dibuat. Silakan coba lagi.");
+      const hasSafeLog = actionsSrc.includes("telegram_pairing_generation_failed");
+
+      if (hasQuotaMsg && hasPermMsg && hasSubMsg && hasDbMsg && hasSafeLog) {
+        record(19, "Server action strictly maps OPERATOR_LIMIT_REACHED, UNAUTHORIZED, SUBSCRIPTION_BLOCKED, and DATABASE_ERROR with safe observability", true);
+      } else {
+        record(19, "Missing required error mapping or observability in actions.ts", false);
+      }
+    } catch (e: any) {
+      record(19, "Error mapping test", false, e.message);
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 20: useTelegramPairing hook supports both result and data
+    // -------------------------------------------------------------------------
+    try {
+      const hookSrc = fs.readFileSync("src/components/telegram/use-telegram-pairing.ts", "utf8");
+      const modalSrc = fs.readFileSync("src/components/telegram/telegram-pairing-modal.tsx", "utf8");
+      const cardSrc = fs.readFileSync("src/components/telegram/telegram-pairing-card.tsx", "utf8");
+
+      const hookSupportsData = hookSrc.includes("res.result || res.data");
+      const modalSupportsData = modalSrc.includes("data?: TelegramPairingTokenResult");
+      const cardHandlesQuota = cardSrc.includes("Batas Operator Tercapai") && cardSrc.includes("/dashboard/subscription");
+
+      if (hookSupportsData && modalSupportsData && cardHandlesQuota) {
+        record(20, "Client pairing UI (hook, modal, card) seamlessly extracts tokenData and renders upgrade action on quota limit", true);
+      } else {
+        record(20, "Client pairing UI missing dual envelope extraction or quota handling", false);
+      }
+    } catch (e: any) {
+      record(20, "Client UI dual envelope test", false, e.message);
+    }
+
+    // -------------------------------------------------------------------------
     // Test Summary
     // -------------------------------------------------------------------------
     const passed = reports.filter((r) => r.passed).length;

@@ -10,6 +10,7 @@ export interface UseTelegramPairingOptions {
   generateToken: () => Promise<{
     success: boolean;
     result?: TelegramPairingTokenResult;
+    data?: TelegramPairingTokenResult;
     error?: string;
   }>;
   checkStatus: (tokenCode: string) => Promise<{
@@ -61,13 +62,15 @@ export function useTelegramPairing({
       const res = await generateToken();
       if (!isMountedRef.current) return;
 
-      if (res.success && res.result) {
-        setTokenResult(res.result);
+      const tokenData = res.result || res.data;
 
-        const expiresAt = new Date(res.result.expiresAt).getTime();
+      if (res.success && tokenData) {
+        setTokenResult(tokenData);
+
+        const expiresAt = new Date(tokenData.expiresAt).getTime();
         const now = Date.now();
         const diffSecs = Math.max(0, Math.floor((expiresAt - now) / 1000));
-        setSecondsRemaining(diffSecs > 0 ? diffSecs : res.result.expiresInSeconds || 600);
+        setSecondsRemaining(diffSecs > 0 ? diffSecs : tokenData.expiresInSeconds || 600);
 
         setState("ACTIVE");
       } else {
@@ -90,12 +93,13 @@ export function useTelegramPairing({
       generateToken()
         .then((res) => {
           if (isCancelled || !isMountedRef.current) return;
-          if (res.success && res.result) {
-            setTokenResult(res.result);
-            const expiresAt = new Date(res.result.expiresAt).getTime();
+          const tokenData = res.result || res.data;
+          if (res.success && tokenData) {
+            setTokenResult(tokenData);
+            const expiresAt = new Date(tokenData.expiresAt).getTime();
             const now = Date.now();
             const diffSecs = Math.max(0, Math.floor((expiresAt - now) / 1000));
-            setSecondsRemaining(diffSecs > 0 ? diffSecs : res.result.expiresInSeconds || 600);
+            setSecondsRemaining(diffSecs > 0 ? diffSecs : tokenData.expiresInSeconds || 600);
             setState("ACTIVE");
           } else {
             setState("ERROR");

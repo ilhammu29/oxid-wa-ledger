@@ -1300,7 +1300,15 @@ export function ChannelsView({
       <TelegramPairingModal
         isOpen={showPairingModal}
         onClose={() => setShowPairingModal(false)}
-        generateToken={generateTelegramPairingCodeAction}
+        generateToken={async () => {
+          const res = await generateTelegramPairingCodeAction();
+          return {
+            success: res.success,
+            result: res.result || res.data,
+            data: res.data || res.result,
+            error: res.error,
+          };
+        }}
         checkStatus={async (code) => {
           const res = await checkTelegramPairingStatusAction(code);
           if (res.paired && res.operators) {

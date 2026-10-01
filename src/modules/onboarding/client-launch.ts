@@ -407,7 +407,12 @@ export async function generateTelegramPairingToken(
   client: SupabaseClient,
   businessId: string,
   userId?: string
-): Promise<{ success: boolean; result?: TelegramPairingTokenResult; error?: string }> {
+): Promise<{
+  success: boolean;
+  result?: TelegramPairingTokenResult;
+  data?: TelegramPairingTokenResult;
+  error?: string;
+}> {
   try {
     // Invalidate existing unused tokens for this business
     await client
@@ -440,15 +445,18 @@ export async function generateTelegramPairingToken(
 
     const deepLink = `https://t.me/${botUsername}?start=${encodeURIComponent(code)}`;
 
+    const tokenResult: TelegramPairingTokenResult = {
+      code,
+      expiresAt,
+      expiresInSeconds,
+      botUsername,
+      deepLink,
+    };
+
     return {
       success: true,
-      result: {
-        code,
-        expiresAt,
-        expiresInSeconds,
-        botUsername,
-        deepLink,
-      },
+      result: tokenResult,
+      data: tokenResult,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Gagal membuat kode pairing.";

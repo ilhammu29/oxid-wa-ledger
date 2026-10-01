@@ -12,6 +12,7 @@ export interface TelegramPairingModalProps {
   generateToken: () => Promise<{
     success: boolean;
     result?: TelegramPairingTokenResult;
+    data?: TelegramPairingTokenResult;
     error?: string;
   }>;
   checkStatus: (tokenCode: string) => Promise<{
