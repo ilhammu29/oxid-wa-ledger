@@ -194,26 +194,24 @@ export async function addProductAction(formData: FormData): Promise<ActionResult
   const supabase = await createClient();
 
   try {
-    // If marked default, unset others first or insert then set default
-    const { data: newProd, error: insertError } = await supabase
-      .from("products")
-      .insert({
-        business_id: session.business.id,
-        name,
-        unit,
-        default_price: defaultPrice,
-        active: true,
-        is_default: false,
-      })
-      .select("id")
-      .single();
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("create_or_bootstrap_product", {
+      p_business_id: session.business.id,
+      p_name: name,
+      p_unit: unit,
+      p_price: defaultPrice,
+      p_aliases: [],
+      p_is_onboarding: false,
+      p_set_as_default: isDefault,
+      p_user_id: session.user.id,
+    });
 
-    if (insertError) {
-      throw insertError;
+    if (rpcErr) {
+      throw rpcErr;
     }
 
-    if (isDefault && newProd?.id) {
-      await setDefaultProduct(supabase, session.business.id, newProd.id);
+    const res = rpcRes as { success?: boolean; error?: string; message?: string } | null;
+    if (!res?.success) {
+      return { success: false, error: res?.message || "Gagal menambah produk." };
     }
 
     revalidatePath("/dashboard/products");

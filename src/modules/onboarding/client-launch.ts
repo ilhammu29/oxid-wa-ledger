@@ -301,69 +301,78 @@ export async function addFirstProductForBusiness(
   }
 
   try {
-    // 1. Insert product
-    const { data: product, error: prodErr } = await client
-      .from("products")
-      .insert({
-        business_id: input.businessId,
-        name,
-        unit,
-        default_price: price,
-        is_default: true,
-        active: true,
-      })
-      .select("id")
-      .single();
+    const isValidUuid = (val?: string): boolean =>
+      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
 
-    if (prodErr || !product) {
-      return { success: false, error: prodErr?.message || "Gagal menyimpan produk." };
+    let authUser: { id: string } | null = null;
+    if (client.auth?.getUser) {
+      const { data: authData } = await client.auth.getUser().catch(() => ({ data: { user: null } }));
+      authUser = authData?.user || null;
     }
 
-    const productId = product.id;
+    const resolvedUserId = isValidUuid(userId) ? userId : authUser?.id && isValidUuid(authUser.id) ? authUser.id : null;
 
-    // 2. Insert aliases
+    if (!resolvedUserId) {
+      return {
+        success: false,
+        error: "Sesi Anda tidak valid. Silakan masuk kembali.",
+      };
+    }
+
     const aliases = (input.aliases || [])
       .map((a) => a.trim().toLowerCase())
       .filter((a) => a.length > 0 && a !== name.toLowerCase());
 
-    // Always include product's own name as default alias
     const allAliases = Array.from(new Set([name.toLowerCase(), ...aliases]));
 
-    if (allAliases.length > 0) {
-      for (const alias of allAliases) {
-        const normalizedAlias = alias.trim().toLowerCase().replace(/\s+/g, " ");
-        try {
-          await client.from("product_aliases").insert({
-            business_id: input.businessId,
-            product_id: productId,
-            alias,
-            normalized_alias: normalizedAlias,
-          });
-        } catch {
-          // Skip duplicates silently
-        }
+    const { data: rpcRes, error: rpcErr } = await client.rpc("create_or_bootstrap_product", {
+      p_business_id: input.businessId,
+      p_name: name,
+      p_unit: unit,
+      p_price: price,
+      p_aliases: allAliases,
+      p_is_onboarding: true,
+      p_set_as_default: true,
+      p_user_id: resolvedUserId,
+    });
+
+    if (rpcErr) {
+      console.error("[addFirstProductForBusiness] RPC error:", rpcErr.message);
+      if (rpcErr.message.includes("idx_products_unique_default") || rpcErr.message.includes("DEFAULT_CONFLICT")) {
+        return {
+          success: false,
+          error: "Produk berhasil disimpan, tetapi status produk default tidak dapat diperbarui.",
+        };
       }
+      return {
+        success: false,
+        error: "Produk belum dapat dibuat. Silakan coba lagi.",
+      };
     }
 
-    // 3. Advance onboarding progress
-    await client
-      .from("business_onboarding_progress")
-      .update({
-        product_completed: true,
-        current_step: 3,
-      })
-      .eq("business_id", input.businessId);
+    const res = rpcRes as {
+      success?: boolean;
+      product_id?: string;
+      error?: string;
+      message?: string;
+      idempotent?: boolean;
+    } | null;
 
-    // 4. Log event
-    await logOnboardingEvent(client, input.businessId, "product_created", {
-      product_id: productId,
-      name,
-      unit,
-      price,
-      aliases_count: allAliases.length,
-    }, userId);
+    if (!res?.success || !res.product_id) {
+      const safeError =
+        res?.message ||
+        (res?.error === "INVALID_NAME"
+          ? "Nama produk minimal 2 karakter."
+          : res?.error === "INVALID_PRICE"
+          ? "Harga produk tidak valid."
+          : res?.error === "UNAUTHORIZED"
+          ? "Hanya pemilik atau admin yang dapat menambahkan produk."
+          : "Produk belum dapat dibuat. Silakan coba lagi.");
 
-    return { success: true, productId };
+      return { success: false, error: safeError };
+    }
+
+    return { success: true, productId: res.product_id };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Gagal menambahkan produk.";
     return { success: false, error: msg };
