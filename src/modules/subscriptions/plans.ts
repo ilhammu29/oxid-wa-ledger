@@ -1,3 +1,8 @@
+/**
+ * Centralized Authoritative Subscription Plans & Pricing Metadata.
+ * Step 9.1: Hardened subscription tiers with integer IDR money semantics.
+ * Note: These pricing tiers serve as system defaults and can be configured as needed.
+ */
 import { SubscriptionPlan, SubscriptionPlanCode } from "./types";
 
 export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> = {

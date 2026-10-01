@@ -5,6 +5,7 @@ import {
   SubscriptionStateResult,
   SubscriptionPayment,
   SubscriptionPlan,
+  BillingPaymentSetting,
 } from "@/modules/subscriptions/types";
 import { formatIDR } from "@/modules/subscriptions/plans";
 import { submitManualPaymentAction } from "@/app/dashboard/actions";
@@ -25,6 +26,7 @@ interface SubscriptionViewProps {
   payments: SubscriptionPayment[];
   plans: SubscriptionPlan[];
   role: "owner" | "admin" | "member";
+  paymentSettings?: BillingPaymentSetting[];
 }
 
 export function SubscriptionView({
@@ -32,6 +34,7 @@ export function SubscriptionView({
   payments,
   plans,
   role,
+  paymentSettings = [],
 }: SubscriptionViewProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -302,22 +305,35 @@ export function SubscriptionView({
           pengirim.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-4">
-          <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex justify-between items-center">
-            <div>
-              <span className="text-zinc-500 block text-[11px]">Bank Central Asia (BCA)</span>
-              <span className="font-mono font-semibold text-zinc-200 text-sm">8015-2882-91</span>
-              <span className="text-zinc-400 block text-[11px]">a.n. PT OXID DIGITAL INDONESIA</span>
-            </div>
+        {paymentSettings.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-4">
+            {paymentSettings.map((setting) => (
+              <div
+                key={setting.id}
+                className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex justify-between items-center"
+              >
+                <div>
+                  <span className="text-zinc-500 block text-[11px]">{setting.bankName}</span>
+                  <span className="font-mono font-semibold text-zinc-200 text-sm">
+                    {setting.maskedAccountNumber}
+                  </span>
+                  <span className="text-zinc-400 block text-[11px]">
+                    a.n. {setting.accountName}
+                  </span>
+                  {setting.paymentInstructions && (
+                    <span className="text-zinc-500 block text-[10px] mt-1">
+                      {setting.paymentInstructions}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex justify-between items-center">
-            <div>
-              <span className="text-zinc-500 block text-[11px]">Bank Mandiri</span>
-              <span className="font-mono font-semibold text-zinc-200 text-sm">1370-0291-8821</span>
-              <span className="text-zinc-400 block text-[11px]">a.n. PT OXID DIGITAL INDONESIA</span>
-            </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-400 mb-4">
+            Detail pembayaran belum dikonfigurasi. Silakan hubungi admin OXID untuk aktivasi langganan.
           </div>
-        </div>
+        )}
 
         <div className="text-[11px] text-zinc-500 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -406,7 +422,7 @@ export function SubscriptionView({
                 <input
                   type="number"
                   name="amount"
-                  defaultValue={49000}
+                  defaultValue={plans.find((p) => p.code === "basic")?.priceIdr || 49000}
                   required
                   min={1000}
                   step={1000}
@@ -423,7 +439,7 @@ export function SubscriptionView({
                   defaultValue="manual_transfer"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="manual_transfer">Transfer Bank (BCA / Mandiri)</option>
+                  <option value="manual_transfer">Transfer Bank Manual</option>
                   <option value="qris_manual">QRIS Pembayaran</option>
                   <option value="cash">Tunai / Mitra Langsung</option>
                 </select>
@@ -436,7 +452,7 @@ export function SubscriptionView({
                 <input
                   type="text"
                   name="reference"
-                  placeholder="Contoh: BCA Ref 9821 / a.n. Budi Santoso"
+                  placeholder="Contoh: REF-9821 / a.n. Pengirim"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-emerald-500"
                 />

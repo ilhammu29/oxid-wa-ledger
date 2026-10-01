@@ -5,6 +5,7 @@ import {
   SubscriptionStateResult,
   MutationGateResult,
   SubscriptionStatus,
+  BillingPaymentSetting,
 } from "./types";
 import { getPlan } from "./plans";
 
@@ -304,4 +305,35 @@ export async function recordSubscriptionAudit(
     notes: params.notes || null,
     metadata: params.metadata || {},
   });
+}
+
+/**
+ * Fetches active payment settings for bank transfers.
+ * Returns empty array if none are configured or active.
+ */
+export async function getBillingPaymentSettings(
+  client: SupabaseClient
+): Promise<BillingPaymentSetting[]> {
+  try {
+    const { data, error } = await client
+      .from("billing_payment_settings")
+      .select("*")
+      .eq("active", true)
+      .order("created_at", { ascending: true });
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((d) => ({
+      id: d.id,
+      bankName: d.bank_name,
+      accountName: d.account_name,
+      maskedAccountNumber: d.masked_account_number,
+      paymentInstructions: d.payment_instructions,
+      active: d.active,
+    }));
+  } catch {
+    return [];
+  }
 }

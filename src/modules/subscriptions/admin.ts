@@ -357,6 +357,11 @@ export async function adminConfirmPayment(
     throw new Error(`Payment record not found: ${pError?.message || "Not found"}`);
   }
 
+  // Idempotency guard: If payment is already confirmed, do not confirm or extend again
+  if (payment.status === "confirmed") {
+    return;
+  }
+
   // 1b. Fetch subscription
   const { data: sub, error: subError } = await client
     .from("business_subscriptions")
@@ -426,9 +431,13 @@ export async function adminRejectPayment(
 ): Promise<void> {
   const { data: payment } = await client
     .from("subscription_payments")
-    .select("business_id, subscription_id")
+    .select("business_id, subscription_id, status")
     .eq("id", params.paymentId)
     .single();
+
+  if (!payment || payment.status === "rejected") {
+    return;
+  }
 
   await client
     .from("subscription_payments")
@@ -527,6 +536,9 @@ export async function adminSuspendSubscription(
     .single();
 
   if (!sub) throw new Error("Subscription not found");
+  if (sub.status === "suspended") {
+    return;
+  }
 
   await client
     .from("business_subscriptions")
@@ -616,6 +628,9 @@ export async function adminCancelSubscription(
     .single();
 
   if (!sub) throw new Error("Subscription not found");
+  if (sub.status === "cancelled") {
+    return;
+  }
 
   await client
     .from("business_subscriptions")

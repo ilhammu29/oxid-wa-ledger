@@ -6,6 +6,7 @@ import {
   getBusinessSubscriptionState,
   getBusinessPayments,
   getAllPlans,
+  getBillingPaymentSettings,
 } from "@/modules/subscriptions";
 import { SubscriptionView } from "@/components/dashboard/subscription-view";
 
@@ -19,6 +20,7 @@ export default async function SubscriptionPage() {
   const subscriptionState = await getBusinessSubscriptionState(supabase, business.id);
   const payments = await getBusinessPayments(supabase, business.id);
   const allPlans = getAllPlans();
+  const paymentSettings = await getBillingPaymentSettings(supabase);
 
   return (
     <div className="space-y-6">
@@ -35,6 +37,7 @@ export default async function SubscriptionPage() {
         subscriptionState={subscriptionState}
         payments={payments}
         plans={allPlans}
+        paymentSettings={paymentSettings}
         role={session.role || "member"}
       />
     </div>

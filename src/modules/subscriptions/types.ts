@@ -104,3 +104,12 @@ export interface SubscriptionAuditLog {
   metadata: Record<string, unknown> | null;
   createdAt: string;
 }
+
+export interface BillingPaymentSetting {
+  id: string;
+  bankName: string;
+  accountName: string;
+  maskedAccountNumber: string;
+  paymentInstructions?: string | null;
+  active: boolean;
+}

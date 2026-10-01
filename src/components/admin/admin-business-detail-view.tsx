@@ -430,7 +430,7 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
                 <input
                   type="text"
                   name="notes"
-                  placeholder="Contoh: Bukti transfer BCA valid"
+                  placeholder="Contoh: Bukti transfer valid / mutasi cocok"
                   className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
                 />
               </div>
