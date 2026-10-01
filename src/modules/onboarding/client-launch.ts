@@ -87,10 +87,28 @@ export async function createBusinessForUser(
   const ownerName = input.ownerName?.trim() || null;
 
   try {
-    // 0. Verification check: unverified users cannot provision a business unless internal bypass is active
-    if (process.env.ALLOW_UNVERIFIED_INTERNAL_SIGNUP !== "true" && client.auth?.getUser) {
+    const isValidUuid = (val?: string): boolean =>
+      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+
+    // Get current auth state if available
+    let authUser: { id: string; email_confirmed_at?: string | null; confirmed_at?: string | null } | null = null;
+    if (client.auth?.getUser) {
       const { data: authData } = await client.auth.getUser().catch(() => ({ data: { user: null } }));
-      if (authData?.user && !authData.user.email_confirmed_at && !authData.user.confirmed_at) {
+      authUser = authData?.user || null;
+    }
+
+    const resolvedUserId = isValidUuid(userId) ? userId : authUser?.id && isValidUuid(authUser.id) ? authUser.id : null;
+
+    if (!resolvedUserId) {
+      return {
+        success: false,
+        error: "Sesi Anda tidak valid. Silakan masuk kembali.",
+      };
+    }
+
+    // 0. Verification check: unverified users cannot provision a business unless internal bypass is active
+    if (process.env.ALLOW_UNVERIFIED_INTERNAL_SIGNUP !== "true" && authUser) {
+      if (!authUser.email_confirmed_at && !authUser.confirmed_at) {
         return {
           success: false,
           error: "Email belum diverifikasi. Verifikasi email diperlukan sebelum membuat bisnis.",
@@ -98,100 +116,60 @@ export async function createBusinessForUser(
       }
     }
 
-    // 0.1 Idempotency guard: check if user already has an active incomplete business (prevents duplicate provisioning on retry/refresh)
-    const { data: incompleteBiz } = await client
-      .from("businesses")
-      .select("id, onboarding_completed_at")
-      .eq("created_by", userId)
-      .is("onboarding_completed_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (incompleteBiz?.id) {
-      // Ensure onboarding progress is initialized for existing business
-      await client.from("business_onboarding_progress").upsert(
-        {
-          business_id: incompleteBiz.id,
-          current_step: 2,
-          profile_completed: true,
-        },
-        { onConflict: "business_id" }
-      );
-
-      return { success: true, businessId: incompleteBiz.id };
-    }
-
-    // 1. Create Business (DB Trigger trg_business_subscription_init automatically creates 14-day trial)
-    const { data: bizData, error: bizError } = await client
-      .from("businesses")
-      .insert({
-        name,
-        category,
-        owner_name: ownerName,
-        timezone,
-        currency,
-        default_unit: defaultUnit,
-        created_by: userId,
-        status: "active",
-      })
-      .select("id, name")
-      .single();
-
-    if (bizError || !bizData) {
-      return { success: false, error: bizError?.message || "Gagal membuat profil bisnis." };
-    }
-
-    const businessId = bizData.id;
-
-    // 2. Insert owner membership in business_users
-    const { error: memError } = await client.from("business_users").insert({
-      business_id: businessId,
-      user_id: userId,
-      role: "owner",
+    // 1. Authoritative provisioning via PostgreSQL SECURITY DEFINER RPC
+    // Eliminates circular RLS dependencies between businesses and business_users
+    const { data: rpcRes, error: rpcErr } = await client.rpc("create_business_for_authenticated_user", {
+      p_name: name,
+      p_category: category,
+      p_owner_name: ownerName,
+      p_timezone: timezone,
+      p_currency: currency,
+      p_default_unit: defaultUnit,
+      p_owner_user_id: resolvedUserId,
     });
 
-    if (memError) {
-      return { success: false, error: memError.message };
+    if (rpcErr) {
+      console.error("[createBusinessForUser] RPC execution error:", rpcErr.message);
+      if (rpcErr.message.includes("UNAUTHORIZED") || rpcErr.code === "42501") {
+        return {
+          success: false,
+          error: "Sesi Anda tidak valid. Silakan masuk kembali.",
+        };
+      }
+      return {
+        success: false,
+        error: "Profil usaha belum dapat dibuat. Silakan coba lagi.",
+      };
     }
 
-    // 3. Ensure channel settings exist
-    await client.from("business_channel_settings").insert({
-      business_id: businessId,
-      telegram_enabled: true,
-      whatsapp_enabled: false,
-      primary_channel: "telegram",
-    });
+    const rpcResult = rpcRes as {
+      success?: boolean;
+      business_id?: string;
+      error?: string;
+      message?: string;
+    } | null;
 
-    // 4. Ensure reminder settings exist
-    await client.from("business_reminder_settings").insert({
-      business_id: businessId,
-      enabled: true,
-      reminder_time: "18:00",
-      days_of_week: [1, 2, 3, 4, 5, 6, 0],
-    });
+    if (!rpcResult?.success || !rpcResult.business_id) {
+      const safeErrorMsg =
+        rpcResult?.message ||
+        (rpcResult?.error === "UNAUTHORIZED"
+          ? "Sesi Anda tidak valid. Silakan masuk kembali."
+          : rpcResult?.error === "EMAIL_NOT_VERIFIED"
+          ? "Email belum diverifikasi. Verifikasi email diperlukan sebelum membuat bisnis."
+          : rpcResult?.error === "INVALID_NAME"
+          ? "Nama usaha minimal 2 karakter."
+          : "Profil usaha belum dapat dibuat. Silakan coba lagi.");
 
-    // 5. Ensure onboarding progress is initialized
-    await client.from("business_onboarding_progress").upsert(
-      {
-        business_id: businessId,
-        current_step: 2,
-        profile_completed: true,
-      },
-      { onConflict: "business_id" }
-    );
+      return {
+        success: false,
+        error: safeErrorMsg,
+      };
+    }
 
-    // 6. Log event
-    await logOnboardingEvent(client, businessId, "business_created", {
-      name,
-      category,
-      timezone,
-    }, userId);
-
-    return { success: true, businessId };
+    return { success: true, businessId: rpcResult.business_id };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Terjadi kesalahan sistem.";
-    return { success: false, error: msg };
+    console.error("[createBusinessForUser] Unexpected exception:", err);
+    return { success: false, error: "Profil usaha belum dapat dibuat. Silakan coba lagi." };
   }
 }
 

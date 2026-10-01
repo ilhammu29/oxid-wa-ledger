@@ -183,6 +183,19 @@ async function runStep10_2Tests() {
             error: null,
           }),
         },
+        rpc: async (fnName: string, params: any) => {
+          if (fnName === "create_business_for_authenticated_user") {
+            return {
+              data: {
+                success: true,
+                business_id: "biz-verified-01",
+                name: params.p_name,
+              },
+              error: null,
+            };
+          }
+          return { data: null, error: { message: "Unknown RPC" } };
+        },
         from: (table: string) => {
           if (table === "businesses") {
             return {
