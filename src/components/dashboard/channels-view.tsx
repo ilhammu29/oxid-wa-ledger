@@ -10,7 +10,6 @@ import {
   Info,
   Smartphone,
   Lock,
-  UserPlus,
   Trash2,
   Bell,
   AlertTriangle,
@@ -30,7 +29,7 @@ import {
   generateTelegramPairingCodeAction,
   checkTelegramPairingStatusAction,
 } from "@/app/dashboard/actions";
-import { WhatsAppReadiness, WhatsAppConnectionStatus } from "@/modules/channels/types";
+import { WhatsAppReadiness } from "@/modules/channels/types";
 import { TelegramPairingModal } from "@/components/telegram/telegram-pairing-modal";
 import { getTelegramBotUsername } from "@/config/env.client";
 
@@ -71,38 +70,6 @@ interface ChannelsViewProps {
     maxOperators: number;
   };
   botUsername?: string;
-}
-
-function getStatusBadgeStyle(status: WhatsAppConnectionStatus) {
-  switch (status) {
-    case "ACTIVE":
-      return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
-    case "READY":
-      return "bg-sky-500/15 text-sky-300 border-sky-500/30";
-    case "CONFIGURING":
-      return "bg-amber-500/15 text-amber-300 border-amber-500/30";
-    case "ERROR":
-      return "bg-rose-500/15 text-rose-300 border-rose-500/30";
-    case "NOT CONFIGURED":
-    default:
-      return "bg-white/5 text-zinc-400 border-white/10";
-  }
-}
-
-function getStatusDotColor(status: WhatsAppConnectionStatus) {
-  switch (status) {
-    case "ACTIVE":
-      return "bg-emerald-400";
-    case "READY":
-      return "bg-sky-400";
-    case "CONFIGURING":
-      return "bg-amber-400";
-    case "ERROR":
-      return "bg-rose-400";
-    case "NOT CONFIGURED":
-    default:
-      return "bg-zinc-500";
-  }
 }
 
 export function ChannelsView({
@@ -185,7 +152,7 @@ export function ChannelsView({
   const [showCutoverModal, setShowCutoverModal] = useState(false);
   const [pendingCutoverPrimary, setPendingCutoverPrimary] = useState<"telegram" | "whatsapp" | null>(null);
 
-  // Operator State
+  // WhatsApp Operator & Template State
   const [newPhone, setNewPhone] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newReceiveReminders, setNewReceiveReminders] = useState(true);
@@ -194,7 +161,6 @@ export function ChannelsView({
   const [operatorError, setOperatorError] = useState<string | null>(null);
   const [operatorSuccess, setOperatorSuccess] = useState<string | null>(null);
 
-  // Template State
   const [templateName, setTemplateName] = useState(
     readiness.connection?.reminderTemplateName || "daily_sales_reminder"
   );
@@ -232,7 +198,7 @@ export function ChannelsView({
         if (overridePrimary) setPrimaryChannel(overridePrimary);
         setTimeout(() => setSaveSuccess(false), 4000);
       } else {
-        setSaveError(res.error || "Gagal menyimpan pengaturan channel.");
+        setSaveError(res.error || "Gagal menyimpan pengaturan kanal.");
       }
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : "Terjadi kesalahan.");
@@ -318,8 +284,6 @@ export function ChannelsView({
 
   const handleDeleteSender = async (senderId: string) => {
     if (!canEdit) return;
-    if (!confirm("Hapus nomor operator WhatsApp ini dari daftar izin bisnis?")) return;
-
     setOperatorActionId(senderId);
     try {
       const res = await deleteWhatsAppAuthorizedSenderAction(senderId);
@@ -343,16 +307,16 @@ export function ChannelsView({
 
     try {
       const formData = new FormData();
-      formData.set("templateName", templateName.trim());
-      formData.set("templateLanguage", templateLanguage.trim());
+      formData.set("templateName", templateName);
+      formData.set("templateLanguage", templateLanguage);
       formData.set("templateStatus", templateStatus);
 
       const res = await saveWhatsAppTemplateAction(formData);
       if (res.success) {
-        setTemplateSuccess("Pengaturan template WhatsApp berhasil diperbarui.");
+        setTemplateSuccess("Konfigurasi template Meta berhasil disimpan.");
         setTimeout(() => setTemplateSuccess(null), 4000);
       } else {
-        setTemplateError(res.error || "Gagal menyimpan template WhatsApp.");
+        setTemplateError(res.error || "Gagal menyimpan template.");
       }
     } catch (err: unknown) {
       setTemplateError(err instanceof Error ? err.message : "Terjadi kesalahan.");
@@ -363,943 +327,650 @@ export function ChannelsView({
 
   return (
     <div className="space-y-6">
-      {/* Top 4 Summary Metric Indicators */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Kanal Utama Aktif */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Kanal Utama
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Bot className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white">
-            {primaryChannel === "telegram" ? "Telegram Bot" : "WhatsApp"}
-          </div>
-          <div className="mt-2 text-[11px] text-emerald-400 font-medium flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Operasional Aktif
-          </div>
+      {/* Header & Inline Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Radio className="w-5 h-5 text-primary" />
+            Kanal Perpesanan
+          </h1>
+          <p className="text-xs text-muted mt-0.5">
+            Kelola koneksi bot Telegram, alokasi operator, dan perutean pengingat otomatis.
+          </p>
         </div>
 
-        {/* Metric 2: Kanal Sekunder */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Kanal Cadangan
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Smartphone className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white">
-            Meta WhatsApp
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            {whatsappEnabled ? "Aktif" : "Nonaktif (Deferred)"}
-          </div>
-        </div>
-
-        {/* Metric 3: Operator Telegram */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Operator Terhubung
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {telegramOps.length}
-            </span>
-            <span className="text-xs text-zinc-400">/ {maxOperators} Kuota</span>
-          </div>
-          <div className="mt-2 text-[11px] text-sky-400">
-            {plan?.name || "Paket Bisnis"}
-          </div>
-        </div>
-
-        {/* Metric 4: Pengingat Harian */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Pengingat Harian
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Bell className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white capitalize">
-            {reminderChannel}
-          </div>
-          <div className="mt-2 text-[11px] text-amber-300">
-            Target perutean notifikasi
-          </div>
+        <div className="inline-flex items-center gap-2 text-xs text-muted bg-surface border border-border px-3 py-1.5 rounded-lg self-start sm:self-auto">
+          <span>Kanal Aktif: <strong className="text-foreground capitalize">{primaryChannel}</strong></span>
+          <span className="text-border">·</span>
+          <span>Operator: <strong className="text-foreground font-mono">{telegramOps.length}</strong> / {maxOperators}</span>
         </div>
       </div>
 
       {/* Alert Notices */}
       {saveSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs sm:text-sm flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
           <span>Pengaturan kanal komunikasi berhasil disimpan.</span>
         </div>
       )}
 
       {saveError && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs sm:text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+        <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
           <span>{saveError}</span>
         </div>
       )}
 
-      {/* WhatsApp Connection Health Banner */}
-      <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-white text-sm sm:text-base">
-                  Status Integrasi WhatsApp Cloud API
-                </h3>
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide border ${getStatusBadgeStyle(
-                    readiness.status
-                  )}`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${getStatusDotColor(readiness.status)}`} />
-                  {readiness.status}
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Pondasi operasional pesan instan berbasis Meta Cloud API resmi.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 6 Key Operational Facts Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Nama Bisnis Meta</p>
-            <p className="text-xs font-semibold text-white mt-1 truncate" title={readiness.connection?.verifiedName || "Belum Diverifikasi"}>
-              {readiness.connection?.verifiedName || "Belum Diverifikasi"}
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Nomor WhatsApp</p>
-            <p className="text-xs font-semibold text-white mt-1 font-mono">
-              {readiness.connection?.maskedPhoneNumber || readiness.connection?.displayPhoneNumber || "Belum Ada"}
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Koneksi WABA ID</p>
-            <p className="text-xs font-semibold text-white mt-1 flex items-center gap-1">
-              {readiness.hasWabaId ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 inline" />
-                  <span className="text-emerald-300">Terhubung</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-3.5 h-3.5 text-zinc-500 inline" />
-                  <span className="text-zinc-400">Belum Ada</span>
-                </>
-              )}
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Phone Number ID</p>
-            <p className="text-xs font-semibold text-white mt-1 font-mono">
-              {readiness.connection?.maskedPhoneNumberId || "Belum Ada"}
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Webhook Status</p>
-            <p className="text-xs font-semibold text-white mt-1 flex items-center gap-1">
-              {readiness.hasActiveConnection ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 inline" />
-                  <span className="text-emerald-300">Aktif (HMAC)</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 inline" />
-                  <span className="text-amber-300">Tertunda</span>
-                </>
-              )}
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-            <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Operator Terdaftar</p>
-            <p className="text-xs font-semibold text-white mt-1 flex items-center gap-1.5">
-              <span className="inline-block px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[11px] font-mono">
-                {readiness.authorizedSendersCount}
-              </span>
-              <span className="text-zinc-300">Nomor</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Channel Toggles Section (2 Cards) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Telegram Card */}
-        <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md flex flex-col justify-between space-y-5 transition-all hover:border-purple-500/30">
-          <div className="space-y-4">
+      {/* Channel Cards (2 Distinct Cards) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Telegram Card (Primary Operational Channel) */}
+        <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                  <Bot className="w-5 h-5" />
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm sm:text-base">Telegram Bot</h3>
-                  <p className="text-xs text-purple-300 font-mono mt-0.5">@{effectiveBotUsername}</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground text-sm">Telegram Bot</h3>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                      Kanal Utama
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted font-mono mt-0.5">@{effectiveBotUsername}</p>
                 </div>
               </div>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  telegramEnabled
-                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                    : "bg-white/5 text-zinc-400 border border-white/10"
-                }`}
-              >
+              <div className="flex items-center gap-2">
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    telegramEnabled ? "bg-emerald-400 animate-pulse" : "bg-zinc-500"
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    telegramEnabled
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                      : "bg-secondary text-muted-foreground border border-border"
                   }`}
-                />
-                {telegramEnabled ? "AKTIF" : "NONAKTIF"}
-              </span>
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      telegramEnabled ? "bg-emerald-500" : "bg-muted-foreground"
+                    }`}
+                  />
+                  {telegramEnabled ? "Aktif" : "Nonaktif"}
+                </span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setTelegramEnabled(!telegramEnabled)}
+                    className={`w-9 h-5 rounded-full p-0.5 transition-colors focus:outline-none shrink-0 ${
+                      telegramEnabled ? "bg-primary" : "bg-secondary border border-border"
+                    }`}
+                    aria-label="Aktifkan Telegram"
+                  >
+                    <span
+                      className={`block w-4 h-4 rounded-full bg-white transition-transform ${
+                        telegramEnabled ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Connection Status Grid */}
+            {/* Quick Status Bar */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-[10px] text-zinc-400 font-medium block uppercase tracking-wider">
-                  Webhook
+              <div className="p-2.5 rounded-md bg-secondary/50 border border-border">
+                <span className="text-[10px] text-muted uppercase font-medium block">
+                  Webhook Bot
                 </span>
-                <span className="font-semibold text-emerald-400 flex items-center gap-1.5 mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Aktif & Terverifikasi
+                <span className="font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Operasional
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-[10px] text-zinc-400 font-medium block uppercase tracking-wider">
-                  Bot Status
+              <div className="p-2.5 rounded-md bg-secondary/50 border border-border">
+                <span className="text-[10px] text-muted uppercase font-medium block">
+                  Status Layanan
                 </span>
-                <span className="font-semibold text-white flex items-center gap-1.5 mt-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                <span className="font-medium text-foreground flex items-center gap-1 mt-0.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                   Siap Melayani
                 </span>
               </div>
             </div>
 
-            {/* Toggle Channel */}
-            <div className="flex items-center justify-between py-2 border-t border-b border-white/5">
+            {/* Operator Quota Header */}
+            <div className="flex items-center justify-between pt-1">
               <div>
-                <p className="text-xs font-semibold text-white">Aktifkan Perintah Bot</p>
-                <p className="text-[11px] text-zinc-400">
-                  Menerima perintah /sale, /batal, /status, dan pengingat via Telegram.
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-muted" />
+                  Operator Telegram Terhubung
+                </span>
+                <p className="text-[11px] text-muted">
+                  {plan?.name ? `${plan.name}: ` : ""}
+                  {telegramOps.length} dari {maxOperators} kuota digunakan
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => canEdit && setTelegramEnabled(!telegramEnabled)}
-                disabled={!canEdit}
-                className={`w-12 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-                  telegramEnabled ? "bg-purple-600 shadow-md shadow-purple-900/40" : "bg-white/10"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                    telegramEnabled ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Operators Section */}
-            <div className="pt-2 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white">Operator Telegram Terhubung</span>
-                  <p className="text-[11px] text-zinc-400">
-                    {plan?.name ? `${plan.name}: ` : ""}
-                    {telegramOps.length} / {maxOperators} operator digunakan
-                  </p>
-                </div>
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold ${
-                    isLimitReached
-                      ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                      : "bg-purple-500/15 text-purple-300 border border-purple-500/30"
-                  }`}
-                >
-                  {telegramOps.length} / {maxOperators}
-                </span>
-              </div>
-
-              {/* Status/Error banner */}
-              {unlinkOpMsg && (
-                <div
-                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                    unlinkOpMsg.type === "success"
-                      ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-300 border border-rose-500/20"
-                  }`}
-                >
-                  <span>{unlinkOpMsg.text}</span>
-                </div>
-              )}
-
-              {/* Limit Reached Warning */}
-              {isLimitReached && (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-white">Batas operator tercapai</p>
-                    <p className="text-[11px] text-zinc-400">
-                      Batas operator Telegram untuk paket Anda sudah tercapai ({telegramOps.length}/{maxOperators}).
-                    </p>
-                  </div>
-                  <Link
-                    href="/dashboard/subscription"
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 font-medium text-[11px] shrink-0 transition"
-                  >
-                    Lihat Paket
-                  </Link>
-                </div>
-              )}
-
-              {/* Operator Cards / List */}
-              {telegramOps.length === 0 ? (
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-dashed border-white/10 text-center space-y-3">
-                  <p className="text-xs text-zinc-400">Belum ada operator Telegram yang terhubung.</p>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPairingModal(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Hubungkan Telegram</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {telegramOps.map((op) => (
-                    <div
-                      key={op.id}
-                      className="p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs space-y-2.5 transition-all hover:border-purple-500/30"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-white text-xs">
-                              {op.operatorRole || op.displayLabel || "Operator"}
-                            </span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                              Aktif
-                            </span>
-                          </div>
-                          <p className="text-xs text-purple-300 font-mono mt-0.5">
-                            {op.telegramUsername ? `@${op.telegramUsername.replace(/^@/, "")}` : maskTelegramUserId(op.telegramUserId)}
-                          </p>
-                        </div>
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={() => setOperatorToUnlink(op)}
-                            disabled={unlinkingOpId === op.id}
-                            className="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition disabled:opacity-50"
-                          >
-                            Putuskan
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-[11px] text-zinc-400">
-                        <div>
-                          <span>Terima Pengingat: </span>
-                          <span className="font-medium text-white">
-                            {op.receiveReminders ? "Ya" : "Tidak"}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span>Terhubung: </span>
-                          <span className="font-medium text-white">
-                            {formatConnectedAt(op.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Add Operator CTA */}
-                  {canEdit && (
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowPairingModal(true)}
-                        disabled={isLimitReached}
-                        className="w-full py-2.5 px-3 rounded-xl border border-white/10 hover:bg-white/5 text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Plus className="w-4 h-4 text-purple-400" />
-                        <span>+ Tambah Operator Telegram</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Help Text */}
-          <div className="text-[11px] text-zinc-400 pt-3 border-t border-white/5 leading-relaxed">
-            Gunakan satu bot OXID Ledger untuk semua bisnis. Setiap operator dihubungkan melalui kode koneksi yang unik.
-          </div>
-        </div>
-
-        {/* WhatsApp Card */}
-        <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm sm:text-base">Meta WhatsApp Cloud API</h3>
-                  <p className="text-xs text-zinc-400">Kanal utama komunikasi WhatsApp resmi</p>
-                </div>
-              </div>
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                  readiness.ready
-                    ? whatsappEnabled
-                      ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                      : "bg-sky-500/15 text-sky-300 border border-sky-500/30"
-                    : "bg-white/5 text-zinc-400 border border-white/10"
+                className={`px-2 py-0.5 rounded text-xs font-mono font-medium ${
+                  isLimitReached
+                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                    : "bg-secondary text-foreground border border-border"
                 }`}
               >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    readiness.ready
-                      ? whatsappEnabled
-                        ? "bg-emerald-400"
-                        : "bg-sky-400"
-                      : "bg-zinc-500"
-                  }`}
-                />
-                {readiness.ready
-                  ? whatsappEnabled
-                    ? "Aktif"
-                    : "Siap (Nonaktif)"
-                  : "Belum Siap"}
+                {telegramOps.length} / {maxOperators}
               </span>
             </div>
 
-            <div className="py-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-white">Aktifkan Kanal WhatsApp</p>
-                  <p className="text-[11px] text-zinc-400">
-                    Memproses webhook pesan masuk dan mengirim balasan via WhatsApp.
+            {/* Unlink Message Banner */}
+            {unlinkOpMsg && (
+              <div
+                className={`p-2.5 rounded-md text-xs flex items-center gap-2 ${
+                  unlinkOpMsg.type === "success"
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                    : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                }`}
+              >
+                <span>{unlinkOpMsg.text}</span>
+              </div>
+            )}
+
+            {/* Limit Warning */}
+            {isLimitReached && (
+              <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <p className="font-medium">Batas operator tercapai</p>
+                  <p className="text-[11px] text-muted">
+                    Tingkatkan paket bisnis untuk menghubungkan lebih banyak operator.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!readiness.ready && !whatsappEnabled) {
-                      setSaveError(
-                        `Kanal WhatsApp belum dapat diaktifkan: ${readiness.missingRequirements.join(" ")}`
-                      );
-                      return;
-                    }
-                    if (canEdit) setWhatsappEnabled(!whatsappEnabled);
-                  }}
-                  disabled={!canEdit || (!readiness.ready && !whatsappEnabled)}
-                  className={`w-12 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-                    whatsappEnabled ? "bg-emerald-600 shadow-md shadow-emerald-900/40" : "bg-white/10"
-                  } disabled:opacity-50`}
+                <Link
+                  href="/dashboard/subscription"
+                  className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-medium shrink-0 transition"
                 >
-                  <div
-                    className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                      whatsappEnabled ? "translate-x-6" : "translate-x-0"
-                    }`}
-                  />
-                </button>
+                  Upgrade
+                </Link>
               </div>
+            )}
 
-              {/* Readiness Checklist */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2.5">
-                <p className="text-xs font-bold text-white uppercase tracking-wider">
-                  Checklist Kesiapan WhatsApp
-                </p>
-                <ul className="text-xs space-y-2">
-                  <li className="flex items-center gap-2.5">
-                    {readiness.hasActiveConnection ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <span className={readiness.hasActiveConnection ? "text-zinc-200" : "text-zinc-400"}>
-                      Koneksi WhatsApp Aktif
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    {readiness.hasPhoneNumberId ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <span className={readiness.hasPhoneNumberId ? "text-zinc-200" : "text-zinc-400"}>
-                      Phone Number ID Terdaftar
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    {readiness.hasAuthorizedSenders ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <span className={readiness.hasAuthorizedSenders ? "text-zinc-200" : "text-zinc-400"}>
-                      Minimal 1 Operator WhatsApp Terdaftar ({readiness.authorizedSendersCount} terdaftar)
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    {readiness.isTokenConfigured ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <span className={readiness.isTokenConfigured ? "text-zinc-200" : "text-zinc-400"}>
-                      Token WHATSAPP_ACCESS_TOKEN Runtime Siap
-                    </span>
-                  </li>
-                </ul>
+            {/* Operator List */}
+            {telegramOps.length === 0 ? (
+              <div className="p-5 rounded-lg border border-dashed border-border text-center space-y-2.5">
+                <p className="text-xs text-muted">Belum ada operator Telegram yang terhubung.</p>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPairingModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-medium transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Hubungkan Operator</span>
+                  </button>
+                )}
               </div>
+            ) : (
+              <div className="space-y-2">
+                {telegramOps.map((op) => (
+                  <div
+                    key={op.id}
+                    className="p-3 rounded-lg border border-border bg-secondary/30 text-xs space-y-1.5 hover:bg-surface-hover transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-foreground text-xs">
+                            {op.operatorRole || op.displayLabel || "Operator"}
+                          </span>
+                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            Aktif
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted font-mono mt-0.5">
+                          {op.telegramUsername ? `@${op.telegramUsername.replace(/^@/, "")}` : maskTelegramUserId(op.telegramUserId)}
+                        </p>
+                      </div>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => setOperatorToUnlink(op)}
+                          disabled={unlinkingOpId === op.id}
+                          className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition disabled:opacity-50"
+                        >
+                          Putuskan
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-border text-[11px] text-muted">
+                      <span>Pengingat: <strong className="text-foreground">{op.receiveReminders ? "Ya" : "Tidak"}</strong></span>
+                      <span>Terhubung: {formatConnectedAt(op.createdAt)}</span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add Operator CTA */}
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPairingModal(true)}
+                    disabled={isLimitReached}
+                    className="w-full py-2 px-3 rounded-lg border border-border hover:bg-surface-hover text-foreground text-xs font-medium flex items-center justify-center gap-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-primary" />
+                    <span>+ Hubungkan Operator Telegram</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <p className="text-[11px] text-muted pt-2 border-t border-border">
+            Satu bot OXID Ledger melayani semua bisnis. Operator dihubungkan menggunakan kode aman yang kedaluwarsa dalam 10 menit.
+          </p>
+        </div>
+
+        {/* WhatsApp Card (Clean Deferred State) */}
+        <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center shrink-0">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">Meta WhatsApp Cloud API</h3>
+                  <p className="text-xs text-muted">Kanal Perpesanan Bisnis</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
+                  {whatsappEnabled ? "Aktif" : "Segera Hadir"}
+                </span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!readiness.ready && !whatsappEnabled) {
+                        setSaveError(
+                          `Kanal WhatsApp belum dapat diaktifkan: ${readiness.missingRequirements.join(" ")}`
+                        );
+                        return;
+                      }
+                      setWhatsappEnabled(!whatsappEnabled);
+                    }}
+                    disabled={!readiness.ready && !whatsappEnabled}
+                    className={`w-9 h-5 rounded-full p-0.5 transition-colors focus:outline-none shrink-0 ${
+                      whatsappEnabled ? "bg-primary" : "bg-secondary border border-border"
+                    } disabled:opacity-50`}
+                    aria-label="Aktifkan WhatsApp"
+                  >
+                    <span
+                      className={`block w-4 h-4 rounded-full bg-white transition-transform ${
+                        whatsappEnabled ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Explanation Box */}
+            <div className="p-3.5 rounded-lg bg-secondary/50 border border-border space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-foreground font-medium">
+                <Info className="w-4 h-4 text-primary shrink-0" />
+                <span>Status Peluncuran WhatsApp Cloud</span>
+              </div>
+              <p className="text-muted leading-relaxed text-[11px]">
+                Integrasi langsung Meta WhatsApp Cloud API sedang dalam tahap sertifikasi template utility dan verifikasi WABA bisnis. Selama fase pra-beta ini, seluruh pencatatan transaksi kasir difokuskan melalui kanal resmi Telegram Bot yang stabil dan terbukti cepat.
+              </p>
+            </div>
+
+            {/* Readiness Checklist (Compact) */}
+            <div className="p-3 rounded-lg border border-border space-y-2">
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-muted">
+                Status Kesiapan Meta WABA
+              </p>
+              <ul className="text-xs space-y-1.5">
+                <li className="flex items-center gap-2">
+                  {readiness.hasActiveConnection ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full border border-border flex items-center justify-center text-[10px] text-muted">-</span>
+                  )}
+                  <span className={readiness.hasActiveConnection ? "text-foreground" : "text-muted"}>
+                    Koneksi WhatsApp Aktif
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  {readiness.hasPhoneNumberId ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full border border-border flex items-center justify-center text-[10px] text-muted">-</span>
+                  )}
+                  <span className={readiness.hasPhoneNumberId ? "text-foreground" : "text-muted"}>
+                    Phone Number ID Terdaftar
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  {readiness.hasApprovedTemplate ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full border border-border flex items-center justify-center text-[10px] text-muted">-</span>
+                  )}
+                  <span className={readiness.hasApprovedTemplate ? "text-foreground" : "text-muted"}>
+                    Template Utilitas Meta Disetujui
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div className="text-[11px] text-zinc-400 pt-3 border-t border-white/5 leading-relaxed">
-            Membutuhkan Meta WABA terverifikasi dan App subscription resmi.
-          </div>
+          <p className="text-[11px] text-muted pt-2 border-t border-border">
+            Ketika siap, aktivasi kanal WhatsApp tidak akan mengubah riwayat keuangan yang telah tercatat di PostgreSQL.
+          </p>
         </div>
       </div>
 
-      {/* Channel Routing Configuration Card */}
-      <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md space-y-6">
+      {/* Channel Routing & Preferences Card */}
+      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
         <div>
-          <h3 className="font-bold text-white text-sm sm:text-base">
+          <h3 className="font-semibold text-foreground text-sm">
             Perutean Kanal (Routing)
           </h3>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-muted mt-0.5">
             Tentukan prioritas kanal komunikasi utama dan target pengingat otomatis bisnis Anda.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Primary Channel */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
+            <label className="block text-xs font-medium text-foreground mb-1.5">
               Kanal Utama (Primary Channel)
             </label>
             <select
               value={primaryChannel}
               onChange={(e) => handlePrimaryChange(e.target.value as "telegram" | "whatsapp")}
               disabled={!canEdit}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 text-xs font-medium text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              className="w-full px-3 py-2 rounded-lg border border-border text-xs text-foreground bg-background focus:outline-none focus:ring-1 focus:ring-primary transition"
             >
-              <option value="telegram" className="bg-[#111726] text-white">Telegram (Aktif & Teruji)</option>
-              <option value="whatsapp" disabled={!readiness.ready} className="bg-[#111726] text-white">
-                WhatsApp {!readiness.ready ? "(Belum Siap - Lengkapi Checklist)" : "(Kanal Produksi)"}
+              <option value="telegram">Telegram (Utama - Stabil & Teruji)</option>
+              <option value="whatsapp" disabled={!readiness.ready}>
+                WhatsApp {!readiness.ready ? "(Belum Siap - Ditangguhkan)" : "(Kanal Produksi)"}
               </option>
             </select>
-            <p className="text-[11px] text-zinc-400 mt-1.5">
-              Kanal acuan utama untuk pencatatan transaksi sehari-hari pemilik dan kasir.
+            <p className="text-[11px] text-muted mt-1">
+              Kanal acuan untuk pencatatan transaksi sehari-hari pemilik dan kasir.
             </p>
           </div>
 
           {/* Reminder Channel */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
+            <label className="block text-xs font-medium text-foreground mb-1.5">
               Kanal Pengingat Otomatis (Reminder Channel)
             </label>
             <select
               value={reminderChannel}
               onChange={(e) => setReminderChannel(e.target.value as "telegram" | "whatsapp")}
               disabled={!canEdit}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 text-xs font-medium text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              className="w-full px-3 py-2 rounded-lg border border-border text-xs text-foreground bg-background focus:outline-none focus:ring-1 focus:ring-primary transition"
             >
-              <option value="telegram" className="bg-[#111726] text-white">Telegram (Aktif & Teruji)</option>
+              <option value="telegram">Telegram (Utama - Stabil & Teruji)</option>
               <option
                 value="whatsapp"
                 disabled={!readiness.hasApprovedTemplate || !readiness.ready}
-                className="bg-[#111726] text-white"
               >
-                WhatsApp {readiness.hasApprovedTemplate ? "(Template Disetujui)" : "(Terkunci — Butuh Template Disetujui)"}
+                WhatsApp {readiness.hasApprovedTemplate ? "(Template Disetujui)" : "(Terkunci — Butuh Template Meta)"}
               </option>
             </select>
-            <div className="mt-2 flex items-start gap-2 text-[11px] text-zinc-400 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed">
+            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted">
               {readiness.hasApprovedTemplate ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
               ) : (
-                <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                <Lock className="w-3.5 h-3.5 shrink-0 text-muted" />
               )}
               <span>
                 {readiness.hasApprovedTemplate
-                  ? `Template Meta "${readiness.connection?.reminderTemplateName}" telah disetujui. Pengingat WhatsApp siap dikirim ke operator terpilih.`
-                  : "Pengingat WhatsApp diblokir demi kepatuhan Meta Policy sampai template berstatus approved dan operator terpilih terdaftar."}
+                  ? "Template Meta siap digunakan untuk pengingat."
+                  : "Pengingat WhatsApp dibatasi sampai template utility disetujui Meta."}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Data Safety Notice */}
-        <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-zinc-300 flex items-start gap-3">
-          <Info className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-semibold text-white">Jaminan Keamanan Data & Sumber Kebenaran</p>
-            <p className="text-[11px] leading-relaxed text-zinc-400">
-              Pengalihan atau penonaktifan kanal pesan tidak akan pernah menghapus data transaksi,
-              saldo ledger, maupun riwayat percakapan. Seluruh mutasi keuangan tersimpan aman secara terpusat di PostgreSQL Supabase.
-            </p>
-          </div>
-        </div>
-
         {/* Save Routing Button */}
         {canEdit && (
-          <div className="flex items-center justify-end pt-2">
+          <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={() => handleSaveSettings()}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-medium transition disabled:opacity-50"
             >
-              <Radio className="w-4 h-4" />
-              <span>{saving ? "Menyimpan..." : "Simpan Pengaturan Kanal"}</span>
+              {saving ? "Menyimpan..." : "Simpan Pengaturan Kanal"}
             </button>
           </div>
         )}
       </div>
 
-      {/* Operator WhatsApp Management Section */}
-      <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md space-y-6">
-        <div>
-          <h3 className="font-bold text-white text-sm sm:text-base">
-            Daftar Operator WhatsApp yang Diizinkan
-          </h3>
-          <p className="text-xs text-zinc-400 mt-1">
-            Hanya nomor terdaftar yang dapat mencatat transaksi penjualan dan menerima pengingat harian.
-          </p>
-        </div>
+      {/* Advanced / Developer Integration: WhatsApp Senders & Templates (Subtle Collapsible Section) */}
+      <details className="card-base bg-surface border-border p-4 rounded-lg group">
+        <summary className="text-xs font-medium text-muted cursor-pointer hover:text-foreground flex items-center justify-between select-none">
+          <span>Konfigurasi Lanjutan WhatsApp Cloud API & Template</span>
+          <span className="text-[11px] font-mono group-open:rotate-90 transition-transform">▸</span>
+        </summary>
 
-        {operatorSuccess && (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-            <span>{operatorSuccess}</span>
-          </div>
-        )}
-
-        {operatorError && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{operatorError}</span>
-          </div>
-        )}
-
-        {/* Add Operator Form */}
-        {canEdit && (
-          <form onSubmit={handleAddOperator} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
-            <p className="text-xs font-semibold text-white flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-purple-400" />
-              Tambah Operator WhatsApp Baru
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-300 mb-1">
-                  Nomor WhatsApp <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="08123456789 atau 62812..."
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-white/10 text-xs text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
+        <div className="pt-4 space-y-5 border-t border-border mt-3">
+          {/* Operator WhatsApp Form & Table */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-foreground">Operator WhatsApp yang Diizinkan</h4>
+            {operatorSuccess && (
+              <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs">
+                {operatorSuccess}
               </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-300 mb-1">
-                  Nama / Label Jabatan
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Kasir Kolam 1 / Owner"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-white/10 text-xs text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
+            )}
+            {operatorError && (
+              <div className="p-2.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs">
+                {operatorError}
               </div>
+            )}
 
-              <div className="flex flex-col justify-end">
-                <div className="flex items-center gap-2 h-9 mb-0.5">
+            {canEdit && (
+              <form onSubmit={handleAddOperator} className="p-3 rounded-lg bg-secondary/40 border border-border space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input
-                    type="checkbox"
-                    id="receiveRemindersCheckbox"
-                    checked={newReceiveReminders}
-                    onChange={(e) => setNewReceiveReminders(e.target.checked)}
-                    className="rounded border-white/20 bg-white/10 text-purple-600 focus:ring-0 h-4 w-4"
+                    type="text"
+                    placeholder="Nomor WA (contoh: 08123...)"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
                   />
-                  <label htmlFor="receiveRemindersCheckbox" className="text-xs text-zinc-300 select-none">
-                    Kirim pengingat ke nomor ini
-                  </label>
+                  <input
+                    type="text"
+                    placeholder="Label / Nama Operator"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="receiveRemindersCheckbox"
+                      checked={newReceiveReminders}
+                      onChange={(e) => setNewReceiveReminders(e.target.checked)}
+                      className="rounded border-border text-primary"
+                    />
+                    <label htmlFor="receiveRemindersCheckbox" className="text-xs text-muted">
+                      Kirim pengingat
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={addingOperator || !newPhone.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-surface-hover border border-border text-foreground text-xs font-medium transition disabled:opacity-50"
+                  >
+                    {addingOperator ? "Mendaftarkan..." : "Daftarkan Operator"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {senders.length > 0 && (
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-secondary/50 text-muted uppercase text-[10px]">
+                    <tr>
+                      <th className="px-3 py-2">Nomor</th>
+                      <th className="px-3 py-2">Label</th>
+                      <th className="px-3 py-2 text-center">Status</th>
+                      <th className="px-3 py-2 text-center">Pengingat</th>
+                      {canEdit && <th className="px-3 py-2 text-right">Aksi</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {senders.map((s) => (
+                      <tr key={s.id} className="hover:bg-surface-hover">
+                        <td className="px-3 py-2 font-mono text-foreground">{s.phoneNumber}</td>
+                        <td className="px-3 py-2 text-muted">{s.displayLabel || "-"}</td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSenderActive(s.id, s.active)}
+                            disabled={!canEdit || operatorActionId === s.id}
+                            className="text-[11px] text-muted underline"
+                          >
+                            {s.active ? "Aktif" : "Nonaktif"}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSenderReminders(s.id, s.receiveReminders)}
+                            disabled={!canEdit || operatorActionId === s.id}
+                            className="text-[11px] text-muted hover:text-foreground inline-flex items-center gap-1"
+                          >
+                            <Bell className={`w-3 h-3 ${s.receiveReminders ? "text-primary" : "text-muted"}`} />
+                            <span>{s.receiveReminders ? "Ya" : "Tidak"}</span>
+                          </button>
+                        </td>
+                        {canEdit && (
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSender(s.id)}
+                              className="text-muted hover:text-rose-500"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Template Configuration */}
+          <div className="space-y-3 pt-3 border-t border-border">
+            <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <FileCode2 className="w-3.5 h-3.5 text-muted" />
+              Pengaturan Template Utilitas Meta
+            </h4>
+            {templateSuccess && (
+              <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs">
+                {templateSuccess}
+              </div>
+            )}
+            {templateError && (
+              <div className="p-2.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs">
+                {templateError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveTemplate} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Nama Template</label>
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    disabled={!canEdit}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border text-xs font-mono bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Bahasa</label>
+                  <select
+                    value={templateLanguage}
+                    onChange={(e) => setTemplateLanguage(e.target.value)}
+                    disabled={!canEdit}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
+                  >
+                    <option value="id">Bahasa Indonesia (id)</option>
+                    <option value="en_US">English (en_US)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Status Persetujuan</label>
+                  <select
+                    value={templateStatus}
+                    onChange={(e) => setTemplateStatus(e.target.value)}
+                    disabled={!canEdit}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
+                  >
+                    <option value="unconfigured">unconfigured</option>
+                    <option value="pending">pending</option>
+                    <option value="approved">approved</option>
+                    <option value="rejected">rejected</option>
+                  </select>
                 </div>
               </div>
-            </div>
 
-            <div className="flex justify-end pt-1">
-              <button
-                type="submit"
-                disabled={addingOperator || !newPhone.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition disabled:opacity-50"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>{addingOperator ? "Mendaftarkan..." : "Daftarkan Operator"}</span>
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Operators Table */}
-        <div className="overflow-x-auto rounded-xl border border-white/10">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-white/[0.02] border-b border-white/10 text-zinc-400 font-semibold uppercase text-[11px]">
-              <tr>
-                <th className="px-4 py-3">Nomor WhatsApp</th>
-                <th className="px-4 py-3">Label / Nama</th>
-                <th className="px-4 py-3 text-center">Status Akses</th>
-                <th className="px-4 py-3 text-center">Terima Pengingat</th>
-                {canEdit && <th className="px-4 py-3 text-right">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {senders.length === 0 ? (
-                <tr>
-                  <td colSpan={canEdit ? 5 : 4} className="px-4 py-8 text-center text-zinc-500">
-                    Belum ada operator WhatsApp yang terdaftar. Tambahkan operator di atas.
-                  </td>
-                </tr>
-              ) : (
-                senders.map((s) => (
-                  <tr key={s.id} className="hover:bg-white/[0.02]">
-                    <td className="px-4 py-3 font-mono text-white">
-                      {s.phoneNumber.slice(0, 5)}****{s.phoneNumber.slice(-4)}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-300">
-                      {s.displayLabel || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSenderActive(s.id, s.active)}
-                        disabled={!canEdit || operatorActionId === s.id}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition ${
-                          s.active
-                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                            : "bg-white/5 text-zinc-400 border border-white/10"
-                        }`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${s.active ? "bg-emerald-400" : "bg-zinc-500"}`} />
-                        {s.active ? "Aktif" : "Nonaktif"}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSenderReminders(s.id, s.receiveReminders)}
-                        disabled={!canEdit || operatorActionId === s.id}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition ${
-                          s.receiveReminders
-                            ? "bg-sky-500/15 text-sky-300 border border-sky-500/30"
-                            : "bg-white/5 text-zinc-400 border border-white/10"
-                        }`}
-                      >
-                        <Bell className={`w-3 h-3 ${s.receiveReminders ? "text-sky-400" : "text-zinc-500"}`} />
-                        {s.receiveReminders ? "Ya" : "Tidak"}
-                      </button>
-                    </td>
-                    {canEdit && (
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSender(s.id)}
-                          disabled={operatorActionId === s.id}
-                          className="p-1 text-zinc-400 hover:text-rose-400 transition"
-                          title="Hapus Operator"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))
+              {canEdit && (
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingTemplate}
+                    className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-surface-hover border border-border text-foreground text-xs font-medium transition disabled:opacity-50"
+                  >
+                    {savingTemplate ? "Menyimpan..." : "Simpan Template"}
+                  </button>
+                </div>
               )}
-            </tbody>
-          </table>
+            </form>
+          </div>
         </div>
-      </div>
-
-      {/* WhatsApp Template Configuration Section */}
-      <div className="bg-[#111726]/80 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl backdrop-blur-md space-y-6">
-        <div>
-          <h3 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
-            <FileCode2 className="w-4 h-4 text-purple-400" />
-            Konfigurasi Template Pengingat Meta (Utility Template)
-          </h3>
-          <p className="text-xs text-zinc-400 mt-1">
-            Sesuai aturan Meta Cloud API, pengingat otomatis di luar jendela layanan 24 jam wajib menggunakan template kategori Utility yang telah disetujui Meta.
-          </p>
-        </div>
-
-        {templateSuccess && (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-            <span>{templateSuccess}</span>
-          </div>
-        )}
-
-        {templateError && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{templateError}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSaveTemplate} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                Nama Template Meta
-              </label>
-              <input
-                type="text"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                disabled={!canEdit}
-                placeholder="daily_sales_reminder"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 text-xs font-mono text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <p className="text-[11px] text-zinc-500 mt-1">Nama template di Meta WhatsApp Manager.</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                Kode Bahasa
-              </label>
-              <select
-                value={templateLanguage}
-                onChange={(e) => setTemplateLanguage(e.target.value)}
-                disabled={!canEdit}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 text-xs text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="id" className="bg-[#111726] text-white">Bahasa Indonesia (id)</option>
-                <option value="en_US" className="bg-[#111726] text-white">English (en_US)</option>
-              </select>
-              <p className="text-[11px] text-zinc-500 mt-1">Bahasa yang didaftarkan pada template.</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                Status Persetujuan Meta
-              </label>
-              <select
-                value={templateStatus}
-                onChange={(e) => setTemplateStatus(e.target.value)}
-                disabled={!canEdit}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 text-xs font-medium text-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="unconfigured" className="bg-[#111726] text-white">Belum Dikonfigurasi (unconfigured)</option>
-                <option value="pending" className="bg-[#111726] text-white">Sedang Ditinjau Meta (pending)</option>
-                <option value="approved" className="bg-[#111726] text-white">Disetujui Meta (approved)</option>
-                <option value="rejected" className="bg-[#111726] text-white">Ditolak Meta (rejected)</option>
-              </select>
-              <p className="text-[11px] text-zinc-500 mt-1">Hanya template approved yang dapat digunakan.</p>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-            <div className="space-y-1">
-              <p className="font-semibold text-white">Ketentuan Pengiriman Pesan Bisnis WhatsApp:</p>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Pesan balasan transaksi yang dikirimkan dalam 24 jam setelah pesan operator masuk dapat menggunakan format teks biasa gratis.
-                Namun untuk pengingat harian otomatis pada jam terjadwal, Meta membatasi pesan keluar wajib menggunakan template Utility yang telah disetujui.
-              </p>
-            </div>
-          </div>
-
-          {canEdit && (
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={savingTemplate}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-xs border border-white/10 transition shadow-xs disabled:opacity-50"
-              >
-                <FileCode2 className="w-4 h-4" />
-                <span>{savingTemplate ? "Menyimpan Template..." : "Simpan Konfigurasi Template"}</span>
-              </button>
-            </div>
-          )}
-        </form>
-      </div>
+      </details>
 
       {/* Cutover Confirmation Modal */}
       {showCutoverModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#111726] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/10 space-y-4 text-white">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                <ArrowRightLeft className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-secondary text-primary flex items-center justify-center shrink-0">
+                <ArrowRightLeft className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm">
-                  Konfirmasi Pengalihan Kanal Utama ke WhatsApp
+                <h3 className="font-semibold text-foreground text-sm">
+                  Konfirmasi Pengalihan ke WhatsApp
                 </h3>
-                <p className="text-xs text-zinc-400">Migrasi Telegram ke WhatsApp Produksi</p>
+                <p className="text-xs text-muted">Jadikan WhatsApp sebagai kanal utama</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-zinc-300 space-y-2">
-              <p className="font-semibold text-white">Jaminan Integritas Buku Besar:</p>
-              <ul className="list-disc list-inside space-y-1 text-[11px] text-zinc-400">
-                <li>Seluruh transaksi keuangan, katalog produk, dan laporan tetap tersimpan utuh di PostgreSQL.</li>
-                <li>Kanal Telegram tetap dapat dipertahankan aktif sebagai jalur cadangan (dual-run).</li>
-                <li>Pengalihan kanal murni mengubah jalur transport pesan tanpa menyentuh data keuangan.</li>
-              </ul>
+            <div className="p-3 rounded-lg bg-secondary/50 border border-border text-xs text-muted space-y-1">
+              <p className="font-medium text-foreground">Jaminan Integritas Buku Besar:</p>
+              <p className="text-[11px] leading-relaxed">
+                Seluruh transaksi keuangan tetap tersimpan utuh di PostgreSQL Supabase. Pengalihan hanya memindahkan jalur pesan.
+              </p>
             </div>
 
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Jadikan WhatsApp sebagai kanal utama bisnis Anda sekarang?
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -1307,7 +978,7 @@ export function ChannelsView({
                   setPendingCutoverPrimary(null);
                 }}
                 disabled={saving}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground transition"
               >
                 Batal
               </button>
@@ -1315,10 +986,9 @@ export function ChannelsView({
                 type="button"
                 onClick={() => handleSaveSettings(pendingCutoverPrimary || "whatsapp")}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/30 transition disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary-hover text-primary-foreground transition disabled:opacity-50"
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{saving ? "Mengalihkan..." : "Ya, Alihkan ke WhatsApp"}</span>
+                {saving ? "Mengalihkan..." : "Ya, Alihkan ke WhatsApp"}
               </button>
             </div>
           </div>
@@ -1327,15 +997,15 @@ export function ChannelsView({
 
       {/* Telegram Operator Unlink Confirmation Modal */}
       {operatorToUnlink && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#111726] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/10 space-y-4 text-white">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20">
-                <Trash2 className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/20">
+                <Trash2 className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm">Putuskan operator Telegram?</h3>
-                <p className="text-xs text-zinc-400">
+                <h3 className="font-semibold text-foreground text-sm">Putuskan Operator Telegram?</h3>
+                <p className="text-xs text-muted">
                   {operatorToUnlink.operatorRole || operatorToUnlink.displayLabel || "Operator"} &bull;{" "}
                   {operatorToUnlink.telegramUsername
                     ? `@${operatorToUnlink.telegramUsername.replace(/^@/, "")}`
@@ -1344,32 +1014,25 @@ export function ChannelsView({
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-300 space-y-1">
-              <p className="font-semibold text-white">Perhatian:</p>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Operator ini tidak akan bisa lagi mencatat transaksi melalui Telegram untuk bisnis ini.
-              </p>
+            <div className="p-3 rounded-lg bg-secondary/50 border border-border text-xs text-muted">
+              Operator ini tidak akan bisa lagi mencatat transaksi melalui Telegram untuk bisnis ini sampai dihubungkan kembali.
             </div>
 
-            {/* Lockout Warning if single operator */}
             {telegramOps.length === 1 && (
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Ini adalah satu-satunya operator Telegram yang terhubung.</span>
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Ini adalah satu-satunya operator yang terhubung.</span>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Setelah diputuskan, transaksi melalui Telegram tidak dapat dilakukan sampai operator baru dihubungkan.
-                </p>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setOperatorToUnlink(null)}
                 disabled={unlinkingOpId !== null}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition min-h-[44px]"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground transition"
               >
                 Batal
               </button>
@@ -1377,7 +1040,7 @@ export function ChannelsView({
                 type="button"
                 onClick={handleConfirmUnlink}
                 disabled={unlinkingOpId !== null}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition shadow-lg shadow-rose-900/30 disabled:opacity-50 min-h-[44px]"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-rose-600 hover:bg-rose-500 text-white transition disabled:opacity-50"
               >
                 {unlinkingOpId !== null ? "Memutuskan..." : "Putuskan Operator"}
               </button>

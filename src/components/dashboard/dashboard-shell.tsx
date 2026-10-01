@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,7 +8,6 @@ import {
   Receipt,
   Package,
   CalendarCheck,
-  Download,
   LogOut,
   X,
   Plus,
@@ -17,17 +16,18 @@ import {
   Radio,
   FileSpreadsheet,
   CreditCard,
-  Sparkles,
   Search,
-  Calendar,
   Sun,
+  Moon,
+  Laptop,
   MoreHorizontal,
-  Settings,
-  Crown,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
+import { CommandPalette } from "./command-palette";
+import { useTheme } from "@/components/theme/theme-provider";
 
 interface DashboardShellProps {
   business: {
@@ -63,459 +63,572 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem("oxid_sidebar_collapsed") === "true";
+      } catch {
+        // Ignore storage errors
+      }
+    }
+    return false;
+  });
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [saleModalOpen, setSaleModalOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
+  const toggleSidebar = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("oxid_sidebar_collapsed", String(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
+
+  // Keyboard shortcut listener for Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Navigation Items
   const primaryNavItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { name: "Transaksi", href: "/dashboard/transactions", icon: Receipt },
     { name: "Produk", href: "/dashboard/products", icon: Package },
     { name: "Status Harian", href: "/dashboard/status", icon: CalendarCheck },
+  ];
+
+  const operationsNavItems = [
     { name: "Monitoring & Bot", href: "/dashboard/monitoring", icon: Activity },
     { name: "Pengingat Harian", href: "/dashboard/settings/reminders", icon: Bell },
     { name: "Kanal Pesan", href: "/dashboard/settings/channels", icon: Radio },
     { name: "Google Sheets", href: "/dashboard/settings/google-sheets", icon: FileSpreadsheet },
   ];
 
-  const secondaryNavItems = [
+  const accountNavItems = [
     { name: "Langganan", href: "/dashboard/subscription", icon: CreditCard },
-    { name: "Pengaturan", href: "/dashboard/settings/channels", icon: Settings },
-  ];
-
-  const mobileBottomNavItems = [
-    { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Transaksi", href: "/dashboard/transactions", icon: Receipt },
-    { name: "Produk", href: "/dashboard/products", icon: Package },
-    { name: "Pengingat", href: "/dashboard/settings/reminders", icon: Bell },
   ];
 
   const currentDateFormatted = new Intl.DateTimeFormat("id-ID", {
-    weekday: "long",
-    year: "numeric",
-    month: "short",
+    weekday: "short",
     day: "numeric",
+    month: "short",
     timeZone: business.timezone || "Asia/Jakarta",
   }).format(new Date());
 
-  const getRoleLabel = (r: string) => {
-    switch (r) {
-      case "owner":
-        return "Pemilik Bisnis";
-      case "admin":
-        return "Admin";
-      default:
-        return "Operator";
-    }
+  const getBreadcrumbTitle = () => {
+    if (pathname === "/dashboard") return "Overview";
+    if (pathname.startsWith("/dashboard/transactions")) return "Transaksi";
+    if (pathname.startsWith("/dashboard/products")) return "Produk & Alias";
+    if (pathname.startsWith("/dashboard/status")) return "Status Harian";
+    if (pathname.startsWith("/dashboard/monitoring")) return "Monitoring";
+    if (pathname.startsWith("/dashboard/settings/reminders")) return "Pengingat";
+    if (pathname.startsWith("/dashboard/settings/channels")) return "Kanal Pesan";
+    if (pathname.startsWith("/dashboard/settings/google-sheets")) return "Google Sheets";
+    if (pathname.startsWith("/dashboard/subscription")) return "Langganan";
+    return "Dashboard";
+  };
+
+  const cycleTheme = () => {
+    if (theme === "system") setTheme("dark");
+    else if (theme === "dark") setTheme("light");
+    else setTheme("system");
   };
 
   return (
-    <div className="min-h-screen bg-[#090D16] flex flex-col md:flex-row text-slate-100 font-sans selection:bg-violet-500/30 selection:text-violet-200 relative overflow-x-hidden">
-      {/* Ambient background glow effects matching reference images */}
-      <div className="fixed top-0 right-1/4 w-[500px] h-[500px] bg-violet-600/[0.07] rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="fixed bottom-10 left-10 w-[450px] h-[450px] bg-indigo-600/[0.05] rounded-full blur-[140px] pointer-events-none z-0" />
-
-      {/* Mobile Top Header */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0D121F]/90 backdrop-blur-md border-b border-white/[0.08] sticky top-0 z-30">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-violet-900/40">
-            <span className="text-[11px] tracking-wider">OX</span>
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
+      {/* Mobile Topbar */}
+      <header className="md:hidden flex items-center justify-between px-4 h-14 bg-surface border-b border-border sticky top-0 z-30">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0">
+            OX
           </div>
-          <div>
-            <h1 className="font-bold text-white text-sm tracking-tight leading-tight truncate max-w-[170px]">
+          <div className="min-w-0">
+            <h1 className="font-semibold text-xs tracking-tight truncate max-w-[150px]">
               {business.name}
             </h1>
-            <p className="text-[10px] text-slate-400">OXID Ledger</p>
+            <p className="text-[10px] text-muted truncate">OXID Ledger</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => setSaleModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md shadow-violet-900/30 active:scale-95 transition-all"
-            title="Catat Transaksi"
+            type="button"
+            onClick={() => setCommandPaletteOpen(true)}
+            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover"
+            aria-label="Cari"
           >
-            <Plus className="w-4 h-4" />
+            <Search className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={cycleTheme}
+            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover"
+            aria-label="Ganti Tema"
+            title={`Tema: ${theme}`}
+          >
+            {theme === "system" ? (
+              <Laptop className="w-4 h-4" />
+            ) : resolvedTheme === "dark" ? (
+              <Moon className="w-4 h-4" />
+            ) : (
+              <Sun className="w-4 h-4" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSaleModalOpen(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-fg font-medium text-xs shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
             <span>Catat</span>
           </button>
-          <Link
-            href="/dashboard/monitoring"
-            className="p-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] text-slate-300 hover:text-white transition-colors"
-          >
-            <Bell className="w-4 h-4" />
-          </Link>
         </div>
       </header>
 
-      {/* Desktop Sidebar Navigation */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-64 bg-[#0D121F]/95 backdrop-blur-md border-r border-white/[0.08] flex-col justify-between">
-        <div>
-          {/* Logo & Brand Header */}
-          <div className="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-violet-600/30 ring-1 ring-violet-400/40">
-                <span className="text-xs font-black">OX</span>
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-white text-sm tracking-tight">OXID Ledger</span>
-                </div>
-                <p className="text-[10px] text-violet-400 font-medium">Aplikasi Pembukuan UMKM</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Action Button: Catat Transaksi */}
-          <div className="px-4 pt-4 pb-2">
-            <button
-              onClick={() => setSaleModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-violet-600/25 transition-all active:scale-[0.99] border border-violet-400/30"
+      {/* Desktop Collapsible Sidebar */}
+      <aside
+        className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-surface border-r border-border flex-col justify-between transition-all duration-200 ${
+          isCollapsed ? "w-16" : "w-[220px]"
+        }`}
+      >
+        <div className="flex flex-col h-full justify-between">
+          {/* Top Branding & Quick Add */}
+          <div className="p-3">
+            <div
+              className={`flex items-center gap-2.5 px-2 py-2 mb-2 ${
+                isCollapsed ? "justify-center" : ""
+              }`}
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Catat Transaksi</span>
-            </button>
+              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0">
+                OX
+              </div>
+              {!isCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-xs truncate leading-tight">
+                    {business.name}
+                  </div>
+                  <div className="text-[10px] text-muted flex items-center gap-1">
+                    <span>Ledger UKM</span>
+                    <span>&bull;</span>
+                    <span className="capitalize">{role}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Action Button */}
+            {!isCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setSaleModalOpen(true)}
+                className="w-full mt-1 mb-3 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-fg text-xs font-medium transition hover:opacity-95 shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Catat Penjualan</span>
+              </button>
+            ) : (
+              <div className="flex justify-center mb-3">
+                <button
+                  type="button"
+                  onClick={() => setSaleModalOpen(true)}
+                  className="w-8 h-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center transition hover:opacity-95 shadow-xs"
+                  title="Catat Penjualan"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Navigation Lists */}
+            <div className="space-y-4">
+              {/* Primary Group */}
+              <div className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                    Utama
+                  </div>
+                )}
+                {primaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={isCollapsed ? item.name : undefined}
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isCollapsed ? "justify-center" : ""
+                      } ${
+                        isActive
+                          ? "bg-primary text-primary-fg font-semibold"
+                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Operations Group */}
+              <div className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                    Operasional
+                  </div>
+                )}
+                {operationsNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={isCollapsed ? item.name : undefined}
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isCollapsed ? "justify-center" : ""
+                      } ${
+                        isActive
+                          ? "bg-primary text-primary-fg font-semibold"
+                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Account Group */}
+              <div className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                    Akun
+                  </div>
+                )}
+                {accountNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={isCollapsed ? item.name : undefined}
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isCollapsed ? "justify-center" : ""
+                      } ${
+                        isActive
+                          ? "bg-primary text-primary-fg font-semibold"
+                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Nav Items Group 1 */}
-          <nav className="px-3 py-2 space-y-1 overflow-y-auto max-h-[calc(100vh-340px)]">
-            {primaryNavItems.map((item) => {
-              const isActive =
-                item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-md shadow-violet-900/40"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
-                  }`}
-                >
-                  <Icon
-                    className={`w-4 h-4 ${
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
-                    }`}
-                  />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-
-            <div className="pt-2 pb-1 px-3">
-              <div className="h-px bg-white/[0.06]" />
-            </div>
-
-            {/* Nav Items Group 2 (Langganan, Pengaturan) */}
-            {secondaryNavItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-md shadow-violet-900/40"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
-                  }`}
-                >
-                  <Icon
-                    className={`w-4 h-4 ${
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
-                    }`}
-                  />
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer: Subscription Widget & User Logout */}
-        <div className="p-3 border-t border-white/[0.08] space-y-2.5 bg-[#0A0E1A]">
-          {/* Upgrade / Subscription Mini Card */}
-          <Link
-            href="/dashboard/subscription"
-            className="block p-3 rounded-xl bg-gradient-to-br from-violet-950/50 via-[#131A2E] to-[#101626] border border-violet-500/20 hover:border-violet-500/40 transition-all group shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-violet-600/30 flex items-center justify-center text-violet-300">
-                  <Crown className="w-3.5 h-3.5" />
+          {/* Bottom Sidebar: Subscription compact row & collapse toggle */}
+          <div className="p-3 border-t border-border space-y-2">
+            {!isCollapsed && subscriptionState && (
+              <div className="p-2 rounded-lg border border-border bg-surface-hover text-[11px] space-y-1">
+                <div className="flex items-center justify-between text-muted">
+                  <span className="font-medium text-foreground">
+                    {subscriptionState.isTrial ? "Pilot Trial" : "Paket Aktif"}
+                  </span>
+                  <span className="text-primary font-semibold">
+                    {subscriptionState.daysRemaining} hari
+                  </span>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-white leading-tight">
-                    {subscriptionState?.isTrial ? "Masa Trial" : "Langganan"}
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    {subscriptionState?.daysRemaining !== undefined
-                      ? `${subscriptionState.daysRemaining} hari tersisa`
-                      : "Kelola paket"}
-                  </p>
+                <div className="w-full bg-border rounded-full h-1 overflow-hidden">
+                  <div
+                    className="bg-primary h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, Math.max(10, (subscriptionState.daysRemaining / 14) * 100))}%`,
+                    }}
+                  />
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-violet-400 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </Link>
+            )}
 
-          {/* User Account Bar */}
-          <div className="flex items-center justify-between pt-1 px-1">
-            <div className="truncate max-w-[155px]" title={userEmail}>
-              <p className="truncate text-xs font-medium text-slate-300">{userEmail}</p>
-              <p className="text-[10px] text-violet-400 font-mono capitalize">{role}</p>
-            </div>
-            <form action={logoutAction}>
+            {/* Collapse / Expand Toggle Button */}
+            <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+              {!isCollapsed && (
+                <form action={logoutAction}>
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground px-2 py-1 rounded-md transition"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Keluar</span>
+                  </button>
+                </form>
+              )}
+
               <button
-                type="submit"
-                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                title="Keluar"
+                type="button"
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition"
+                title={isCollapsed ? "Perluas Sidebar" : "Perkecil Sidebar"}
+                aria-label={isCollapsed ? "Perluas Sidebar" : "Perkecil Sidebar"}
               >
-                <LogOut className="w-4 h-4" />
+                {isCollapsed ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 md:pl-64 z-10">
-        {/* Desktop Top Navbar */}
-        <header className="hidden md:flex items-center justify-between px-8 py-3.5 bg-[#0D121F]/80 backdrop-blur-md border-b border-white/[0.08] sticky top-0 z-30">
-          {/* Left: Global Search Mock / Operational Input */}
-          <div className="relative w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              readOnly
-              placeholder="Cari transaksi, produk..."
-              className="w-full bg-[#13192B] border border-white/[0.08] rounded-xl pl-9 pr-12 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none cursor-default"
-            />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded">
-              ⌘ K
-            </span>
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${
+          isCollapsed ? "md:pl-16" : "md:pl-[220px]"
+        }`}
+      >
+        {/* Desktop Topbar */}
+        <header className="hidden md:flex h-14 border-b border-border bg-surface sticky top-0 z-30 px-6 items-center justify-between">
+          {/* Breadcrumb / Context */}
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <span className="text-foreground font-medium">{business.name}</span>
+            <span>/</span>
+            <span>{getBreadcrumbTitle()}</span>
           </div>
 
-          {/* Right: Date, Notifications, Theme, Business Chip, CTA */}
-          <div className="flex items-center gap-3">
-            {/* Operational Date Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#13192B] border border-white/[0.08] text-xs text-slate-300">
-              <Calendar className="w-3.5 h-3.5 text-violet-400" />
-              <span>{currentDateFormatted}</span>
-            </div>
-
-            {/* Notification Icon */}
-            <Link
-              href="/dashboard/monitoring"
-              className="p-2 rounded-xl bg-[#13192B] border border-white/[0.08] text-slate-300 hover:text-white hover:border-violet-500/30 transition-colors relative"
-              title="Notifikasi & Monitoring"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-violet-500 ring-2 ring-[#0D121F]" />
-            </Link>
-
-            {/* Theme Toggle Display */}
-            <div
-              className="p-2 rounded-xl bg-[#13192B] border border-white/[0.08] text-slate-400"
-              title="Tema Gelap Aktif"
-            >
-              <Sun className="w-4 h-4 text-amber-400/80" />
-            </div>
-
-            {/* Business / Profile Chip */}
-            <div className="flex items-center gap-2.5 pl-2 pr-3 py-1 rounded-xl bg-[#13192B] border border-white/[0.08]">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                {business.name.slice(0, 1).toUpperCase()}
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-semibold text-white leading-tight truncate max-w-[120px]">
-                  {business.name}
-                </p>
-                <p className="text-[10px] text-slate-400 leading-tight">
-                  {getRoleLabel(role)}
-                </p>
-              </div>
-            </div>
-
-            {/* Catat Transaksi CTA */}
+          {/* Center Search / Command Palette Trigger */}
+          <div className="w-full max-w-sm px-4">
             <button
-              onClick={() => setSaleModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md shadow-violet-900/30 transition-all active:scale-95 border border-violet-400/30"
+              type="button"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-muted bg-surface-hover border border-border rounded-lg hover:border-primary/40 hover:text-foreground transition-colors"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Catat Transaksi</span>
+              <div className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5" />
+                <span>Cari halaman atau aksi...</span>
+              </div>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border bg-surface rounded text-muted">
+                ⌘K
+              </kbd>
             </button>
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-3">
+            {/* Operational Date */}
+            <span className="text-xs text-muted font-mono hidden lg:inline-block">
+              {currentDateFormatted}
+            </span>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={cycleTheme}
+              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover border border-transparent hover:border-border transition"
+              title={`Mode: ${theme} (Klik untuk ganti)`}
+              aria-label="Ganti Tema"
+            >
+              {theme === "system" ? (
+                <Laptop className="w-4 h-4" />
+              ) : resolvedTheme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* User Profile Chip */}
+            <div className="flex items-center gap-2 pl-2 border-l border-border">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center">
+                {userEmail.slice(0, 1).toUpperCase()}
+              </div>
+              <span className="text-xs text-foreground font-medium max-w-[120px] truncate hidden xl:inline-block">
+                {userEmail}
+              </span>
+            </div>
           </div>
         </header>
 
-        {/* Trial Status Banner */}
-        {subscriptionState?.isTrial && (
-          <div
-            className={`px-4 sm:px-8 py-2 flex items-center justify-between text-xs font-medium border-b ${
-              subscriptionState.daysRemaining <= 3
-                ? "bg-rose-950/40 border-rose-800/40 text-rose-300"
-                : subscriptionState.daysRemaining <= 7
-                ? "bg-amber-950/40 border-amber-800/40 text-amber-300"
-                : "bg-violet-950/30 border-violet-800/30 text-violet-300"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-              <span>
-                Masa Uji Coba: <strong>{subscriptionState.daysRemaining} hari tersisa</strong>
-                {subscriptionState.daysRemaining <= 3 && " — Segera aktifkan paket agar bot Telegram tetap melayani transaksi."}
-              </span>
-            </div>
-            <Link
-              href="/dashboard/subscription"
-              className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-xs transition-colors"
-            >
-              Lihat Paket
-            </Link>
-          </div>
-        )}
-
-        {/* Main Content Viewport */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-10">
+        {/* Page Content Body */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">
           {children}
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation Bar (Fixed 5-item thumb friendly) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#0D121F]/95 backdrop-blur-lg border-t border-white/[0.08] z-40 px-2 py-1.5 flex items-center justify-around safe-area-bottom shadow-2xl">
-        {mobileBottomNavItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl min-w-[56px] min-h-[44px] transition-all ${
-                isActive
-                  ? "text-violet-400 font-bold"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <div
-                className={`p-1 rounded-lg ${
-                  isActive ? "bg-violet-600/20 text-violet-400" : ""
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] mt-0.5 tracking-tight">{item.name}</span>
-            </Link>
-          );
-        })}
-
-        {/* 5th Item: "Lainnya" (Opens Drawer / Bottom Sheet) */}
-        <button
-          onClick={() => setMobileSheetOpen(true)}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl min-w-[56px] min-h-[44px] transition-all ${
-            mobileSheetOpen ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
+      {/* Mobile Bottom Navigation (5 items) */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface border-t border-border z-30 px-3 py-1.5 flex items-center justify-around pb-safe">
+        <Link
+          href="/dashboard"
+          className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
+            pathname === "/dashboard" ? "text-primary" : "text-muted"
           }`}
         >
-          <div
-            className={`p-1 rounded-lg ${
-              mobileSheetOpen ? "bg-violet-600/20 text-violet-400" : ""
-            }`}
-          >
-            <MoreHorizontal className="w-5 h-5" />
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Overview</span>
+        </Link>
+
+        <Link
+          href="/dashboard/transactions"
+          className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
+            pathname.startsWith("/dashboard/transactions")
+              ? "text-primary"
+              : "text-muted"
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          <span>Transaksi</span>
+        </Link>
+
+        {/* Center Restrained Action Button */}
+        <button
+          type="button"
+          onClick={() => setSaleModalOpen(true)}
+          className="flex flex-col items-center gap-0.5 min-w-[56px] min-h-[44px] justify-center"
+          aria-label="Catat Penjualan"
+        >
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-fg flex items-center justify-center shadow-xs">
+            <Plus className="w-5 h-5" />
           </div>
-          <span className="text-[10px] mt-0.5 tracking-tight">Lainnya</span>
+        </button>
+
+        <Link
+          href="/dashboard/products"
+          className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
+            pathname.startsWith("/dashboard/products")
+              ? "text-primary"
+              : "text-muted"
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Produk</span>
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setMobileSheetOpen(true)}
+          className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
+            mobileSheetOpen ? "text-primary" : "text-muted"
+          }`}
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          <span>Lainnya</span>
         </button>
       </nav>
 
-      {/* Mobile "Lainnya" Bottom Sheet Drawer */}
+      {/* Mobile Drawer "Lainnya" */}
       {mobileSheetOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          {/* Backdrop */}
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end animate-in fade-in duration-150"
+          onClick={() => setMobileSheetOpen(false)}
+        >
           <div
-            onClick={() => setMobileSheetOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
-          />
-
-          {/* Drawer Sheet */}
-          <div className="relative bg-[#111726] border-t border-white/[0.1] rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto z-10 shadow-2xl space-y-4">
-            {/* Sheet Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-slate-600/50 mx-auto mb-2" />
-
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            className="w-full bg-surface border-t border-border rounded-t-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-border">
               <div>
-                <h3 className="font-bold text-white text-sm">Menu Lainnya</h3>
-                <p className="text-[11px] text-slate-400">{business.name}</p>
+                <h3 className="font-semibold text-sm">Menu Tambahan</h3>
+                <p className="text-xs text-muted">Operasional & Pengaturan</p>
               </div>
               <button
+                type="button"
                 onClick={() => setMobileSheetOpen(false)}
-                className="p-1.5 rounded-xl bg-white/[0.05] text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-muted hover:text-foreground"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <Link
                 href="/dashboard/status"
                 onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
               >
-                <CalendarCheck className="w-4 h-4 text-violet-400" />
+                <CalendarCheck className="w-4 h-4 text-muted" />
                 <span>Status Harian</span>
               </Link>
+
               <Link
                 href="/dashboard/monitoring"
                 onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
               >
-                <Activity className="w-4 h-4 text-sky-400" />
-                <span>Monitoring & Bot</span>
+                <Activity className="w-4 h-4 text-muted" />
+                <span>Monitoring</span>
               </Link>
+
+              <Link
+                href="/dashboard/settings/reminders"
+                onClick={() => setMobileSheetOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
+              >
+                <Bell className="w-4 h-4 text-muted" />
+                <span>Pengingat</span>
+              </Link>
+
               <Link
                 href="/dashboard/settings/channels"
                 onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
               >
-                <Radio className="w-4 h-4 text-emerald-400" />
+                <Radio className="w-4 h-4 text-muted" />
                 <span>Kanal Pesan</span>
               </Link>
+
               <Link
                 href="/dashboard/settings/google-sheets"
                 onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
               >
-                <FileSpreadsheet className="w-4 h-4 text-teal-400" />
+                <FileSpreadsheet className="w-4 h-4 text-muted" />
                 <span>Google Sheets</span>
               </Link>
+
               <Link
                 href="/dashboard/subscription"
                 onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
               >
-                <CreditCard className="w-4 h-4 text-amber-400" />
+                <CreditCard className="w-4 h-4 text-muted" />
                 <span>Langganan</span>
               </Link>
-              <a
-                href="/api/export/ledger.xlsx"
-                download
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#161F33] border border-white/[0.06] text-xs font-medium text-slate-200 hover:text-white hover:border-violet-500/30"
-              >
-                <Download className="w-4 h-4 text-blue-400" />
-                <span>Unduh Excel</span>
-              </a>
             </div>
 
-            {/* Logout button in drawer */}
-            <div className="pt-2 border-t border-white/[0.08]">
+            <div className="pt-2 border-t border-border flex items-center justify-between">
+              <span className="text-xs text-muted truncate max-w-[200px]">
+                {userEmail}
+              </span>
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Keluar dari Akun</span>
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar</span>
                 </button>
               </form>
             </div>
@@ -523,7 +636,14 @@ export function DashboardShell({
         </div>
       )}
 
-      {/* Catat Penjualan Modal (Preserved exactly) */}
+      {/* Command Palette Modal */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onOpenCatatPenjualan={() => setSaleModalOpen(true)}
+      />
+
+      {/* Catat Penjualan Modal */}
       <CatatPenjualanModal
         isOpen={saleModalOpen}
         onClose={() => setSaleModalOpen(false)}

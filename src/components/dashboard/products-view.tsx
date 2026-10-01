@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   Tag,
   Search,
-  Layers,
-  Filter,
 } from "lucide-react";
 import {
   addProductAction,
@@ -170,122 +168,70 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
   return (
     <div className="space-y-5">
-      {/* Top 4 Metrics Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Produk Aktif */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Produk Aktif
+      {/* Header with Title, Stats Line, and Add Product CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Katalog Produk
+          </h1>
+          <div className="flex items-center gap-2 text-xs text-muted mt-1 font-mono">
+            <span>{activeCount} produk aktif</span>
+            <span>·</span>
+            <span>{products.length} total SKU</span>
+            <span>·</span>
+            <span>{totalAliases} alias bot</span>
+            <span>·</span>
+            <span>
+              Default:{" "}
+              <strong className="text-foreground font-semibold">
+                {defaultProduct ? defaultProduct.name : "Belum diatur"}
+              </strong>
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Check className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {activeCount}
-            </span>
-            <span className="text-xs text-zinc-400">dari {products.length} SKU</span>
-          </div>
-          <div className="mt-2 text-[11px] text-emerald-400/90 flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Siap dicatat di Telegram
           </div>
         </div>
 
-        {/* Metric 2: Produk Default */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Produk Default
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Star className="w-4 h-4 fill-amber-400" />
-            </div>
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white truncate" title={defaultProduct?.name || "Belum diatur"}>
-            {defaultProduct ? defaultProduct.name : "Belum Diatur"}
-          </div>
-          <div className="mt-2 text-[11px] text-amber-400/90 font-mono">
-            {defaultProduct ? `Rp${new Intl.NumberFormat("id-ID").format(defaultProduct.default_price)} / ${defaultProduct.unit}` : "Klik 'Set Default'"}
-          </div>
-        </div>
-
-        {/* Metric 3: Alias Terdaftar */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Alias Bot Aktif
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Tag className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {totalAliases}
-            </span>
-            <span className="text-xs text-zinc-400">Kata Kunci</span>
-          </div>
-          <div className="mt-2 text-[11px] text-purple-400/90 font-medium">
-            Sinonim parser natural
-          </div>
-        </div>
-
-        {/* Metric 4: Total Katalog */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Total Katalog
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Layers className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {products.length}
-            </span>
-            <span className="text-xs text-zinc-400">Komoditas</span>
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400 font-medium">
-            Multi-produk per tenant
-          </div>
-        </div>
+        {canManage && (
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs shadow-xs transition-colors self-start sm:self-center"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah Produk</span>
+          </button>
+        )}
       </div>
 
       {/* Notifications */}
       {error && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs flex items-center gap-2.5">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
       {success && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{success}</span>
         </div>
       )}
 
       {/* Filter and Action Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111726]/60 border border-white/10 rounded-2xl p-3 sm:p-4 backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-surface border border-border rounded-xl p-3 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari komoditas atau alias bot..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+              placeholder="Cari nama komoditas atau alias bot..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted/60 text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -294,41 +240,27 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
           {/* Status Filter */}
           <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-zinc-400 shrink-0 hidden sm:block" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
-              className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+              className="px-2.5 py-1.5 rounded-lg bg-surface border border-border text-foreground text-xs focus:outline-none focus:border-primary transition"
             >
-              <option value="all" className="bg-[#111726] text-white">Semua Status</option>
-              <option value="active" className="bg-[#111726] text-white">Hanya Aktif</option>
-              <option value="inactive" className="bg-[#111726] text-white">Nonaktif</option>
+              <option value="all">Semua Status</option>
+              <option value="active">Hanya Aktif</option>
+              <option value="inactive">Nonaktif</option>
             </select>
           </div>
         </div>
-
-        {/* Add Product Button */}
-        {canManage && (
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tambah Produk</span>
-          </button>
-        )}
       </div>
 
       {/* Products Table & Mobile Cards */}
       {filteredProducts.length === 0 ? (
-        <div className="py-14 px-4 text-center rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mx-auto">
-            <Package className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-white">
+        <div className="py-14 px-4 text-center rounded-xl border border-border bg-surface shadow-xs space-y-2.5">
+          <Package className="w-8 h-8 text-muted mx-auto" />
+          <h3 className="text-sm font-semibold text-foreground">
             {products.length === 0 ? "Belum ada produk" : "Produk tidak ditemukan"}
           </h3>
-          <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs text-muted max-w-sm mx-auto leading-relaxed">
             {products.length === 0
               ? "Tambahkan produk pertama usaha Anda agar bot dapat mengenali pencatatan transaksi via Telegram secara otomatis."
               : `Tidak ada produk yang cocok dengan pencarian "${searchQuery}". Coba kata kunci lain.`}
@@ -336,9 +268,9 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
           {canManage && products.length === 0 && (
             <button
               onClick={() => setAddModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-md transition"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs shadow-xs transition"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Tambah Produk Pertama</span>
             </button>
           )}
@@ -346,63 +278,60 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="hidden sm:block overflow-x-auto rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md shadow-2xl">
+          <div className="hidden sm:block overflow-x-auto rounded-xl border border-border bg-surface shadow-xs">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-white/10 bg-white/[0.02] text-zinc-400 uppercase font-semibold tracking-wider text-[11px]">
-                  <th className="py-3.5 px-4">Nama Produk</th>
-                  <th className="py-3.5 px-4">Satuan</th>
-                  <th className="py-3.5 px-4">Harga Satuan (IDR)</th>
-                  <th className="py-3.5 px-4">Kata Kunci & Alias Bot</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Default Master</th>
-                  {canManage && <th className="py-3.5 px-4 text-right">Aksi</th>}
+                <tr className="border-b border-border bg-surface-hover/60 text-muted uppercase font-semibold tracking-wider text-[11px]">
+                  <th className="py-2.5 px-3.5">Nama Produk</th>
+                  <th className="py-2.5 px-3.5">Satuan</th>
+                  <th className="py-2.5 px-3.5">Harga Acuan</th>
+                  <th className="py-2.5 px-3.5">Kata Kunci & Alias Bot</th>
+                  <th className="py-2.5 px-3.5">Status</th>
+                  <th className="py-2.5 px-3.5">Default Master</th>
+                  {canManage && <th className="py-2.5 px-3.5 text-right">Aksi</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-white/[0.03] transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-white whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
-                          <Package className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <div className="text-white font-medium">{p.name}</div>
-                          <div className="text-[10px] text-zinc-500 font-mono">ID: {p.id.slice(0, 8)}</div>
-                        </div>
+                  <tr key={p.id} className="hover:bg-surface-hover transition-colors">
+                    <td className="py-2.5 px-3.5 font-semibold text-foreground whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{p.name}</span>
+                        {p.is_default && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                            <Star className="w-2.5 h-2.5 fill-current" />
+                            Default
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="font-mono text-zinc-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded text-[11px]">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
+                      <span className="font-mono text-foreground bg-surface-hover border border-border px-1.5 py-0.5 rounded text-[11px]">
                         {p.unit}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-white whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 font-mono font-bold text-foreground whitespace-nowrap">
                       Rp{new Intl.NumberFormat("id-ID").format(p.default_price)}
                     </td>
-                    <td className="py-3.5 px-4 min-w-[200px]">
+                    <td className="py-2.5 px-3.5 min-w-[200px]">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {/* Canonical name badge */}
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20"
                           title="Nama resmi komoditas"
                         >
                           {p.name}
                         </span>
-                        {/* Additional aliases badges */}
                         {(p.aliases || []).map((al) => (
                           <span
                             key={al.id}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-surface-hover text-muted border border-border"
                           >
                             {al.alias}
                             {canManage && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteAlias(al.id)}
-                                className="hover:text-red-400 transition-colors ml-0.5"
-                                title="Hapus alias"
+                                className="text-muted hover:text-rose-500 transition-colors"
                               >
                                 <X className="w-2.5 h-2.5" />
                               </button>
@@ -413,52 +342,51 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                           <button
                             type="button"
                             onClick={() => setAliasModalProduct(p)}
-                            className="inline-flex items-center gap-0.5 text-[11px] text-purple-400 hover:text-purple-300 hover:underline font-medium ml-1"
-                            title="Tambah alias baru"
+                            className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium ml-1"
                           >
-                            <Plus className="w-3 h-3" /> Alias
+                            <Plus className="w-2.5 h-2.5" /> Alias
                           </button>
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
                       {p.active ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                          <Check className="w-3 h-3 text-emerald-400" />
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                          <Check className="w-3 h-3" />
                           Aktif
                         </span>
                       ) : (
-                        <span className="text-[11px] font-semibold text-zinc-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10">
+                        <span className="inline-flex items-center text-[11px] font-medium text-muted bg-surface-hover px-2 py-0.5 rounded-md border border-border">
                           Nonaktif
                         </span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
                       {p.is_default ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                          DEFAULT
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          Utama
                         </span>
                       ) : (
-                        canManage && (
+                        canManage && p.active && (
                           <button
                             onClick={() => handleSetDefault(p.id)}
-                            disabled={loading || !p.active}
-                            className="text-[11px] text-zinc-400 hover:text-amber-300 hover:underline disabled:opacity-40 transition-colors"
+                            disabled={loading}
+                            className="text-[11px] text-muted hover:text-foreground hover:underline transition-colors"
                           >
-                            Set Default
+                            Jadikan Default
                           </button>
                         )
                       )}
                     </td>
                     {canManage && (
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
                         <button
                           onClick={() => setEditingProduct(p)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-200 font-medium text-[11px] transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-[11px] font-medium transition-colors"
                         >
-                          <Edit2 className="w-3 h-3 text-zinc-400" />
-                          Edit
+                          <Edit2 className="w-3 h-3 text-muted" />
+                          <span>Edit</span>
                         </button>
                       </td>
                     )}
@@ -469,36 +397,31 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
           </div>
 
           {/* Mobile Card View */}
-          <div className="sm:hidden space-y-3">
+          <div className="sm:hidden space-y-2">
             {filteredProducts.map((p) => (
               <div
                 key={p.id}
-                className="rounded-2xl border border-white/10 bg-[#111726]/90 p-4 space-y-3 backdrop-blur-md"
+                className="p-3.5 rounded-xl bg-surface border border-border hover:border-primary/40 space-y-2.5 shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
-                      <Package className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-white font-bold text-sm">{p.name}</div>
-                      <div className="text-[11px] text-zinc-400 font-mono">
-                        Rp{new Intl.NumberFormat("id-ID").format(p.default_price)} / {p.unit}
-                      </div>
+                  <div>
+                    <div className="text-foreground font-semibold text-sm">{p.name}</div>
+                    <div className="text-xs text-muted font-mono mt-0.5">
+                      Rp{new Intl.NumberFormat("id-ID").format(p.default_price)} / {p.unit}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {p.is_default && (
-                      <span className="p-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300" title="Default Produk">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span className="p-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400" title="Default Produk">
+                        <Star className="w-3.5 h-3.5 fill-current" />
                       </span>
                     )}
                     {p.active ? (
-                      <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         Aktif
                       </span>
                     ) : (
-                      <span className="text-[10px] font-semibold text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                      <span className="text-[10px] font-medium text-muted bg-surface-hover px-2 py-0.5 rounded-md border border-border">
                         Nonaktif
                       </span>
                     )}
@@ -507,24 +430,24 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
                 {/* Aliases */}
                 <div className="pt-1">
-                  <div className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider mb-1.5">
+                  <div className="text-[10px] uppercase font-semibold text-muted tracking-wider mb-1">
                     Kata Kunci Bot
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
                       {p.name}
                     </span>
                     {(p.aliases || []).map((al) => (
                       <span
                         key={al.id}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-surface-hover text-muted border border-border"
                       >
                         {al.alias}
                         {canManage && (
                           <button
                             type="button"
                             onClick={() => handleDeleteAlias(al.id)}
-                            className="text-cyan-400 hover:text-red-400"
+                            className="text-muted hover:text-rose-500"
                           >
                             <X className="w-2.5 h-2.5" />
                           </button>
@@ -535,9 +458,9 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                       <button
                         type="button"
                         onClick={() => setAliasModalProduct(p)}
-                        className="inline-flex items-center gap-0.5 text-[11px] text-purple-400 font-medium ml-1"
+                        className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium ml-1"
                       >
-                        <Plus className="w-3 h-3" /> Alias
+                        <Plus className="w-2.5 h-2.5" /> Alias
                       </button>
                     )}
                   </div>
@@ -545,13 +468,13 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
                 {/* Action buttons */}
                 {canManage && (
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                  <div className="pt-2 border-t border-border flex items-center justify-between">
                     <div>
                       {!p.is_default && p.active && (
                         <button
                           onClick={() => handleSetDefault(p.id)}
                           disabled={loading}
-                          className="text-xs text-amber-400 hover:underline font-medium"
+                          className="text-xs text-muted hover:text-foreground hover:underline font-medium"
                         >
                           Jadikan Default
                         </button>
@@ -559,9 +482,9 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                     </div>
                     <button
                       onClick={() => setEditingProduct(p)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-zinc-200 text-xs font-medium"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-xs font-medium"
                     >
-                      <Edit2 className="w-3 h-3 text-zinc-400" />
+                      <Edit2 className="w-3 h-3 text-muted" />
                       <span>Edit Produk</span>
                     </button>
                   </div>
@@ -574,27 +497,25 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
       {/* Add Product Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#111726] rounded-2xl border border-white/10 shadow-2xl max-w-md w-full overflow-hidden text-white animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-surface rounded-xl border border-border shadow-xl max-w-md w-full overflow-hidden text-foreground animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-surface-hover/40">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <Package className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-white">
+                <Package className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">
                   Tambah Produk Baru
                 </h3>
               </div>
               <button
                 onClick={() => setAddModalOpen(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleAddSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Nama Produk
                 </label>
                 <input
@@ -602,12 +523,12 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   type="text"
                   required
                   placeholder="Contoh: Lele, Nila, Gurame"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Satuan Takaran
                 </label>
                 <input
@@ -616,12 +537,12 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   required
                   defaultValue="kg"
                   placeholder="kg"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-zinc-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 text-xs font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Harga Satuan (IDR)
                 </label>
                 <input
@@ -631,7 +552,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   min="0"
                   step="1"
                   placeholder="Contoh: 28000"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-zinc-500 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 text-xs font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
@@ -639,14 +560,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                  className="px-3.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 shadow-lg shadow-purple-900/30 transition"
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 shadow-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Simpan Produk"}
                 </button>
@@ -658,27 +579,25 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
       {/* Edit Product Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#111726] rounded-2xl border border-white/10 shadow-2xl max-w-md w-full overflow-hidden text-white animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-surface rounded-xl border border-border shadow-xl max-w-md w-full overflow-hidden text-foreground animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-surface-hover/40">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <Edit2 className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-white">
+                <Edit2 className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">
                   Edit Produk: {editingProduct.name}
                 </h3>
               </div>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Nama Produk
                 </label>
                 <input
@@ -686,12 +605,12 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   type="text"
                   required
                   defaultValue={editingProduct.name}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Satuan Takaran
                 </label>
                 <input
@@ -699,12 +618,12 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   type="text"
                   required
                   defaultValue={editingProduct.unit}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground text-xs font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Harga Satuan (IDR)
                 </label>
                 <input
@@ -714,7 +633,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   min="0"
                   step="1"
                   defaultValue={editingProduct.default_price}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground text-xs font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
@@ -724,9 +643,9 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   name="active"
                   type="checkbox"
                   defaultChecked={editingProduct.active}
-                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                 />
-                <label htmlFor="active" className="text-xs font-medium text-zinc-300 cursor-pointer">
+                <label htmlFor="active" className="text-xs font-medium text-foreground cursor-pointer">
                   Produk Aktif untuk Pencatatan Transaksi
                 </label>
               </div>
@@ -735,14 +654,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                  className="px-3.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 shadow-lg shadow-purple-900/30 transition"
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 shadow-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Perbarui Produk"}
                 </button>
@@ -754,16 +673,16 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
       {/* Add Alias Modal */}
       {aliasModalProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#111726] rounded-2xl border border-white/10 shadow-2xl max-w-sm w-full overflow-hidden text-white animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-surface rounded-xl border border-border shadow-xl max-w-sm w-full overflow-hidden text-foreground animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-surface-hover/40">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
                   Tambah Alias Bot
                 </h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Untuk produk: <span className="font-semibold text-purple-300">{aliasModalProduct.name}</span>
+                <p className="text-xs text-muted mt-0.5">
+                  Produk: <span className="font-semibold text-foreground">{aliasModalProduct.name}</span>
                 </p>
               </div>
               <button
@@ -771,14 +690,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   setAliasModalProduct(null);
                   setNewAliasText("");
                 }}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleAddAliasSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleAddAliasSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-medium text-muted mb-1.5">
                   Nama Alias / Sinonim
                 </label>
                 <input
@@ -788,9 +707,9 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   value={newAliasText}
                   onChange={(e) => setNewAliasText(e.target.value)}
                   placeholder="Contoh: ikan nila, tilapia"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
                 />
-                <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
+                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">
                   Bot Telegram akan otomatis mengenali kata kunci ini saat dicatat di pesan.
                 </p>
               </div>
@@ -802,14 +721,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                     setAliasModalProduct(null);
                     setNewAliasText("");
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                  className="px-3.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 shadow-lg shadow-purple-900/30 transition"
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 shadow-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Simpan Alias"}
                 </button>

@@ -91,43 +91,43 @@ export function CatatPenjualanModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-      <div className="bg-[#111726] rounded-2xl border border-white/[0.1] shadow-2xl max-w-md w-full overflow-hidden text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div className="bg-surface rounded-xl border border-border shadow-xl max-w-md w-full overflow-hidden text-foreground animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-[#161F33]">
+        <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-surface-hover/40">
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight">
+            <h3 className="text-sm font-semibold text-foreground tracking-tight">
               Catat Penjualan Baru
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted">
               Input manual transaksi penjualan kasir / dashboard
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+            className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-5">
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start gap-2">
+            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {successData && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-white">
+                <p className="font-semibold text-foreground">
                   Transaksi Berhasil Dicatat!
                 </p>
-                <p className="text-[11px] mt-0.5 text-slate-300">
+                <p className="text-[11px] mt-0.5 text-muted">
                   {successData.productName} • {successData.quantity}{" "}
                   {successData.unit} = Rp
                   {new Intl.NumberFormat("id-ID").format(
@@ -141,16 +141,16 @@ export function CatatPenjualanModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Product Select */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-muted mb-1.5">
                 Produk
               </label>
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-white/[0.08] bg-[#161F33] text-sm text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               >
                 {products.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#111726] text-white">
+                  <option key={p.id} value={p.id} className="bg-surface text-foreground">
                     {p.name} ({p.unit}) — Rp
                     {new Intl.NumberFormat("id-ID").format(p.default_price)}
                     {p.is_default ? " [Default]" : ""}
@@ -161,7 +161,7 @@ export function CatatPenjualanModal({
 
             {/* Quantity Input */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-muted mb-1.5">
                 Jumlah / Kuantitas ({currentProduct?.unit || "kg"})
               </label>
               <input
@@ -170,15 +170,15 @@ export function CatatPenjualanModal({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="Contoh: 15 atau 2,5"
-                className="w-full px-3 py-2 rounded-xl border border-white/[0.08] bg-[#161F33] text-sm text-white font-mono placeholder:font-sans placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-xs text-foreground font-mono placeholder:font-sans placeholder-muted/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
 
             {/* Price & Total Preview (Read-only reference) */}
-            <div className="bg-[#161F33] border border-white/[0.06] rounded-xl p-3.5 space-y-1.5 text-xs">
-              <div className="flex justify-between text-slate-400">
+            <div className="bg-surface-hover/50 border border-border rounded-lg p-3 space-y-1.5 text-xs">
+              <div className="flex justify-between text-muted">
                 <span>Harga Resmi Master:</span>
-                <span className="font-mono text-slate-200">
+                <span className="font-mono text-foreground">
                   Rp
                   {new Intl.NumberFormat("id-ID").format(
                     currentProduct?.default_price || 0
@@ -186,9 +186,9 @@ export function CatatPenjualanModal({
                   / {currentProduct?.unit || "kg"}
                 </span>
               </div>
-              <div className="flex justify-between font-semibold pt-1.5 border-t border-white/[0.06] text-slate-200">
+              <div className="flex justify-between font-semibold pt-1.5 border-t border-border text-foreground">
                 <span>Estimasi Total:</span>
-                <span className="font-mono text-violet-400 font-bold text-sm">
+                <span className="font-mono text-primary font-bold text-sm">
                   {estimatedTotal !== null
                     ? `Rp${new Intl.NumberFormat("id-ID").format(
                         estimatedTotal
@@ -204,14 +204,14 @@ export function CatatPenjualanModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-medium text-slate-300 hover:bg-white/[0.05] transition-colors"
+                className="px-3.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={loading || !quantity}
-                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-md shadow-violet-900/40 disabled:opacity-50 transition-all border border-violet-400/30"
+                className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-all"
               >
                 {loading ? "Menyimpan..." : "Simpan Transaksi"}
               </button>

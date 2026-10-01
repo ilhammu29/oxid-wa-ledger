@@ -16,11 +16,7 @@ import {
   RefreshCw,
   Copy,
   ShieldCheck,
-  Sparkles,
   Info,
-  Clock,
-  Layers,
-  Database,
 } from "lucide-react";
 
 export interface GoogleSheetsViewProps {
@@ -183,52 +179,52 @@ export function GoogleSheetsView({
     text: string;
     icon: React.ComponentType<{ className?: string }>;
   } = {
-    label: "NOT CONFIGURED",
-    bg: "bg-white/5 border-white/10",
-    text: "text-zinc-400",
+    label: "Belum Dihubungkan",
+    bg: "bg-secondary border-border",
+    text: "text-muted-foreground",
     icon: Info,
   };
 
   if (!isServerConfigured) {
     statusBadge = {
-      label: "SERVER UNCONFIGURED",
-      bg: "bg-amber-500/15 border-amber-500/30",
-      text: "text-amber-300",
+      label: "Server Belum Siap",
+      bg: "bg-amber-500/10 border-amber-500/20",
+      text: "text-amber-700 dark:text-amber-300",
       icon: AlertTriangle,
     };
   } else if (isSyncingActive) {
     statusBadge = {
-      label: "SYNCING",
-      bg: "bg-sky-500/15 border-sky-500/30",
-      text: "text-sky-300",
+      label: "Menyinkronkan...",
+      bg: "bg-sky-500/10 border-sky-500/20",
+      text: "text-sky-700 dark:text-sky-300",
       icon: RefreshCw,
     };
   } else if (!liveConnection?.spreadsheet_id) {
     statusBadge = {
-      label: "NOT CONFIGURED",
-      bg: "bg-white/5 border-white/10",
-      text: "text-zinc-400",
+      label: "Belum Terhubung",
+      bg: "bg-secondary border-border",
+      text: "text-muted-foreground",
       icon: Info,
     };
   } else if (!liveConnection.enabled) {
     statusBadge = {
-      label: "DISABLED",
-      bg: "bg-white/5 border-white/10",
-      text: "text-zinc-400",
+      label: "Nonaktif",
+      bg: "bg-secondary border-border",
+      text: "text-muted-foreground",
       icon: XCircle,
     };
   } else if (liveConnection.last_sync_status === "failed") {
     statusBadge = {
-      label: "ERROR",
-      bg: "bg-rose-500/15 border-rose-500/30",
-      text: "text-rose-300",
+      label: "Gangguan",
+      bg: "bg-rose-500/10 border-rose-500/20",
+      text: "text-rose-700 dark:text-rose-300",
       icon: XCircle,
     };
   } else if (liveConnection.last_sync_status === "success") {
     statusBadge = {
-      label: "CONNECTED",
-      bg: "bg-emerald-500/15 border-emerald-500/30",
-      text: "text-emerald-300",
+      label: "Terhubung & Sinkron",
+      bg: "bg-emerald-500/10 border-emerald-500/20",
+      text: "text-emerald-700 dark:text-emerald-300",
       icon: CheckCircle2,
     };
   }
@@ -340,130 +336,57 @@ export function GoogleSheetsView({
   const StatusIcon = statusBadge.icon;
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Top 4 Summary Metric Indicators */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Status Koneksi */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Status Koneksi
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <FileSpreadsheet className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-1">
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusBadge.bg} ${statusBadge.text}`}
-            >
-              <StatusIcon className={`w-3.5 h-3.5 ${statusBadge.label === "SYNCING" ? "animate-spin" : ""}`} />
-              {statusBadge.label}
-            </span>
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            {liveConnection?.enabled ? "Auto sync aktif" : "Auto sync nonaktif"}
-          </div>
-        </div>
-
-        {/* Metric 2: Judul Spreadsheet */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Spreadsheet Target
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Database className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-sm sm:text-base font-bold text-white truncate" title={liveConnection?.spreadsheet_title || "Belum Dihubungkan"}>
-            {liveConnection?.spreadsheet_title || "Belum Terhubung"}
-          </div>
-          <div className="mt-2 text-[11px] text-emerald-300">
-            5 Lembar Kerja Mirror
-          </div>
-        </div>
-
-        {/* Metric 3: Sinkronisasi Terakhir */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Sinkronisasi Terakhir
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-xs sm:text-sm font-semibold text-white font-mono truncate">
-            {liveConnection?.last_sync_at
-              ? new Date(liveConnection.last_sync_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
-              : "Belum Ada"}
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400 truncate">
-            {liveConnection?.last_sync_at
-              ? new Date(liveConnection.last_sync_at).toLocaleDateString("id-ID")
-              : "Menunggu sinkronisasi"}
-          </div>
-        </div>
-
-        {/* Metric 4: Antrean Worker */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Status Antrean
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Layers className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-sm sm:text-base font-bold text-white">
-            {livePendingJob ? "Menunggu Worker" : "Up to Date"}
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            {syncInterval} menit interval
-          </div>
-        </div>
+    <div className="space-y-6 max-w-4xl">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          Google Sheets Mirror
+        </h1>
+        <p className="text-xs text-muted mt-1">
+          Pencadangan satu arah otomatis dari buku besar OXID ke Google Spreadsheet bisnis Anda.
+        </p>
       </div>
 
       {/* Server Configuration Alert */}
       {!isServerConfigured && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3 text-amber-300 text-xs">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-semibold text-white">Google Sheets belum dikonfigurasi pada server.</p>
-            <p className="text-zinc-400 leading-relaxed">
-              Environment variable <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-300">GOOGLE_SERVICE_ACCOUNT_EMAIL</code> dan <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[11px] text-amber-300">GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code> belum tersedia pada runtime server. Aplikasi tetap berfungsi normal, namun sinkronisasi Google Sheets ditangguhkan.
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2.5 text-amber-800 dark:text-amber-300 text-xs">
+          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="font-semibold text-foreground">Google Sheets belum dikonfigurasi pada server.</p>
+            <p className="text-muted leading-relaxed">
+              Kredensial Service Account belum tersedia pada runtime server. Sinkronisasi Google Sheets ditangguhkan sementara.
             </p>
           </div>
         </div>
       )}
 
-      {/* Header Overview Card */}
-      <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-            <FileSpreadsheet className="w-6 h-6" />
+      {/* Status & Quick Action Card */}
+      <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-white">
-                {liveConnection?.spreadsheet_title || "Google Spreadsheet Mirror"}
+              <h2 className="text-sm font-semibold text-foreground">
+                {liveConnection?.spreadsheet_title || "Belum Terhubung ke Spreadsheet"}
               </h2>
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${statusBadge.bg} ${statusBadge.text}`}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusBadge.bg} ${statusBadge.text}`}
               >
-                <StatusIcon className={`w-3.5 h-3.5 ${statusBadge.label === "SYNCING" ? "animate-spin" : ""}`} />
+                <StatusIcon className={`w-3 h-3 ${statusBadge.label === "Menyinkronkan..." ? "animate-spin" : ""}`} />
                 {statusBadge.label}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-muted mt-0.5">
               {liveConnection?.last_sync_at
-                ? `Terakhir disinkronkan: ${new Date(liveConnection.last_sync_at).toLocaleString("id-ID")}`
+                ? `Terakhir sinkron: ${new Date(liveConnection.last_sync_at).toLocaleString("id-ID")}`
                 : "Belum pernah disinkronkan"}
             </p>
             {liveRecentRuns.length > 0 && liveRecentRuns[0].status === "success" && (
-              <p className="text-[11px] text-emerald-400 font-medium mt-1">
-                ✓ Berhasil menyinkronkan {liveRecentRuns[0].rows_transactions} transaksi, {liveRecentRuns[0].rows_products} produk, {liveRecentRuns[0].rows_daily_status} status harian.
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                ✓ {liveRecentRuns[0].rows_transactions} transaksi, {liveRecentRuns[0].rows_products} produk, {liveRecentRuns[0].rows_daily_status} status harian
               </p>
             )}
           </div>
@@ -474,209 +397,192 @@ export function GoogleSheetsView({
           type="button"
           onClick={handleManualSync}
           disabled={!liveConnection?.enabled || !liveConnection?.spreadsheet_id || isSyncingActive || isPending}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-medium transition"
         >
-          <RefreshCw className={`w-4 h-4 ${isSyncingActive ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isSyncingActive ? "animate-spin" : ""}`} />
           <span>{isSyncingActive ? "Menyinkronkan..." : "Sinkronkan Sekarang"}</span>
         </button>
       </div>
 
       {/* Error Callout Alert Banner */}
       {liveConnection?.last_sync_status === "failed" && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3">
-          <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-rose-300 space-y-1">
-            <p className="font-semibold text-white">Sinkronisasi Terakhir Mengalami Kendala</p>
+        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-start gap-2.5">
+          <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+          <div className="text-xs text-rose-700 dark:text-rose-300 space-y-1">
+            <p className="font-semibold text-foreground">Kendala Sinkronisasi Terakhir</p>
             <p>{getFriendlyErrorMessage(liveConnection.last_error_code, liveConnection.last_error_message)}</p>
             {liveConnection.last_error_code === "PERMISSION_DENIED" && serviceAccountEmail && (
-              <p className="text-[11px] text-zinc-300 mt-1">
-                Solusi: Buka spreadsheet Anda, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-purple-300">{serviceAccountEmail}</code> sebagai <strong>Editor</strong>.
+              <p className="text-[11px] text-muted mt-1">
+                Solusi: Buka spreadsheet Anda, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan <code className="bg-secondary px-1 py-0.5 rounded font-mono text-foreground">{serviceAccountEmail}</code> sebagai <strong>Editor</strong>.
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* Operator Setup Guide Box */}
-      <div className="p-5 sm:p-6 bg-[#090D16] text-white rounded-2xl space-y-3.5 border border-purple-500/20 shadow-2xl">
-        <div className="flex items-center gap-2 text-xs font-bold text-purple-400 uppercase tracking-wider">
-          <Sparkles className="w-4 h-4" />
-          Panduan Pengaturan Klien (3 Langkah Mudah)
-        </div>
-        <ol className="text-xs text-zinc-300 space-y-2 list-decimal list-inside leading-relaxed">
+      {/* Setup Guide Box */}
+      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+        <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          Panduan Pengaturan (3 Langkah)
+        </h3>
+        <ol className="text-xs text-muted space-y-2 list-decimal list-inside leading-relaxed">
           <li>
             Buat spreadsheet baru di Google Drive Anda (misal: <em>Buku Kas OXID Ledger</em>).
           </li>
           <li>
-            Buka spreadsheet, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan email Service Account berikut sebagai <strong>Editor</strong>:
-            <div className="mt-2 flex items-center gap-2 bg-[#111726] border border-white/10 px-3.5 py-2 rounded-xl font-mono text-xs text-purple-300">
+            Klik tombol <strong>Bagikan (Share)</strong> di spreadsheet, lalu undang email Service Account berikut sebagai <strong>Editor</strong>:
+            <div className="mt-1.5 flex items-center gap-2 bg-secondary p-2 rounded-lg font-mono text-xs text-foreground">
               <span className="truncate">{serviceAccountEmail || "Belum dikonfigurasi"}</span>
               {serviceAccountEmail && (
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition px-2 py-0.5 rounded bg-white/5"
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted hover:text-foreground transition px-2 py-0.5 rounded bg-surface border border-border"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Copy className="w-3 h-3" />
                   <span>{copiedEmail ? "Tersalin!" : "Salin"}</span>
                 </button>
               )}
             </div>
           </li>
           <li>
-            Salin tautan spreadsheet dari browser Anda, tempelkan ke kolom di bawah, klik <strong>Test Connection</strong>, lalu <strong>Simpan Pengaturan</strong>.
+            Salin tautan spreadsheet dari browser, tempelkan pada kolom di bawah, klik <strong>Test Connection</strong>, lalu simpan.
           </li>
         </ol>
       </div>
 
       {/* Main Settings Form */}
-      <form onSubmit={handleSave} className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-md space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Konfigurasi Spreadsheet
-          </h3>
+      <form onSubmit={handleSave} className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">
+          Konfigurasi Spreadsheet
+        </h3>
 
-          {/* Spreadsheet URL / ID Input */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Tautan Google Spreadsheet atau Spreadsheet ID
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <input
-                type="text"
-                value={spreadsheetInput}
-                onChange={(e) => setSpreadsheetInput(e.target.value)}
-                placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5.../edit"
-                disabled={!canEdit || isPending}
-                className="flex-1 px-3.5 py-2.5 text-xs border border-white/10 rounded-xl bg-white/5 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono disabled:opacity-50 transition"
-              />
-              <button
-                type="button"
-                onClick={handleTestConnection}
-                disabled={!canEdit || isTesting || !spreadsheetInput.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-50 text-white rounded-xl transition shrink-0"
-              >
-                <ShieldCheck className="w-4 h-4 text-purple-400" />
-                <span>{isTesting ? "Memeriksa..." : "Test Connection"}</span>
-              </button>
-            </div>
-            <p className="text-[11px] text-zinc-500">
-              Hanya domain resmi <code className="text-purple-300 font-mono">docs.google.com</code> yang diterima demi keamanan.
-            </p>
-
-            {/* Test Connection Result Box */}
-            {testResult?.tested && (
-              <div
-                className={`mt-2 p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
-                  testResult.success
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-                    : "bg-rose-500/10 border-rose-500/20 text-rose-300"
-                }`}
-              >
-                {testResult.success ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <p className="font-semibold text-white">
-                    {testResult.success ? "Koneksi Berhasil!" : "Koneksi Gagal"}
-                  </p>
-                  <p className="text-[11px] mt-0.5">
-                    {testResult.success
-                      ? `Spreadsheet "${testResult.title}" terverifikasi dan siap disinkronkan.`
-                      : testResult.error}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Automatic Sync Switch */}
-          <div className="pt-3 flex items-center justify-between border-t border-white/5">
-            <div>
-              <p className="text-xs font-semibold text-white">Sinkronisasi Otomatis</p>
-              <p className="text-[11px] text-zinc-400">
-                Otomatis memperbarui spreadsheet setiap ada transaksi atau perubahan status bisnis.
-              </p>
-            </div>
+        {/* Spreadsheet URL / ID Input */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-foreground">
+            Tautan Google Spreadsheet atau ID
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={spreadsheetInput}
+              onChange={(e) => setSpreadsheetInput(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5.../edit"
+              disabled={!canEdit || isPending}
+              className="flex-1 px-3 py-2 text-xs border border-border rounded-lg bg-background text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary font-mono disabled:opacity-50 transition"
+            />
             <button
               type="button"
-              onClick={() => canEdit && setEnabled(!enabled)}
-              disabled={!canEdit || isPending}
-              className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
-                enabled ? "bg-purple-600 shadow-md shadow-purple-900/40" : "bg-white/10"
-              }`}
+              onClick={handleTestConnection}
+              disabled={!canEdit || isTesting || !spreadsheetInput.trim()}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium bg-secondary hover:bg-surface-hover border border-border disabled:opacity-50 text-foreground rounded-lg transition shrink-0"
             >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${
-                  enabled ? "translate-x-6" : "translate-x-0.5"
-                }`}
-              />
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              <span>{isTesting ? "Memeriksa..." : "Test Connection"}</span>
             </button>
           </div>
+          <p className="text-[11px] text-muted">
+            Hanya domain resmi <code className="font-mono text-foreground">docs.google.com</code> yang diterima demi keamanan.
+          </p>
 
-          {/* Sync Interval Selector */}
-          <div className="pt-3 space-y-2 border-t border-white/5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Interval Rekonsiliasi Otomatis (Periodic Reconciliation)
-            </label>
-            <select
-              value={syncInterval}
-              onChange={(e) => setSyncInterval(e.target.value)}
-              disabled={!canEdit || isPending}
-              className="px-3.5 py-2.5 text-xs border border-white/10 rounded-xl bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          {/* Test Connection Result Box */}
+          {testResult?.tested && (
+            <div
+              className={`mt-2 p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                testResult.success
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                  : "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
+              }`}
             >
-              <option value="5" className="bg-[#111726] text-white">Setiap 5 Menit (Direkomendasikan)</option>
-              <option value="15" className="bg-[#111726] text-white">Setiap 15 Menit</option>
-              <option value="30" className="bg-[#111726] text-white">Setiap 30 Menit</option>
-              <option value="60" className="bg-[#111726] text-white">Setiap 60 Menit (1 Jam)</option>
-            </select>
-            <p className="text-[11px] text-zinc-500">
-              Memastikan lembar laporan tetap selaras jika ada event sinkronisasi yang tertunda.
+              {testResult.success ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <p className="font-semibold">
+                  {testResult.success ? "Koneksi Berhasil!" : "Koneksi Gagal"}
+                </p>
+                <p className="text-[11px] mt-0.5">
+                  {testResult.success
+                    ? `Spreadsheet "${testResult.title}" terverifikasi dan siap disinkronkan.`
+                    : testResult.error}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Automatic Sync Switch */}
+        <div className="pt-3 flex items-center justify-between border-t border-border">
+          <div>
+            <p className="text-xs font-medium text-foreground">Sinkronisasi Otomatis</p>
+            <p className="text-[11px] text-muted">
+              Perbarui lembar kerja secara berkala saat ada transaksi baru tercatat.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => canEdit && setEnabled(!enabled)}
+            disabled={!canEdit || isPending}
+            className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
+              enabled ? "bg-primary" : "bg-secondary border border-border"
+            }`}
+          >
+            <span
+              className={`block w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out shadow-sm ${
+                enabled ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
         </div>
 
-        {/* Managed Worksheets Notice */}
-        <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-white">
-            <Info className="w-4 h-4 text-purple-400" />
-            Lembar Kerja yang Dikelola OXID (Managed Worksheets)
-          </div>
-          <p className="text-[11px] text-zinc-400 leading-relaxed">
-            OXID hanya mengelola 5 lembar kerja: <code className="bg-white/10 px-1.5 py-0.5 rounded text-purple-300 font-mono">Dashboard</code>, <code className="bg-white/10 px-1.5 py-0.5 rounded text-purple-300 font-mono">Transactions</code>, <code className="bg-white/10 px-1.5 py-0.5 rounded text-purple-300 font-mono">Products</code>, <code className="bg-white/10 px-1.5 py-0.5 rounded text-purple-300 font-mono">Daily_Status</code>, dan <code className="bg-white/10 px-1.5 py-0.5 rounded text-purple-300 font-mono">Config</code>. Lembar buatan Anda sendiri (misal: <em>Catatan Pribadi</em>) tidak akan disentuh atau dihapus.
-          </p>
+        {/* Sync Interval Selector */}
+        <div className="pt-3 space-y-1.5 border-t border-border">
+          <label className="block text-xs font-medium text-foreground">
+            Interval Rekonsiliasi Otomatis
+          </label>
+          <select
+            value={syncInterval}
+            onChange={(e) => setSyncInterval(e.target.value)}
+            disabled={!canEdit || isPending}
+            className="px-3 py-1.5 text-xs border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition"
+          >
+            <option value="5">Setiap 5 Menit (Direkomendasikan)</option>
+            <option value="15">Setiap 15 Menit</option>
+            <option value="30">Setiap 30 Menit</option>
+            <option value="60">Setiap 60 Menit (1 Jam)</option>
+          </select>
         </div>
 
-        {/* Disclaimer / Single Source of Truth Notice */}
-        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="leading-relaxed">
-            <strong>Pemberitahuan Penting:</strong> Supabase tetap menjadi satu-satunya sumber utama (*single source of truth*) data keuangan. Perubahan manual yang Anda buat langsung di Google Sheets <strong>tidak akan mengubah</strong> data di OXID Ledger dan dapat ditimpa saat sinkronisasi berikutnya.
+        {/* Single Source of Truth Notice */}
+        <div className="p-3 bg-secondary/50 border border-border rounded-lg text-xs text-muted flex items-start gap-2">
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="leading-relaxed text-[11px]">
+            OXID hanya mengelola 5 tab: <code className="font-mono text-foreground">Dashboard</code>, <code className="font-mono text-foreground">Transactions</code>, <code className="font-mono text-foreground">Products</code>, <code className="font-mono text-foreground">Daily_Status</code>, dan <code className="font-mono text-foreground">Config</code>. Tab buatan Anda tidak akan dihapus. Perubahan langsung di Google Sheets tidak mengubah data di ledger OXID.
           </p>
         </div>
 
         {/* Form Messages */}
         {message && (
           <div
-            className={`p-3.5 rounded-xl text-xs font-semibold ${
+            className={`p-3 rounded-lg text-xs font-medium ${
               message.type === "success"
-                ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-300 border border-rose-500/20"
+                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
             }`}
           >
             {message.text}
           </div>
         )}
 
-        {/* Submit Button */}
+        {/* Submit */}
         {canEdit && (
-          <div className="flex justify-end pt-2 border-t border-white/5">
+          <div className="flex justify-end pt-1 border-t border-border">
             <button
               type="submit"
               disabled={isPending}
-              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-lg shadow-purple-900/30 transition-all active:scale-[0.98]"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-medium transition"
             >
               {isPending ? "Menyimpan..." : "Simpan Pengaturan"}
             </button>
@@ -685,49 +591,49 @@ export function GoogleSheetsView({
       </form>
 
       {/* Recent Sync Runs Table */}
-      <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-md space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">
           Riwayat Sinkronisasi Terkini
         </h3>
 
         {liveRecentRuns.length === 0 ? (
-          <p className="text-xs text-zinc-500 py-4">Belum ada riwayat sinkronisasi.</p>
+          <p className="text-xs text-muted py-2">Belum ada riwayat sinkronisasi.</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-white/10">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-white/10 text-zinc-400 bg-white/[0.02] uppercase font-semibold text-[11px]">
-                  <th className="py-3 px-3.5">Waktu</th>
-                  <th className="py-3 px-3.5">Status</th>
-                  <th className="py-3 px-3.5">Transaksi</th>
-                  <th className="py-3 px-3.5">Produk</th>
-                  <th className="py-3 px-3.5">Status Harian</th>
-                  <th className="py-3 px-3.5">Catatan / Kode Error</th>
+                <tr className="border-b border-border text-muted bg-secondary/50 uppercase font-medium text-[11px]">
+                  <th className="py-2 px-3">Waktu</th>
+                  <th className="py-2 px-3">Status</th>
+                  <th className="py-2 px-3">Transaksi</th>
+                  <th className="py-2 px-3">Produk</th>
+                  <th className="py-2 px-3">Status Harian</th>
+                  <th className="py-2 px-3">Catatan</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {liveRecentRuns.map((run) => (
-                  <tr key={run.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-3.5 font-mono text-zinc-300 text-[11px] whitespace-nowrap">
+                  <tr key={run.id} className="hover:bg-surface-hover transition-colors">
+                    <td className="py-2.5 px-3 font-mono text-muted text-[11px] whitespace-nowrap">
                       {new Date(run.started_at).toLocaleString("id-ID")}
                     </td>
-                    <td className="py-3 px-3.5 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
                           run.status === "success"
-                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                            : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
                         }`}
                       >
                         {run.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 font-mono text-zinc-300 whitespace-nowrap">{run.rows_transactions} baris</td>
-                    <td className="py-3 px-3.5 font-mono text-zinc-300 whitespace-nowrap">{run.rows_products} baris</td>
-                    <td className="py-3 px-3.5 font-mono text-zinc-300 whitespace-nowrap">{run.rows_daily_status} baris</td>
-                    <td className="py-3 px-3.5 text-zinc-400 max-w-xs truncate">
+                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_transactions} baris</td>
+                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_products} baris</td>
+                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_daily_status} baris</td>
+                    <td className="py-2.5 px-3 text-muted max-w-xs truncate">
                       {run.error_code ? (
-                        <span className="text-rose-400 font-mono text-[11px]">
+                        <span className="text-rose-600 dark:text-rose-400 font-mono text-[11px]">
                           [{run.error_code}] {run.error_message}
                         </span>
                       ) : (

@@ -7,16 +7,10 @@ import { SalesChart } from "@/components/dashboard/sales-chart";
 import { RecentTransactionsTable } from "@/components/dashboard/recent-transactions-table";
 import Link from "next/link";
 import {
-  TrendingUp,
-  Calendar,
-  Layers,
-  Scale,
-  Hash,
   Sparkles,
   CheckCircle2,
   ArrowRight,
   HelpCircle,
-  Package,
 } from "lucide-react";
 import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
 
@@ -75,76 +69,76 @@ export default async function DashboardOverviewPage() {
       {/* Page Title & Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span>Selamat datang kembali!</span>
-            <span className="text-xl">👋</span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <span>Selamat datang kembali</span>
+            <span className="text-lg">👋</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Ini ringkasan penjualan dan aktivitas bisnis <span className="font-semibold text-slate-200">{business.name}</span> pada bulan ini.
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
+            Ringkasan performa dan aktivitas transaksi usaha <span className="font-semibold text-foreground">{business.name}</span>.
           </p>
         </div>
       </div>
 
       {/* Onboarding Checklist Card (Shown until onboarding is 100% complete) */}
       {!onboardingProgress.completedAt && (
-        <div className="p-5 bg-gradient-to-br from-[#121B30] to-[#101626] border border-violet-500/30 rounded-2xl space-y-4 shadow-lg glow-purple-sm">
+        <div className="p-4 sm:p-5 bg-surface border border-border rounded-xl space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 flex items-center justify-center font-bold shrink-0">
-                <Sparkles className="w-5 h-5 text-violet-400" />
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold shrink-0">
+                <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-semibold text-foreground">
                   Mulai Menggunakan OXID Ledger ({onboardingProgress.percentage}% Selesai)
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted">
                   Selesaikan langkah awal agar pencatatan otomatis via bot Telegram berjalan optimal.
                 </p>
               </div>
             </div>
             <Link
               href="/onboarding"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md shadow-violet-900/40 self-start sm:self-center transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs shadow-xs self-start sm:self-center transition-colors"
             >
               <span>Lanjutkan Pengaturan</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-3 border-t border-white/[0.08] text-xs">
-            <div className="flex items-center gap-2 text-emerald-400 font-medium">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-3 border-t border-border text-xs">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>1. Profil Bisnis</span>
             </div>
-            <div className={`flex items-center gap-2 ${onboardingProgress.productCompleted ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 ${onboardingProgress.productCompleted ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted"}`}>
               {onboardingProgress.productCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               ) : (
-                <span className="w-4 h-4 rounded-full border border-slate-600 text-[10px] flex items-center justify-center">2</span>
+                <span className="w-3.5 h-3.5 rounded-full border border-border text-[10px] flex items-center justify-center">2</span>
               )}
               <span>2. Tambah Produk</span>
             </div>
-            <div className={`flex items-center gap-2 ${onboardingProgress.telegramCompleted ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 ${onboardingProgress.telegramCompleted ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted"}`}>
               {onboardingProgress.telegramCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               ) : (
-                <span className="w-4 h-4 rounded-full border border-slate-600 text-[10px] flex items-center justify-center">3</span>
+                <span className="w-3.5 h-3.5 rounded-full border border-border text-[10px] flex items-center justify-center">3</span>
               )}
               <span>3. Hubungkan Telegram</span>
             </div>
-            <div className={`flex items-center gap-2 ${onboardingProgress.firstTransactionCompleted ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 ${onboardingProgress.firstTransactionCompleted ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted"}`}>
               {onboardingProgress.firstTransactionCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               ) : (
-                <span className="w-4 h-4 rounded-full border border-slate-600 text-[10px] flex items-center justify-center">4</span>
+                <span className="w-3.5 h-3.5 rounded-full border border-border text-[10px] flex items-center justify-center">4</span>
               )}
               <span>4. Transaksi Pertama</span>
             </div>
-            <div className={`flex items-center gap-2 ${onboardingProgress.googleSheetsCompleted ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 ${onboardingProgress.googleSheetsCompleted ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted"}`}>
               {onboardingProgress.googleSheetsCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               ) : (
-                <span className="w-4 h-4 rounded-full border border-slate-600 text-[10px] flex items-center justify-center">5</span>
+                <span className="w-3.5 h-3.5 rounded-full border border-border text-[10px] flex items-center justify-center">5</span>
               )}
               <span>5. Google Sheets</span>
             </div>
@@ -152,115 +146,97 @@ export default async function DashboardOverviewPage() {
         </div>
       )}
 
-      {/* KPI Cards Grid (5 Cards from Reference) */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+      {/* KPI Cards Grid (4 Core Metrics, Dense & High-Hierarchy) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Omzet Hari Ini */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#111726] border border-white/[0.08] hover:border-violet-500/30 transition-all shadow-sm space-y-3 relative overflow-hidden group">
+        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="text-xs font-medium text-muted">Omzet Hari Ini</span>
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
               Hari ini
             </span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-400">Omzet Hari Ini</p>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight mt-0.5">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
               {formatIDR(kpis.todayRevenue)}
             </p>
-          </div>
-        </div>
-
-        {/* KPI 2: Omzet Minggu Ini */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#111726] border border-white/[0.08] hover:border-violet-500/30 transition-all shadow-sm space-y-3 relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Minggu ini
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-400">Omzet Minggu Ini</p>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight mt-0.5">
-              {formatIDR(kpis.weekRevenue)}
+            <p className="text-[11px] text-muted mt-1">
+              Minggu ini: {formatIDR(kpis.weekRevenue)}
             </p>
           </div>
         </div>
 
-        {/* KPI 3: Omzet Bulan Ini */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#111726] border border-white/[0.08] hover:border-violet-500/30 transition-all shadow-sm space-y-3 relative overflow-hidden group">
+        {/* KPI 2: Omzet Bulan Ini */}
+        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-              <Layers className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
-              Bulan ini
+            <span className="text-xs font-medium text-muted">Omzet Bulan Ini</span>
+            <span className="text-[10px] font-medium text-muted bg-surface-hover px-1.5 py-0.5 rounded border border-border">
+              Bulan berjalan
             </span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-400">Omzet Bulan Ini</p>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight mt-0.5">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
               {formatIDR(kpis.monthRevenue)}
             </p>
+            <p className="text-[11px] text-muted mt-1">
+              Akumulasi bulan kalender
+            </p>
           </div>
         </div>
 
-        {/* KPI 4: Total Transaksi */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#111726] border border-white/[0.08] hover:border-violet-500/30 transition-all shadow-sm space-y-3 relative overflow-hidden group">
+        {/* KPI 3: Total Transaksi */}
+        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <Hash className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+            <span className="text-xs font-medium text-muted">Transaksi Hari Ini</span>
+            <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
               Sukses
             </span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-400">Total Transaksi</p>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight mt-0.5">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
               {kpis.todayTransactionCount}
+            </p>
+            <p className="text-[11px] text-muted mt-1">
+              Tercatat via bot & dashboard
             </p>
           </div>
         </div>
 
-        {/* KPI 5: Total Qty Terjual */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#111726] border border-white/[0.08] hover:border-violet-500/30 transition-all shadow-sm space-y-3 relative overflow-hidden group col-span-2 sm:col-span-1">
+        {/* KPI 4: Total Qty Terjual */}
+        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Scale className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              Volume
+            <span className="text-xs font-medium text-muted">Volume Terjual</span>
+            <span className="text-[10px] font-medium text-muted bg-surface-hover px-1.5 py-0.5 rounded border border-border">
+              Komoditas
             </span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-400">Total Qty Terjual</p>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight mt-0.5">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
               {kpis.todayQuantity}{" "}
-              <span className="text-xs font-normal text-slate-400">kg</span>
+              <span className="text-xs font-normal text-muted">kg</span>
+            </p>
+            <p className="text-[11px] text-muted mt-1">
+              Total kuantitas hari ini
             </p>
           </div>
         </div>
       </div>
 
-      {/* Middle Section: Chart & Operational Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Middle Section: Chart & Catalog Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left (2 Cols): 14-Day Sales Chart */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/[0.08] bg-[#111726] p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                <span>Grafik Omzet</span>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">
+                Grafik Omzet
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted">
                 Perkembangan omzet 14 hari terakhir ({business.timezone})
               </p>
             </div>
             <div className="flex items-center gap-1.5 self-start sm:self-center">
-              <span className="px-3 py-1 rounded-xl bg-violet-600 text-white text-xs font-semibold shadow-xs">
+              <span className="px-2.5 py-1 rounded-md bg-surface-hover border border-border text-foreground text-xs font-medium">
                 Harian
               </span>
             </div>
@@ -269,28 +245,23 @@ export default async function DashboardOverviewPage() {
         </div>
 
         {/* Right (1 Col): Penjualan per Produk / Ringkasan Katalog */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#111726] p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-violet-600/20 text-violet-400 flex items-center justify-center">
-                  <Package className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white tracking-tight">Katalog Produk</h3>
-                  <p className="text-[11px] text-slate-400">Produk aktif terdaftar</p>
-                </div>
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground tracking-tight">Katalog Produk</h3>
+                <p className="text-[11px] text-muted">Produk aktif terdaftar</p>
               </div>
               <Link
                 href="/dashboard/products"
-                className="text-[11px] font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                className="text-xs font-medium text-primary hover:underline transition-colors"
               >
                 Kelola →
               </Link>
             </div>
 
             {/* List of Products */}
-            <div className="space-y-2.5 mt-4">
+            <div className="space-y-2 mt-3">
               {Array.from(productMap.entries()).slice(0, 5).map(([id, name], idx) => {
                 const colors = [
                   "bg-violet-500",
@@ -303,28 +274,28 @@ export default async function DashboardOverviewPage() {
                 return (
                   <div
                     key={id}
-                    className="p-3 rounded-xl bg-[#161F33] border border-white/[0.05] flex items-center justify-between text-xs"
+                    className="p-2.5 rounded-lg bg-surface-hover/50 border border-border flex items-center justify-between text-xs"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
-                      <span className="font-semibold text-white">{name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                      <span className="font-medium text-foreground">{name}</span>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono">Aktif</span>
+                    <span className="text-[11px] text-muted font-mono">Aktif</span>
                   </div>
                 );
               })}
               {productMap.size === 0 && (
-                <div className="text-center py-6 text-slate-500 text-xs">
+                <div className="text-center py-6 text-muted text-xs">
                   Belum ada produk aktif
                 </div>
               )}
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/[0.06]">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="pt-3 border-t border-border">
+            <div className="flex items-center justify-between text-xs text-muted">
               <span>Total Volume Hari Ini:</span>
-              <span className="font-bold text-white font-mono">{kpis.todayQuantity} kg</span>
+              <span className="font-semibold text-foreground font-mono">{kpis.todayQuantity} kg</span>
             </div>
           </div>
         </div>
@@ -334,16 +305,16 @@ export default async function DashboardOverviewPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white tracking-tight">
+            <h3 className="text-sm font-semibold text-foreground tracking-tight">
               Aktivitas Transaksi Terbaru
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted">
               Transaksi tercatat via bot Telegram atau dashboard
             </p>
           </div>
           <Link
             href="/dashboard/transactions"
-            className="text-xs font-semibold text-violet-400 hover:text-violet-300 inline-flex items-center gap-1 transition-colors"
+            className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 transition-colors"
           >
             Lihat Semua
             <ArrowRight className="w-3.5 h-3.5" />
@@ -356,40 +327,40 @@ export default async function DashboardOverviewPage() {
         />
       </div>
 
-      {/* Panduan Cepat Chat Telegram (Reference Design) */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#111726] p-5 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-white font-bold text-sm">
-          <HelpCircle className="w-4 h-4 text-violet-400" />
+      {/* Panduan Cepat Chat Telegram */}
+      <div className="rounded-xl border border-border bg-surface p-4 shadow-xs space-y-3">
+        <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+          <HelpCircle className="w-4 h-4 text-primary" />
           <span>Panduan Cepat Chat Telegram</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          <div className="p-3 rounded-xl bg-[#161F33] border border-white/[0.05] space-y-1.5">
-            <span className="font-semibold text-slate-300 block">Catat Penjualan:</span>
-            <p className="font-mono text-violet-300 text-[11px] bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+            <span className="font-medium text-muted block text-[11px]">Catat Penjualan:</span>
+            <p className="font-mono text-primary text-[11px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
               &ldquo;Kejual lele 10kg&rdquo;
             </p>
-            <p className="text-[11px] text-slate-400">Mencatat kg dan menghitung total rupiah.</p>
+            <p className="text-[11px] text-muted">Mencatat kg dan menghitung total rupiah.</p>
           </div>
-          <div className="p-3 rounded-xl bg-[#161F33] border border-white/[0.05] space-y-1.5">
-            <span className="font-semibold text-slate-300 block">Laporan Hari Ini:</span>
-            <p className="font-mono text-sky-300 text-[11px] bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded-lg">
+          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+            <span className="font-medium text-muted block text-[11px]">Laporan Hari Ini:</span>
+            <p className="font-mono text-sky-600 dark:text-sky-400 text-[11px] bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded">
               &ldquo;Laporan hari ini&rdquo;
             </p>
-            <p className="text-[11px] text-slate-400">Melihat rekap omzet & volume produk.</p>
+            <p className="text-[11px] text-muted">Melihat rekap omzet & volume produk.</p>
           </div>
-          <div className="p-3 rounded-xl bg-[#161F33] border border-white/[0.05] space-y-1.5">
-            <span className="font-semibold text-slate-300 block">Tanpa Penjualan:</span>
-            <p className="font-mono text-amber-300 text-[11px] bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg">
+          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+            <span className="font-medium text-muted block text-[11px]">Tanpa Penjualan:</span>
+            <p className="font-mono text-amber-600 dark:text-amber-400 text-[11px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
               &ldquo;Gak ada penjualan&rdquo;
             </p>
-            <p className="text-[11px] text-slate-400">Konfirmasi kas tetap nol hari ini.</p>
+            <p className="text-[11px] text-muted">Konfirmasi kas tetap nol hari ini.</p>
           </div>
-          <div className="p-3 rounded-xl bg-[#161F33] border border-white/[0.05] space-y-1.5">
-            <span className="font-semibold text-slate-300 block">Toko Tutup / Libur:</span>
-            <p className="font-mono text-rose-300 text-[11px] bg-rose-500/10 border border-rose-500/20 px-2 py-1 rounded-lg">
+          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+            <span className="font-medium text-muted block text-[11px]">Toko Tutup / Libur:</span>
+            <p className="font-mono text-rose-600 dark:text-rose-400 text-[11px] bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded">
               &ldquo;Libur hari ini&rdquo;
             </p>
-            <p className="text-[11px] text-slate-400">Mencatat status libur operasional.</p>
+            <p className="text-[11px] text-muted">Mencatat status libur operasional.</p>
           </div>
         </div>
       </div>

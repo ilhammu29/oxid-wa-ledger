@@ -9,6 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useTheme } from "@/components/theme/theme-provider";
 
 interface SalesChartProps {
   data: {
@@ -20,6 +21,9 @@ interface SalesChartProps {
 }
 
 export function SalesChart({ data }: SalesChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const chartData = data.map((d) => {
     // Format "YYYY-MM-DD" into short label like "28 Sep"
     const parts = d.date.split("-");
@@ -47,6 +51,12 @@ export function SalesChart({ data }: SalesChartProps) {
     return `Rp${val}`;
   };
 
+  const strokeColor = isDark ? "#8B5CF6" : "#7C3AED";
+  const gridStroke = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.06)";
+  const axisColor = isDark ? "#94A3B8" : "#64748B";
+  const axisLine = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+  const dotStroke = isDark ? "#111726" : "#FFFFFF";
+
   return (
     <div className="w-full h-72">
       <ResponsiveContainer width="100%" height="100%">
@@ -56,24 +66,24 @@ export function SalesChart({ data }: SalesChartProps) {
         >
           <defs>
             <linearGradient id="purpleGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.0} />
+              <stop offset="5%" stopColor={strokeColor} stopOpacity={isDark ? 0.25 : 0.12} />
+              <stop offset="95%" stopColor={strokeColor} stopOpacity={0.0} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
-            stroke="rgba(255, 255, 255, 0.05)"
+            stroke={gridStroke}
           />
           <XAxis
             dataKey="displayDate"
-            tick={{ fill: "#94A3B8", fontSize: 11 }}
-            axisLine={{ stroke: "rgba(255, 255, 255, 0.08)" }}
+            tick={{ fill: axisColor, fontSize: 11 }}
+            axisLine={{ stroke: axisLine }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatIDR}
-            tick={{ fill: "#94A3B8", fontSize: 11 }}
+            tick={{ fill: axisColor, fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
@@ -82,14 +92,14 @@ export function SalesChart({ data }: SalesChartProps) {
               if (active && payload && payload.length) {
                 const item = payload[0].payload;
                 return (
-                  <div className="rounded-xl bg-[#111726] border border-violet-500/30 p-3 shadow-2xl text-xs text-slate-100 glow-purple-sm">
-                    <p className="font-semibold text-slate-400 font-mono mb-1">
+                  <div className="rounded-xl bg-surface border border-border p-3 shadow-lg text-xs text-foreground">
+                    <p className="font-semibold text-muted font-mono mb-1">
                       {item.displayDate} ({item.date})
                     </p>
-                    <p className="text-violet-400 font-bold text-base">
+                    <p className="text-primary font-bold text-base">
                       Rp{new Intl.NumberFormat("id-ID").format(item.revenue)}
                     </p>
-                    <p className="text-slate-400 text-[11px] mt-1">
+                    <p className="text-muted text-[11px] mt-1">
                       {item.quantity} kg • {item.transactionCount} transaksi
                     </p>
                   </div>
@@ -101,11 +111,11 @@ export function SalesChart({ data }: SalesChartProps) {
           <Area
             type="monotone"
             dataKey="revenue"
-            stroke="#8B5CF6"
-            strokeWidth={2.5}
+            stroke={strokeColor}
+            strokeWidth={2}
             fillOpacity={1}
             fill="url(#purpleGlow)"
-            activeDot={{ r: 6, fill: "#A78BFA", stroke: "#111726", strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: strokeColor, stroke: dotStroke, strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

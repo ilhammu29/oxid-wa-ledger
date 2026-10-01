@@ -10,7 +10,6 @@ import {
   AlertCircle,
   HelpCircle,
   Users,
-  Sparkles,
 } from "lucide-react";
 import {
   saveReminderSettingsAction,
@@ -132,151 +131,90 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Top 4 Summary Metric Indicators */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Status Pengingat */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Status Pengingat
-            </span>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              enabled
-                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                : "bg-white/5 border border-white/10 text-zinc-500"
-            }`}>
-              <Bell className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-1">
-            {enabled ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Aktif
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/5 text-zinc-400 border border-white/10">
-                Nonaktif
-              </span>
-            )}
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            {enabled ? "Evaluasi harian aktif" : "Pengingat dinonaktifkan"}
-          </div>
-        </div>
+    <div className="space-y-6 max-w-4xl">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <Bell className="w-5 h-5 text-primary" />
+          Pengingat Harian Otomatis
+        </h1>
+        <p className="text-xs text-muted mt-1">
+          Kirim notifikasi pengingat via Telegram ke operator jika belum ada transaksi atau konfirmasi status toko hari ini.
+        </p>
+      </div>
 
-        {/* Metric 2: Waktu Eksekusi */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Waktu Eksekusi
+      {/* Inline Status Row */}
+      <div className="card-base bg-surface border-border p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-muted">Status:</span>
+          {enabled ? (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Aktif
             </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-            {reminderTime}
-          </div>
-          <div className="mt-2 text-[11px] text-purple-300 font-mono truncate">
-            {settings.timezone}
-          </div>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
+              Nonaktif
+            </span>
+          )}
         </div>
-
-        {/* Metric 3: Hari Terjadwal */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Hari Terjadwal
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {selectedDays.length}
-            </span>
-            <span className="text-xs text-zinc-400">Hari / Pekan</span>
-          </div>
-          <div className="mt-2 text-[11px] text-blue-300">
-            Jadwal mingguan
-          </div>
-        </div>
-
-        {/* Metric 4: Penerima Terdaftar */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Penerima Terdaftar
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {selectedRecipients.length}
-            </span>
-            <span className="text-xs text-zinc-400">dari {operators.length} Operator</span>
-          </div>
-          <div className="mt-2 text-[11px] text-amber-300">
-            Kanal Telegram
-          </div>
+        <div className="flex items-center gap-3 text-muted">
+          <span>Jam: <strong className="text-foreground font-mono">{reminderTime}</strong> ({settings.timezone})</span>
+          <span className="text-border">·</span>
+          <span><strong className="text-foreground font-mono">{selectedDays.length}</strong> hari/pekan</span>
+          <span className="text-border">·</span>
+          <span><strong className="text-foreground font-mono">{selectedRecipients.length}</strong> dari {operators.length} operator</span>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-5">
         {saveSuccess && (
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-300 text-xs flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>Pengaturan pengingat harian berhasil disimpan.</span>
           </div>
         )}
 
         {saveError && (
-          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-300 text-xs flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{saveError}</span>
           </div>
         )}
 
-        {/* 1. Toggle ON / OFF Card */}
-        <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl flex items-center justify-between backdrop-blur-md shadow-2xl">
+        {/* 1. Toggle Card */}
+        <div className="card-base bg-surface border-border p-4 sm:p-5 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <h3 className="font-bold text-white text-sm sm:text-base">
-                Status Pengingat Otomatis
-              </h3>
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              Aktifkan evaluasi harian otomatis pada jam yang ditentukan ({settings.timezone}).
+            <h3 className="font-semibold text-foreground text-sm">
+              Aktifkan Pengingat Otomatis
+            </h3>
+            <p className="text-xs text-muted mt-0.5">
+              Sistem akan otomatis mengevaluasi status pembukuan harian pada jam yang ditentukan ({settings.timezone}).
             </p>
           </div>
           <button
             type="button"
             onClick={() => setEnabled(!enabled)}
             disabled={role === "member"}
-            className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-              enabled ? "bg-purple-600 shadow-lg shadow-purple-900/40" : "bg-white/10"
+            aria-pressed={enabled}
+            className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
+              enabled ? "bg-primary" : "bg-secondary border border-border"
             }`}
           >
             <div
-              className={`w-6 h-6 rounded-full bg-white transition-transform duration-200 ease-in-out shadow-sm ${
-                enabled ? "translate-x-6" : "translate-x-0"
+              className={`w-5 h-5 rounded-full bg-white transition-transform duration-200 ease-in-out shadow-sm ${
+                enabled ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>
         </div>
 
         {/* 2. Schedule & Time */}
-        <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl space-y-5 backdrop-blur-md shadow-2xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-purple-400" />
+              <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-muted" />
                 Jam Pengingat (Waktu Lokal)
               </label>
               <input
@@ -284,43 +222,42 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
                 value={reminderTime}
                 onChange={(e) => setReminderTime(e.target.value)}
                 disabled={role === "member"}
-                className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
               />
-              <span className="text-[11px] text-zinc-500 mt-1.5 block">
-                Zona Waktu: <span className="font-mono text-zinc-400">{settings.timezone}</span>
+              <span className="text-[11px] text-muted mt-1 block">
+                Zona Waktu: <span className="font-mono">{settings.timezone}</span>
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5 text-purple-400" />
-                Channel Pengiriman
+              <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5 text-muted" />
+                Kanal Pengiriman
               </label>
               <div className="space-y-2">
-                <div className="flex items-center gap-2.5 p-2.5 bg-white/5 rounded-xl border border-purple-500/30">
+                <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg border border-border">
                   <input
                     type="radio"
                     checked
                     readOnly
-                    className="w-4 h-4 text-purple-600 bg-white/10 border-white/20 focus:ring-0"
+                    className="w-3.5 h-3.5 text-primary focus:ring-0"
                   />
-                  <span className="text-xs text-white font-medium">Telegram Bot (Didukung Penuh)</span>
+                  <span className="text-xs text-foreground font-medium">Telegram Bot (Utama)</span>
                 </div>
-                <div className="p-2.5 bg-white/[0.02] rounded-xl border border-white/5 text-[11px] text-zinc-400 flex items-start gap-2">
-                  <HelpCircle className="w-3.5 h-3.5 text-zinc-500 mt-0.5 shrink-0" />
-                  <span>Reminder WhatsApp belum tersedia sampai konfigurasi template production selesai.</span>
-                </div>
+                <p className="text-[11px] text-muted">
+                  WhatsApp reminder saat ini ditangguhkan sampai template Cloud API selesai dikonfigurasi.
+                </p>
               </div>
             </div>
           </div>
 
           {/* Days of Week */}
-          <div className="pt-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2.5 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-purple-400" />
+          <div className="pt-2 border-t border-border">
+            <label className="block text-xs font-medium text-foreground mb-2 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-muted" />
               Hari Aktif Pengingat
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {DAYS.map((day) => {
                 const isSelected = selectedDays.includes(day.id);
                 return (
@@ -329,10 +266,10 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
                     type="button"
                     onClick={() => toggleDay(day.id)}
                     disabled={role === "member"}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                       isSelected
-                        ? "bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500/50 text-white shadow-md shadow-purple-900/30"
-                        : "bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "bg-surface border-border text-muted hover:text-foreground hover:bg-surface-hover"
                     }`}
                   >
                     {day.label}
@@ -344,49 +281,52 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
         </div>
 
         {/* 3. Recipient Operators */}
-        <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl space-y-4 backdrop-blur-md shadow-2xl">
-          <div>
-            <h3 className="font-bold text-white text-sm sm:text-base">
-              Operator Penerima Pengingat
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1">
-              Pilih operator Telegram yang berhak menerima notifikasi pengingat harian.
-            </p>
+        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-muted" />
+                Operator Penerima Pengingat
+              </h3>
+              <p className="text-xs text-muted mt-0.5">
+                Pilih operator Telegram yang akan menerima notifikasi jika ledger masih kosong.
+              </p>
+            </div>
           </div>
 
           {operators.length === 0 ? (
-            <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 text-center text-xs text-zinc-400">
-              Belum ada operator Telegram terdaftar. Hubungkan operator terlebih dahulu di menu Kanal Pesan.
+            <div className="p-4 bg-secondary/30 rounded-lg border border-border text-center text-xs text-muted">
+              Belum ada operator Telegram terdaftar. Hubungkan operator di menu Kanal Pesan.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
               {operators.map((op) => {
                 const isChecked = selectedRecipients.includes(op.id);
                 return (
                   <label
                     key={op.id}
-                    className="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:border-purple-500/40 transition-colors"
+                    className="flex items-center justify-between p-3 bg-surface hover:bg-surface-hover cursor-pointer transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleRecipient(op.id)}
                         disabled={role === "member"}
-                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                       />
                       <div>
-                        <span className="text-xs font-semibold text-white block">
+                        <span className="text-xs font-medium text-foreground block">
                           {op.displayLabel || "Operator Telegram"}
                         </span>
-                        <span className="text-[11px] text-zinc-400 font-mono">
+                        <span className="text-[11px] text-muted font-mono">
                           ID: {op.telegramUserId}
                         </span>
                       </div>
                     </div>
                     {isChecked && (
-                      <span className="text-[11px] text-purple-300 font-medium bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30">
-                        Penerima Aktif
+                      <span className="text-[11px] text-primary font-medium bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                        Aktif
                       </span>
                     )}
                   </label>
@@ -396,27 +336,27 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
           )}
         </div>
 
-        {/* 4. Preview Message Box */}
-        <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl space-y-3 backdrop-blur-md shadow-2xl">
-          <h3 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-purple-400" />
+        {/* 4. Preview Message */}
+        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-2.5">
+          <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+            <HelpCircle className="w-4 h-4 text-muted" />
             Pratinjau Pesan Pengingat
           </h3>
-          <div className="p-4 bg-[#090D16] rounded-xl border border-white/10 font-mono text-xs text-zinc-300 whitespace-pre-line leading-relaxed">
+          <div className="p-3 bg-secondary/50 rounded-lg border border-border font-mono text-xs text-foreground whitespace-pre-line leading-relaxed">
             {REMINDER_MESSAGE_TEXT}
           </div>
-          <p className="text-[11px] text-zinc-400 leading-relaxed">
-            Pesan ini hanya dikirimkan bila pada jam yang ditentukan belum ada transaksi penjualan terkonfirmasi, dan status NO_SALE atau CLOSED belum dicatat.
+          <p className="text-[11px] text-muted leading-relaxed">
+            Pesan hanya dikirim bila belum ada transaksi penjualan dan status NO_SALE atau CLOSED belum dicatat.
           </p>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         {role !== "member" && (
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs sm:text-sm shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 active:scale-[0.98]"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-lg text-xs transition-colors disabled:opacity-50"
             >
               {saving ? "Menyimpan..." : "Simpan Pengaturan"}
             </button>
@@ -425,41 +365,40 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
       </form>
 
       {/* 5. Send Test Reminder Section */}
-      <div className="p-5 sm:p-6 bg-[#111726]/80 border border-white/10 rounded-2xl space-y-4 backdrop-blur-md shadow-2xl border-t-2 border-dashed border-purple-500/30">
+      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
         <div>
-          <h3 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
-            <Send className="w-4 h-4 text-sky-400" />
+          <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+            <Send className="w-4 h-4 text-sky-500" />
             Kirim Pesan Uji Coba (Test Reminder)
           </h3>
-          <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-            Kirimkan satu pesan uji coba langsung ke akun Telegram operator untuk memastikan koneksi bot aktif.
-            Pesan uji coba tidak mencatat mutasi finansial dan tidak mengonsumsi kuota pengingat harian.
+          <p className="text-xs text-muted mt-0.5 leading-relaxed">
+            Kirimkan satu pesan uji coba langsung ke akun Telegram operator untuk memastikan koneksi bot aktif. Pesan ini tidak memengaruhi catatan finansial.
           </p>
         </div>
 
         {testSuccess && (
-          <div className="p-3.5 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+          <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-lg text-sky-700 dark:text-sky-300 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-sky-500 shrink-0" />
             <span>Pesan uji coba berhasil dikirim ke Telegram.</span>
           </div>
         )}
 
         {testError && (
-          <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{testError}</span>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           <select
             value={testRecipientId}
             onChange={(e) => setTestRecipientId(Number(e.target.value))}
             disabled={testSending || operators.length === 0}
-            className="px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1"
+            className="px-3 py-2 bg-background border border-border rounded-lg text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary flex-1"
           >
             {operators.map((op) => (
-              <option key={op.id} value={op.telegramUserId} className="bg-[#111726] text-white">
+              <option key={op.id} value={op.telegramUserId}>
                 {op.displayLabel || "Operator"} (ID: {op.telegramUserId})
               </option>
             ))}
@@ -469,7 +408,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
             type="button"
             onClick={handleSendTest}
             disabled={testSending || operators.length === 0 || role === "member"}
-            className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-xl border border-white/10 transition-colors disabled:opacity-50 shrink-0"
+            className="px-3.5 py-2 bg-secondary hover:bg-surface-hover text-foreground text-xs font-medium rounded-lg border border-border transition-colors disabled:opacity-50 shrink-0"
           >
             {testSending ? "Mengirim..." : "Kirim Test Reminder"}
           </button>

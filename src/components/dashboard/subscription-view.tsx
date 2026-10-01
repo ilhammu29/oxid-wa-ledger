@@ -56,42 +56,42 @@ export function SubscriptionView({
     switch (status) {
       case "active":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            AKTIF
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            Aktif
           </span>
         );
       case "trialing":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 border border-purple-500/30 text-purple-300">
-            <Clock className="w-3.5 h-3.5 text-purple-400" />
-            UJI COBA PILOT
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 border border-primary/20 text-primary">
+            <Clock className="w-3.5 h-3.5 text-primary" />
+            Uji Coba Pilot
           </span>
         );
       case "grace_period":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            MASA TENGGANG
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            Masa Tenggang
           </span>
         );
       case "suspended":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 border border-rose-500/30 text-rose-300">
-            <XCircle className="w-3.5 h-3.5 text-rose-400" />
-            DITANGGUHKAN
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300">
+            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+            Ditangguhkan
           </span>
         );
       case "cancelled":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-zinc-400">
-            <XCircle className="w-3.5 h-3.5 text-zinc-500" />
-            DIBATALKAN
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary border border-border text-muted-foreground">
+            <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
+            Dibatalkan
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-zinc-300 border border-white/10">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
             {status.toUpperCase()}
           </span>
         );
@@ -134,106 +134,31 @@ export function SubscriptionView({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top 4 Summary Metric Indicators */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Paket Aktif */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Paket Aktif
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Zap className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white truncate" title={plan.name}>
-            {plan.name}
-          </div>
-          <div className="mt-2">{getStatusBadge()}</div>
-        </div>
-
-        {/* Metric 2: Sisa Masa Aktif */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Sisa Masa Aktif
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
-              {remainingDays}
-            </span>
-            <span className="text-xs text-zinc-400">Hari</span>
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400 truncate">
-            {isTrial ? "Masa uji coba pilot gratis" : "Siklus langganan aktif"}
-          </div>
-        </div>
-
-        {/* Metric 3: Batas Berlaku */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Batas Masa Berlaku
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-xs sm:text-sm font-semibold text-white truncate">
-            {formatDate(currentPeriodEnd)}
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            Pencatatan terjamin aktif
-          </div>
-        </div>
-
-        {/* Metric 4: Status Pencatatan */}
-        <div className="rounded-2xl border border-white/10 bg-[#111726]/80 backdrop-blur-md p-4 sm:p-5 relative overflow-hidden transition-all hover:border-purple-500/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Status Mutasi
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm font-bold">
-            {subscriptionState.canCreateMutations ? (
-              <span className="text-emerald-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Pencatatan Dibuka
-              </span>
-            ) : (
-              <span className="text-rose-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-400" />
-                Dibatasi
-              </span>
-            )}
-          </div>
-          <div className="mt-2 text-[11px] text-zinc-400">
-            Ledger & dashboard tersedia
-          </div>
-        </div>
+    <div className="space-y-6 max-w-5xl">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <Zap className="w-5 h-5 text-primary" />
+          Langganan & Penagihan
+        </h1>
+        <p className="text-xs text-muted mt-1">
+          Informasi paket operasional bisnis, masa berlaku kuota, dan konfirmasi perpanjangan layanan.
+        </p>
       </div>
 
       {/* Feedback banner */}
       {feedback && (
         <div
-          className={`p-4 rounded-2xl border text-xs sm:text-sm flex items-start gap-3 ${
+          className={`p-3.5 rounded-lg border text-xs flex items-start gap-2.5 ${
             feedback.success
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-              : "bg-rose-500/10 border-rose-500/20 text-rose-300"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+              : "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
           }`}
         >
           {feedback.success ? (
-            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
           ) : (
-            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-400" />
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
           )}
           <div>{feedback.message}</div>
         </div>
@@ -242,136 +167,137 @@ export function SubscriptionView({
       {/* Warning / Expiring Soon Banner */}
       {warningMessage && (
         <div
-          className={`p-4 rounded-2xl border text-xs sm:text-sm flex items-start gap-3 ${
+          className={`p-3.5 rounded-lg border text-xs flex items-start gap-2.5 ${
             isSuspended
-              ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+              ? "bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300"
               : isGracePeriod
-              ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-              : "bg-purple-500/10 border-purple-500/30 text-purple-300"
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300"
+              : "bg-primary/10 border-primary/20 text-primary"
           }`}
         >
-          <Info className="w-5 h-5 shrink-0 mt-0.5" />
+          <Info className="w-4 h-4 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold mb-1 text-white">
+            <p className="font-semibold text-foreground">
               {isSuspended
                 ? "Operasional Ditangguhkan"
                 : isGracePeriod
                 ? "Peringatan Masa Tenggang"
                 : "Pengingat Perpanjangan"}
             </p>
-            <p className="text-xs opacity-90 leading-relaxed">{warningMessage}</p>
+            <p className="text-xs opacity-90 mt-0.5 leading-relaxed">{warningMessage}</p>
           </div>
         </div>
       )}
 
-      {/* Hero Plan Status Card */}
-      <div className="bg-[#111726]/80 border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      {/* Current Plan Overview Card */}
+      <div className="card-base bg-surface border-border p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-              <h2 className="text-lg sm:text-xl font-bold text-white">{plan.name}</h2>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base font-bold text-foreground">{plan.name}</h2>
               {getStatusBadge()}
             </div>
-            <p className="text-xs text-zinc-400">{plan.description}</p>
+            <p className="text-xs text-muted mt-1">{plan.description}</p>
           </div>
 
           {canManage && (
             <button
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-purple-900/30 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition"
             >
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="w-3.5 h-3.5" />
               <span>Konfirmasi Pembayaran</span>
             </button>
           )}
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
-          <div className="bg-white/5 border border-white/5 rounded-xl p-4">
-            <span className="text-xs text-zinc-400 block mb-1">Sisa Masa Aktif</span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-white font-mono">{remainingDays}</span>
-              <span className="text-xs text-zinc-400">hari</span>
+        {/* Key Metrics Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+            <span className="text-xs text-muted block mb-0.5">Sisa Masa Aktif</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold text-foreground font-mono">{remainingDays}</span>
+              <span className="text-xs text-muted">hari tersisa</span>
             </div>
-            <span className="text-[11px] text-purple-300 block mt-1">
+            <span className="text-[11px] text-muted block mt-1">
               {isTrial ? "Masa uji coba pilot gratis" : "Siklus langganan aktif"}
             </span>
           </div>
 
-          <div className="bg-white/5 border border-white/5 rounded-xl p-4">
-            <span className="text-xs text-zinc-400 block mb-1">Batas Masa Berlaku</span>
-            <div className="text-sm font-semibold text-white">
-              {formatDate(currentPeriodEnd)}
+          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+            <span className="text-xs text-muted block mb-0.5">Batas Berlaku</span>
+            <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-muted" />
+              <span>{formatDate(currentPeriodEnd)}</span>
             </div>
-            <span className="text-[11px] text-zinc-400 block mt-1">
-              Pencatatan transaksi terjamin hingga tanggal ini
+            <span className="text-[11px] text-muted block mt-1">
+              Pencatatan transaksi terjamin
             </span>
           </div>
 
-          <div className="bg-white/5 border border-white/5 rounded-xl p-4">
-            <span className="text-xs text-zinc-400 block mb-1">Status Pencatatan</span>
-            <div className="flex items-center gap-2 text-sm font-semibold">
+          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+            <span className="text-xs text-muted block mb-0.5">Status Pencatatan Mutasi</span>
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
               {subscriptionState.canCreateMutations ? (
                 <>
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400">Pencatatan Dibuka</span>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="text-emerald-700 dark:text-emerald-300">Pencatatan Dibuka</span>
                 </>
               ) : (
                 <>
-                  <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  <span className="text-rose-400">Pencatatan Dibatasi</span>
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                  <span className="text-rose-700 dark:text-rose-300">Dibatasi</span>
                 </>
               )}
             </div>
-            <span className="text-[11px] text-zinc-400 block mt-1">
-              Riwayat dan dashboard selalu dapat diakses
+            <span className="text-[11px] text-muted block mt-1">
+              Dashboard & riwayat selalu dapat diakses
             </span>
           </div>
         </div>
       </div>
 
       {/* Plan Choices Grid */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <h3 className="text-base font-bold text-white tracking-tight">Pilihan Paket Langganan</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Pilih paket yang sesuai dengan skala dan kebutuhan operasional usaha Anda.
+          <h3 className="text-sm font-semibold text-foreground">Pilihan Paket Langganan</h3>
+          <p className="text-xs text-muted mt-0.5">
+            Pilih paket yang sesuai dengan skala usaha dan jumlah operator kasir Anda.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
           {plans.map((p) => {
             const isCurrent = p.code === plan.code;
             return (
               <div
                 key={p.code}
-                className={`bg-[#111726]/80 border rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all backdrop-blur-md shadow-2xl ${
+                className={`card-base bg-surface border rounded-xl p-4 flex flex-col justify-between transition-colors ${
                   isCurrent
-                    ? "border-purple-500/50 ring-2 ring-purple-500/30 shadow-purple-900/20"
-                    : "border-white/10 hover:border-white/20"
+                    ? "border-primary/50 ring-1 ring-primary/30"
+                    : "border-border hover:border-border/80"
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-base font-bold text-white">{p.name}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-foreground">{p.name}</span>
                     {isCurrent && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
                         Paket Anda
                       </span>
                     )}
                   </div>
-                  <div className="flex items-baseline gap-1 my-3">
-                    <span className="text-2xl sm:text-3xl font-extrabold text-white font-mono">
+                  <div className="flex items-baseline gap-1 my-2">
+                    <span className="text-xl font-bold text-foreground font-mono">
                       {p.priceIdr === 0 ? "Gratis" : formatIDR(p.priceIdr)}
                     </span>
-                    {p.priceIdr > 0 && <span className="text-xs text-zinc-400">/ bulan</span>}
+                    {p.priceIdr > 0 && <span className="text-xs text-muted">/ bulan</span>}
                   </div>
-                  <p className="text-xs text-zinc-400 mb-5 leading-relaxed">{p.description}</p>
-                  <ul className="space-y-2.5 text-xs text-zinc-300 mb-6">
+                  <p className="text-xs text-muted mb-4 leading-relaxed">{p.description}</p>
+                  <ul className="space-y-2 text-xs text-foreground mb-4">
                     {p.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                         <span>{feat}</span>
                       </li>
                     ))}
@@ -384,7 +310,7 @@ export function SubscriptionView({
                       setSelectedPlanCode(p.code);
                       setModalOpen(true);
                     }}
-                    className="w-full py-2.5 rounded-xl text-xs font-semibold text-center border border-white/10 hover:bg-white/5 text-white transition-colors"
+                    className="w-full py-2 rounded-lg text-xs font-medium text-center border border-border hover:bg-surface-hover text-foreground transition-colors mt-2"
                   >
                     Pilih Paket Ini
                   </button>
@@ -396,16 +322,14 @@ export function SubscriptionView({
       </div>
 
       {/* Manual Bank Transfer Instructions */}
-      <div className="bg-[#111726]/80 border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-md space-y-4">
+      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
         <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-purple-400" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+            <Building2 className="w-4 h-4 text-primary" />
             Instruksi Pembayaran Manual (Transfer Bank)
           </h3>
-          <p className="text-xs text-zinc-400 leading-relaxed mt-1">
-            Lakukan pembayaran ke rekening resmi OXID Ledger di bawah ini. Setelah transfer berhasil,
-            klik tombol <strong>Konfirmasi Pembayaran</strong> dan cantumkan nomor referensi atau nama
-            pengirim.
+          <p className="text-xs text-muted leading-relaxed mt-0.5">
+            Lakukan transfer ke rekening resmi OXID Ledger di bawah ini. Setelah transfer berhasil, klik <strong>Konfirmasi Pembayaran</strong> dan cantumkan nomor referensi.
           </p>
         </div>
 
@@ -414,92 +338,90 @@ export function SubscriptionView({
             {paymentSettings.map((setting) => (
               <div
                 key={setting.id}
-                className="p-4 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center"
+                className="p-3.5 rounded-lg bg-secondary/50 border border-border space-y-1"
               >
-                <div>
-                  <span className="text-zinc-400 block text-[11px] uppercase tracking-wider">{setting.bankName}</span>
-                  <span className="font-mono font-bold text-white text-base">
-                    {setting.maskedAccountNumber}
+                <span className="text-muted block text-[11px] uppercase tracking-wider font-medium">{setting.bankName}</span>
+                <span className="font-mono font-bold text-foreground text-sm block">
+                  {setting.maskedAccountNumber}
+                </span>
+                <span className="text-muted block text-xs">
+                  a.n. {setting.accountName}
+                </span>
+                {setting.paymentInstructions && (
+                  <span className="text-muted block text-[11px] pt-1">
+                    {setting.paymentInstructions}
                   </span>
-                  <span className="text-zinc-300 block text-xs mt-0.5">
-                    a.n. {setting.accountName}
-                  </span>
-                  {setting.paymentInstructions && (
-                    <span className="text-zinc-500 block text-[10px] mt-1">
-                      {setting.paymentInstructions}
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-400">
-            Detail pembayaran belum dikonfigurasi. Silakan hubungi admin OXID untuk aktivasi langganan.
+          <div className="p-3 rounded-lg bg-secondary/40 border border-border text-xs text-muted">
+            Detail rekening pembayaran sedang dikonfigurasi. Hubungi admin OXID untuk konfirmasi manual.
           </div>
         )}
 
-        <div className="text-[11px] text-zinc-400 flex items-center gap-2 pt-1 border-t border-white/5">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="text-[11px] text-muted flex items-center gap-1.5 pt-1 border-t border-border">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
           <span>
-            Verifikasi pembayaran dilakukan secara aman oleh admin resmi OXID. Tidak ada biaya tersembunyi.
+            Verifikasi pembayaran diproses secara aman oleh admin resmi OXID. Tidak ada biaya tersembunyi.
           </span>
         </div>
       </div>
 
       {/* Payment History Table */}
-      <div className="bg-[#111726]/80 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="p-5 border-b border-white/10">
-          <h3 className="text-sm font-bold text-white">Riwayat Pembayaran & Tagihan</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Daftar transaksi pembayaran langganan untuk bisnis ini.</p>
+      <div className="card-base bg-surface border-border overflow-hidden">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">Riwayat Pembayaran & Tagihan</h3>
+          <p className="text-xs text-muted mt-0.5">Daftar transaksi pembayaran langganan untuk bisnis ini.</p>
         </div>
 
         {payments.length === 0 ? (
-          <div className="p-8 text-center text-xs text-zinc-500">
+          <div className="p-6 text-center text-xs text-muted">
             Belum ada riwayat pembayaran yang tercatat.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
-              <thead className="bg-white/[0.02] text-zinc-400 border-b border-white/10 uppercase font-semibold text-[11px]">
+              <thead className="bg-secondary/50 text-muted border-b border-border uppercase font-medium text-[11px]">
                 <tr>
-                  <th className="py-3 px-4">Tanggal</th>
-                  <th className="py-3 px-4">Nominal</th>
-                  <th className="py-3 px-4">Metode</th>
-                  <th className="py-3 px-4">Referensi Transfer</th>
-                  <th className="py-3 px-4">Status</th>
+                  <th className="py-2.5 px-3.5">Tanggal</th>
+                  <th className="py-2.5 px-3.5">Nominal</th>
+                  <th className="py-2.5 px-3.5">Metode</th>
+                  <th className="py-2.5 px-3.5">Referensi</th>
+                  <th className="py-2.5 px-3.5">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-zinc-300">
+              <tbody className="divide-y divide-border">
                 {payments.map((p) => {
                   let statusBadge = (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
                       Menunggu Verifikasi
                     </span>
                   );
                   if (p.status === "confirmed") {
                     statusBadge = (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                         Dikonfirmasi
                       </span>
                     );
                   } else if (p.status === "rejected") {
                     statusBadge = (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
                         Ditolak
                       </span>
                     );
                   }
 
                   return (
-                    <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-4 text-zinc-300">{formatDate(p.createdAt)}</td>
-                      <td className="py-3 px-4 font-bold text-white font-mono">{formatIDR(p.amountIdr)}</td>
-                      <td className="py-3 px-4 capitalize text-zinc-300">{p.paymentMethod.replace("_", " ")}</td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-400">
+                    <tr key={p.id} className="hover:bg-surface-hover transition-colors">
+                      <td className="py-2.5 px-3.5 text-muted">{formatDate(p.createdAt)}</td>
+                      <td className="py-2.5 px-3.5 font-semibold text-foreground font-mono">{formatIDR(p.amountIdr)}</td>
+                      <td className="py-2.5 px-3.5 capitalize text-muted">{p.paymentMethod.replace("_", " ")}</td>
+                      <td className="py-2.5 px-3.5 font-mono text-[11px] text-muted">
                         {p.reference || "-"}
                       </td>
-                      <td className="py-3 px-4">{statusBadge}</td>
+                      <td className="py-2.5 px-3.5">{statusBadge}</td>
                     </tr>
                   );
                 })}
@@ -511,28 +433,30 @@ export function SubscriptionView({
 
       {/* Manual Payment Confirmation Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-[#111726] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl text-white animate-in zoom-in-95 duration-150">
-            <h3 className="text-base font-bold text-white mb-1">Konfirmasi Pembayaran Langganan</h3>
-            <p className="text-xs text-zinc-400 mb-4">
-              Masukkan data bukti transfer pembayaran untuk diverifikasi oleh admin OXID.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 shadow-xl text-foreground space-y-3.5">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Konfirmasi Pembayaran Langganan</h3>
+              <p className="text-xs text-muted mt-0.5">
+                Masukkan bukti transfer untuk diverifikasi oleh admin OXID.
+              </p>
+            </div>
 
-            <form onSubmit={handlePaymentSubmit} className="space-y-4">
+            <form onSubmit={handlePaymentSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-medium uppercase tracking-wider text-zinc-300 block mb-1.5">
-                  Pilih Paket Langganan
+                <label className="text-xs font-medium text-foreground block mb-1">
+                  Pilih Paket
                 </label>
                 <select
                   name="planCode"
                   value={selectedPlanCode}
                   onChange={(e) => setSelectedPlanCode(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
                 >
                   {plans
                     .filter((p) => p.priceIdr > 0)
                     .map((p) => (
-                      <option key={p.code} value={p.code} className="bg-[#111726] text-white">
+                      <option key={p.code} value={p.code}>
                         {p.name} ({formatIDR(p.priceIdr)} / {p.durationDays} hari)
                       </option>
                     ))}
@@ -540,59 +464,59 @@ export function SubscriptionView({
               </div>
 
               <div>
-                <label className="text-xs font-medium uppercase tracking-wider text-zinc-300 block mb-1.5">
-                  Nominal Transfer Resmi (IDR)
+                <label className="text-xs font-medium text-foreground block mb-1">
+                  Nominal Transfer
                 </label>
                 <input
                   type="text"
                   readOnly
                   value={activePlanToPay ? formatIDR(activePlanToPay.priceIdr) : "Paket tidak valid"}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-purple-300 font-bold text-sm focus:outline-none font-mono cursor-not-allowed"
+                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground font-semibold text-xs focus:outline-none font-mono cursor-not-allowed"
                 />
                 <input type="hidden" name="amount" value={activePlanToPay?.priceIdr ?? 0} />
               </div>
 
               <div>
-                <label className="text-xs font-medium uppercase tracking-wider text-zinc-300 block mb-1.5">
+                <label className="text-xs font-medium text-foreground block mb-1">
                   Metode Pembayaran
                 </label>
                 <select
                   name="paymentMethod"
                   defaultValue="manual_transfer"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
                 >
-                  <option value="manual_transfer" className="bg-[#111726] text-white">Transfer Bank Manual</option>
-                  <option value="qris_manual" className="bg-[#111726] text-white">QRIS Pembayaran</option>
-                  <option value="cash" className="bg-[#111726] text-white">Tunai / Mitra Langsung</option>
+                  <option value="manual_transfer">Transfer Bank Manual</option>
+                  <option value="qris_manual">QRIS Pembayaran</option>
+                  <option value="cash">Tunai / Mitra Langsung</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-medium uppercase tracking-wider text-zinc-300 block mb-1.5">
-                  Nomor Referensi / Nama Rekening Pengirim
+                <label className="text-xs font-medium text-foreground block mb-1">
+                  Nomor Referensi / Nama Pengirim
                 </label>
                 <input
                   type="text"
                   name="reference"
                   placeholder="Contoh: REF-9821 / a.n. Pengirim"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
                   disabled={isSubmitting}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-purple-900/30 flex items-center gap-2"
+                  className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition flex items-center gap-1.5"
                 >
                   {isSubmitting ? (
                     "Mengirim..."
