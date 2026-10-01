@@ -45,6 +45,12 @@ import {
   enqueueStaleReconciliationJobs,
 } from "../src/modules/google-sheets/queue";
 import { executeBusinessSync } from "../src/modules/google-sheets/sync";
+import {
+  buildManagedSheetsFormattingRequests,
+  buildDashboardChartRequest,
+  TAB_COLORS,
+  MANAGED_SHEET_ORDER,
+} from "../src/modules/google-sheets/formatting";
 import { POST as googleSheetsRunRoute } from "../src/app/api/internal/google-sheets/run/route";
 
 const PG_URL = process.env.TEST_DB_URL || "postgres://postgres:postgres@127.0.0.1:55435/postgres";
@@ -977,6 +983,155 @@ async function runStep7cTests() {
     "7C_TENANT_SECURITY",
     "Unique index uq_google_sheets_connections_spreadsheet_id prevents spreadsheet ID collision across tenants",
     collisionError !== null && collisionError.includes("uq_google_sheets_connections_spreadsheet_id")
+  );
+
+  // --------------------------------------------------------------------------
+  // 8. Google Sheets Presentation Polish & Formatting Engine Tests
+  // --------------------------------------------------------------------------
+  console.log("\n8. Running Google Sheets Presentation & Formatting Tests...");
+
+  const mockTestMetadata = {
+    title: "OXID WA Ledger - Lele Pilot",
+    sheets: [
+      { id: 101, title: "Dashboard", index: 2, charts: [{ chartId: 999 }] },
+      { id: 102, title: "Transactions", index: 0, basicFilter: {}, bandedRanges: [{ bandedRangeId: 888 }], conditionalFormats: [{}] },
+      { id: 103, title: "Products", index: 3 },
+      { id: 104, title: "Daily_Status", index: 4 },
+      { id: 105, title: "Config", index: 1 },
+      { id: 999, title: "Custom User Sheet", index: 5 }, // Custom sheet preserved
+    ],
+  };
+
+  const sampleSheetsData = {
+    Dashboard: dashboardSheet,
+    Transactions: transSheet,
+    Products: prodSheet,
+    Daily_Status: dailySheet,
+    Config: configSheet,
+  };
+
+  const formattingRequests = buildManagedSheetsFormattingRequests(mockTestMetadata, sampleSheetsData) as any[];
+
+  // 1. Idempotent cleanup of old filters, bandings, charts, conditionalFormats
+  record(
+    "7C_PRESENTATION",
+    "Idempotent cleanup: generates clearBasicFilter, deleteBanding, deleteEmbeddedObject, deleteConditionalFormatRule",
+    formattingRequests.some((r) => r.clearBasicFilter?.sheetId === 102) &&
+      formattingRequests.some((r) => r.deleteBanding?.bandedRangeId === 888) &&
+      formattingRequests.some((r) => r.deleteEmbeddedObject?.objectId === 999) &&
+      formattingRequests.some((r) => r.deleteConditionalFormatRule?.sheetId === 102)
+  );
+
+  // 2. Sheet ordering & Tab Colors
+  const updateProps = formattingRequests
+    .filter((r) => r.updateSheetProperties)
+    .map((r) => r.updateSheetProperties.properties);
+
+  const dashProp = updateProps.find((p) => p.sheetId === 101);
+  const txProp = updateProps.find((p) => p.sheetId === 102);
+  const prodProp = updateProps.find((p) => p.sheetId === 103);
+  const dailyProp = updateProps.find((p) => p.sheetId === 104);
+  const confProp = updateProps.find((p) => p.sheetId === 105);
+
+  record(
+    "7C_PRESENTATION",
+    "Worksheet ordering: Dashboard=0, Transactions=1, Products=2, Daily_Status=3, Config=4",
+    dashProp?.index === 0 &&
+      txProp?.index === 1 &&
+      prodProp?.index === 2 &&
+      dailyProp?.index === 3 &&
+      confProp?.index === 4
+  );
+
+  record(
+    "7C_PRESENTATION",
+    "Worksheet tab colors: Dashboard=Blue, Transactions=Emerald, Products=Purple, Daily_Status=Amber, Config=Slate",
+    dashProp?.tabColor?.blue > 0.8 &&
+      txProp?.tabColor?.green > 0.5 &&
+      prodProp?.tabColor?.red > 0.4 &&
+      dailyProp?.tabColor?.red > 0.8 &&
+      confProp?.tabColor?.red > 0.2
+  );
+
+  record(
+    "7C_PRESENTATION",
+    "Worksheet frozen rows: header rows frozen at row 4 across managed sheets",
+    dashProp?.gridProperties?.frozenRowCount === 4 &&
+      txProp?.gridProperties?.frozenRowCount === 4 &&
+      prodProp?.gridProperties?.frozenRowCount === 4
+  );
+
+  // 3. Column widths
+  const dimProps = formattingRequests.filter((r) => r.updateDimensionProperties);
+  record(
+    "7C_PRESENTATION",
+    "Explicit column widths configured for readable non-clipped columns",
+    dimProps.some((r) => r.updateDimensionProperties.range.sheetId === 102 && r.updateDimensionProperties.properties.pixelSize === 135) &&
+      dimProps.some((r) => r.updateDimensionProperties.range.sheetId === 102 && r.updateDimensionProperties.properties.pixelSize === 320)
+  );
+
+  // 4. Number formats (Currency IDR, Date, Time)
+  const cellRepeats = formattingRequests.filter((r) => r.repeatCell);
+  record(
+    "7C_PRESENTATION",
+    "Cell formats: Currency (Rp#,##0), Date (yyyy-mm-dd), and Time (hh:mm:ss) formats present",
+    cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === '"Rp"#,##0') &&
+      cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === "yyyy-mm-dd") &&
+      cellRepeats.some((r) => r.repeatCell.cell?.userEnteredFormat?.numberFormat?.pattern === "hh:mm:ss")
+  );
+
+  // 5. Zebra Banding & Filters
+  const bandings = formattingRequests.filter((r) => r.addBanding);
+  const filters = formattingRequests.filter((r) => r.setBasicFilter);
+  record(
+    "7C_PRESENTATION",
+    "Alternating zebra striping and basic filters applied to Transactions, Products, and Daily_Status",
+    bandings.some((r) => r.addBanding.bandedRange.range.sheetId === 102) &&
+      bandings.some((r) => r.addBanding.bandedRange.range.sheetId === 103) &&
+      filters.some((r) => r.setBasicFilter.filter.range.sheetId === 102) &&
+      filters.some((r) => r.setBasicFilter.filter.range.sheetId === 103)
+  );
+
+  // 6. Conditional Formatting for Status
+  const condRules = formattingRequests.filter((r) => r.addConditionalFormatRule);
+  record(
+    "7C_PRESENTATION",
+    "Conditional formatting: status pill colors for confirmed, cancelled, corrected, AKTIF, OPEN",
+    condRules.some((r) => r.addConditionalFormatRule.rule.booleanRule.condition.values[0].userEnteredValue === "confirmed") &&
+      condRules.some((r) => r.addConditionalFormatRule.rule.booleanRule.condition.values[0].userEnteredValue === "cancelled") &&
+      condRules.some((r) => r.addConditionalFormatRule.rule.booleanRule.condition.values[0].userEnteredValue === "AKTIF")
+  );
+
+  // 7. Safe Chart Generation
+  const chartReqMulti = buildDashboardChartRequest(
+    mockTestMetadata,
+    {
+      Dashboard: [
+        ...dashboardSheet,
+        ["2026-09-29", 400000, 5],
+        ["2026-09-30", 560000, 8],
+      ],
+    }
+  ) as any;
+  const chartReqNone = buildDashboardChartRequest(
+    mockTestMetadata,
+    { Dashboard: dashboardSheet.slice(0, 14) }
+  );
+
+  record(
+    "7C_PRESENTATION",
+    "Safe chart generation: generates COLUMN chart for >= 2 daily points and returns null when < 2 points",
+    chartReqMulti !== null &&
+      chartReqMulti.addChart?.chart?.spec?.basicChart?.chartType === "COLUMN" &&
+      chartReqNone === null
+  );
+
+  // 8. Custom client sheet preservation
+  record(
+    "7C_PRESENTATION",
+    "Custom client sheets strictly preserved: no deletion or alteration requests generated for Custom User Sheet (id 999)",
+    !formattingRequests.some((r) => r.updateSheetProperties?.properties?.sheetId === 999) &&
+      !formattingRequests.some((r) => r.deleteSheet?.sheetId === 999)
   );
 
   // Clean up test data

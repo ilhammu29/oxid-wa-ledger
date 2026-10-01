@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   testGoogleSheetsConnectionAction,
   saveGoogleSheetsConnectionAction,
   triggerManualSyncAction,
+  getGoogleSheetsSyncStatusAction,
 } from "@/app/dashboard/actions";
 import {
   FileSpreadsheet,
@@ -51,22 +53,51 @@ export interface GoogleSheetsViewProps {
   role: string;
 }
 
+function getFriendlyErrorMessage(code: string | null, rawMessage: string | null): string {
+  if (!code) return rawMessage || "Terjadi kesalahan yang tidak diketahui.";
+  switch (code) {
+    case "PERMISSION_DENIED":
+      return "Izin akses ditolak. Pastikan email Service Account telah ditambahkan sebagai Editor di spreadsheet ini.";
+    case "SPREADSHEET_NOT_FOUND":
+      return "Spreadsheet tidak ditemukan. Periksa kembali tautan Google Spreadsheet Anda.";
+    case "GOOGLE_AUTH_ERROR":
+      return "Autentikasi Service Account gagal. Periksa konfigurasi kredensial Google pada server.";
+    case "RATE_LIMIT_EXCEEDED":
+      return "Batas kuota Google Sheets API tercapai. Sinkronisasi akan dicoba ulang secara otomatis.";
+    case "GOOGLE_API_UNAVAILABLE":
+      return "Layanan Google Sheets sementara tidak tersedia. Sinkronisasi akan dicoba kembali.";
+    default:
+      return rawMessage || `Terjadi kesalahan dengan kode: ${code}`;
+  }
+}
+
 export function GoogleSheetsView({
-  connection,
-  pendingJob,
-  recentRuns,
+  connection: initialConnection,
+  pendingJob: initialPendingJob,
+  recentRuns: initialRecentRuns,
   isServerConfigured,
   serviceAccountEmail,
   role,
 }: GoogleSheetsViewProps) {
+  const router = useRouter();
+
+  // Polling override state
+  const [overrideConnection, setOverrideConnection] = useState<typeof initialConnection | null>(null);
+  const [overridePendingJob, setOverridePendingJob] = useState<typeof initialPendingJob | null>(null);
+  const [overrideRecentRuns, setOverrideRecentRuns] = useState<typeof initialRecentRuns | null>(null);
+
+  const liveConnection = overrideConnection ?? initialConnection;
+  const livePendingJob = overridePendingJob ?? initialPendingJob;
+  const liveRecentRuns = overrideRecentRuns ?? initialRecentRuns;
+
   const [spreadsheetInput, setSpreadsheetInput] = useState(
-    connection?.spreadsheet_id
-      ? `https://docs.google.com/spreadsheets/d/${connection.spreadsheet_id}/edit`
+    initialConnection?.spreadsheet_id
+      ? `https://docs.google.com/spreadsheets/d/${initialConnection.spreadsheet_id}/edit`
       : ""
   );
-  const [enabled, setEnabled] = useState(connection?.enabled ?? false);
+  const [enabled, setEnabled] = useState(initialConnection?.enabled ?? false);
   const [syncInterval, setSyncInterval] = useState(
-    String(connection?.sync_interval_minutes || 5)
+    String(initialConnection?.sync_interval_minutes || 5)
   );
 
   const [testResult, setTestResult] = useState<{
@@ -86,6 +117,62 @@ export function GoogleSheetsView({
   const [isManualSyncing, setIsManualSyncing] = useState(false);
 
   const canEdit = role === "owner" || role === "admin";
+
+  // Derive active syncing state
+  const isSyncingActive =
+    isManualSyncing ||
+    Boolean(livePendingJob) ||
+    liveConnection?.last_sync_status === "syncing";
+
+  // Auto-polling effect when sync is active
+  useEffect(() => {
+    if (!isSyncingActive) return;
+
+    let pollCount = 0;
+    const interval = setInterval(async () => {
+      pollCount++;
+      try {
+        const res = await getGoogleSheetsSyncStatusAction();
+        if (res.success && res.data) {
+          setOverrideConnection(res.data.connection);
+          setOverridePendingJob(res.data.pendingJob);
+          setOverrideRecentRuns(res.data.recentRuns);
+
+          // Terminal conditions: no pending job and connection is not syncing
+          const finished =
+            !res.data.pendingJob && res.data.connection?.last_sync_status !== "syncing";
+
+          if (finished || pollCount >= 15) {
+            clearInterval(interval);
+            setIsManualSyncing(false);
+            router.refresh();
+
+            if (res.data.connection?.last_sync_status === "success") {
+              setMessage({
+                text: "Sinkronisasi berhasil! 5 lembar kerja telah diperbarui di Google Sheets.",
+                type: "success",
+              });
+            } else if (res.data.connection?.last_sync_status === "failed") {
+              setMessage({
+                text: `Sinkronisasi gagal: [${res.data.connection.last_error_code || "ERROR"}] ${getFriendlyErrorMessage(
+                  res.data.connection.last_error_code,
+                  res.data.connection.last_error_message
+                )}`,
+                type: "error",
+              });
+            }
+          }
+        }
+      } catch {
+        if (pollCount >= 15) {
+          clearInterval(interval);
+          setIsManualSyncing(false);
+        }
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [isSyncingActive, router]);
 
   // Derive connection state badge
   let statusBadge: {
@@ -107,35 +194,35 @@ export function GoogleSheetsView({
       text: "text-amber-700",
       icon: AlertTriangle,
     };
-  } else if (pendingJob || connection?.last_sync_status === "syncing") {
+  } else if (isSyncingActive) {
     statusBadge = {
       label: "SYNCING",
       bg: "bg-blue-50 border-blue-200",
       text: "text-blue-700",
       icon: RefreshCw,
     };
-  } else if (!connection?.spreadsheet_id) {
+  } else if (!liveConnection?.spreadsheet_id) {
     statusBadge = {
       label: "NOT CONFIGURED",
       bg: "bg-zinc-100 border-zinc-200",
       text: "text-zinc-600",
       icon: Info,
     };
-  } else if (!connection.enabled) {
+  } else if (!liveConnection.enabled) {
     statusBadge = {
       label: "DISABLED",
       bg: "bg-zinc-100 border-zinc-200",
       text: "text-zinc-600",
       icon: XCircle,
     };
-  } else if (connection.last_sync_status === "failed") {
+  } else if (liveConnection.last_sync_status === "failed") {
     statusBadge = {
       label: "ERROR",
       bg: "bg-red-50 border-red-200",
       text: "text-red-700",
       icon: XCircle,
     };
-  } else if (connection.last_sync_status === "success") {
+  } else if (liveConnection.last_sync_status === "success") {
     statusBadge = {
       label: "CONNECTED",
       bg: "bg-emerald-50 border-emerald-200",
@@ -222,21 +309,29 @@ export function GoogleSheetsView({
   const handleManualSync = async () => {
     setIsManualSyncing(true);
     setMessage(null);
+    setOverrideConnection((prev) => {
+      const base = prev ?? initialConnection;
+      return base ? { ...base, last_sync_status: "syncing" } : null;
+    });
+
     try {
       const res = await triggerManualSyncAction();
       if (res.success) {
         setMessage({
-          text: "Sinkronisasi dijadwalkan. Worker akan segera memperbarui Google Sheets.",
+          text: "Sinkronisasi dimulai. Memperbarui lembar kerja Google Sheets...",
           type: "success",
         });
       } else {
+        setIsManualSyncing(false);
         setMessage({
           text: res.error || "Gagal menjadwalkan sinkronisasi.",
           type: "error",
         });
       }
-    } finally {
+    } catch (err: unknown) {
       setIsManualSyncing(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage({ text: msg, type: "error" });
     }
   };
 
@@ -266,7 +361,7 @@ export function GoogleSheetsView({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-zinc-900">
-                {connection?.spreadsheet_title || "Google Spreadsheet Mirror"}
+                {liveConnection?.spreadsheet_title || "Google Spreadsheet Mirror"}
               </h2>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${statusBadge.bg} ${statusBadge.text}`}
@@ -276,10 +371,15 @@ export function GoogleSheetsView({
               </span>
             </div>
             <p className="text-xs text-zinc-500 mt-0.5">
-              {connection?.last_sync_at
-                ? `Terakhir disinkronkan: ${new Date(connection.last_sync_at).toLocaleString("id-ID")}`
+              {liveConnection?.last_sync_at
+                ? `Terakhir disinkronkan: ${new Date(liveConnection.last_sync_at).toLocaleString("id-ID")}`
                 : "Belum pernah disinkronkan"}
             </p>
+            {liveRecentRuns.length > 0 && liveRecentRuns[0].status === "success" && (
+              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                ✓ Berhasil menyinkronkan {liveRecentRuns[0].rows_transactions} transaksi, {liveRecentRuns[0].rows_products} produk, {liveRecentRuns[0].rows_daily_status} status harian.
+              </p>
+            )}
           </div>
         </div>
 
@@ -287,13 +387,29 @@ export function GoogleSheetsView({
         <button
           type="button"
           onClick={handleManualSync}
-          disabled={!connection?.enabled || !connection?.spreadsheet_id || isManualSyncing || isPending}
+          disabled={!liveConnection?.enabled || !liveConnection?.spreadsheet_id || isSyncingActive || isPending}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? "animate-spin" : ""}`} />
-          {isManualSyncing ? "Menjadwalkan..." : "Sync Now (Sinkronkan Sekarang)"}
+          <RefreshCw className={`w-3.5 h-3.5 ${isSyncingActive ? "animate-spin" : ""}`} />
+          {isSyncingActive ? "Menyinkronkan..." : "Sync Now (Sinkronkan Sekarang)"}
         </button>
       </div>
+
+      {/* Error Callout Alert Banner */}
+      {liveConnection?.last_sync_status === "failed" && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="text-xs text-red-800 space-y-1">
+            <p className="font-semibold">Sinkronisasi Terakhir Mengalami Kendala</p>
+            <p>{getFriendlyErrorMessage(liveConnection.last_error_code, liveConnection.last_error_message)}</p>
+            {liveConnection.last_error_code === "PERMISSION_DENIED" && serviceAccountEmail && (
+              <p className="text-[11px] text-red-700 mt-1">
+                Solusi: Buka spreadsheet Anda, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan <code className="bg-red-100 px-1 py-0.5 rounded font-mono">{serviceAccountEmail}</code> sebagai <strong>Editor</strong>.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Operator Setup Guide Box */}
       <div className="p-5 bg-zinc-900 text-zinc-100 rounded-2xl space-y-3.5 border border-zinc-800 shadow-sm">
@@ -488,7 +604,7 @@ export function GoogleSheetsView({
           Riwayat Sinkronisasi Terkini
         </h3>
 
-        {recentRuns.length === 0 ? (
+        {liveRecentRuns.length === 0 ? (
           <p className="text-xs text-zinc-500 py-3">Belum ada riwayat sinkronisasi.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -504,7 +620,7 @@ export function GoogleSheetsView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {recentRuns.map((run) => (
+                {liveRecentRuns.map((run) => (
                   <tr key={run.id} className="text-zinc-700">
                     <td className="py-2.5 font-mono text-[11px]">
                       {new Date(run.started_at).toLocaleString("id-ID")}

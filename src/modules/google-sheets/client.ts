@@ -136,7 +136,7 @@ export class GoogleClientError extends Error {
 /**
  * Maps raw HTTP responses to sanitized GoogleClientError.
  */
-function handleHttpError(status: number, responseBody: string): GoogleClientError {
+export function handleHttpError(status: number, responseBody: string): GoogleClientError {
   let message = `Google API returned HTTP ${status}`;
   try {
     const parsed = JSON.parse(responseBody);
@@ -195,19 +195,29 @@ function handleHttpError(status: number, responseBody: string): GoogleClientErro
   return new GoogleClientError("UNKNOWN_ERROR", message.slice(0, 200), status, false);
 }
 
+export interface SheetMetadataItem {
+  id: number;
+  title: string;
+  index?: number;
+  basicFilter?: unknown;
+  bandedRanges?: Array<{ bandedRangeId: number }>;
+  charts?: Array<{ chartId: number }>;
+  conditionalFormats?: Array<unknown>;
+}
+
 /**
- * Fetches basic spreadsheet metadata: title and existing sheets.
+ * Fetches basic spreadsheet metadata: title and existing sheets with formatting metadata.
  */
 export async function getSpreadsheetMetadata(
   spreadsheetId: string,
   config?: GoogleSheetsClientConfig
-): Promise<{ title: string; sheets: Array<{ id: number; title: string }> }> {
+): Promise<{ title: string; sheets: SheetMetadataItem[] }> {
   const token = await getGoogleAccessToken(config);
   const fetcher = config?.fetchFn || fetch;
 
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
     spreadsheetId
-  )}?fields=properties.title,sheets.properties(sheetId,title)`;
+  )}?fields=properties.title,sheets(properties(sheetId,title,index),basicFilter,bandedRanges(bandedRangeId),charts(chartId),conditionalFormats)`;
 
   const res = await fetcher(url, {
     method: "GET",
@@ -223,8 +233,14 @@ export async function getSpreadsheetMetadata(
   }
 
   const data = (await res.json()) as {
-    properties: { title: string };
-    sheets: Array<{ properties: { sheetId: number; title: string } }>;
+    properties?: { title?: string };
+    sheets?: Array<{
+      properties?: { sheetId?: number; title?: string; index?: number };
+      basicFilter?: unknown;
+      bandedRanges?: Array<{ bandedRangeId: number }>;
+      charts?: Array<{ chartId: number }>;
+      conditionalFormats?: Array<unknown>;
+    }>;
   };
 
   return {
@@ -232,6 +248,11 @@ export async function getSpreadsheetMetadata(
     sheets: (data.sheets || []).map((s) => ({
       id: s.properties?.sheetId ?? 0,
       title: s.properties?.title || "",
+      index: s.properties?.index,
+      basicFilter: s.basicFilter,
+      bandedRanges: s.bandedRanges || [],
+      charts: s.charts || [],
+      conditionalFormats: s.conditionalFormats || [],
     })),
   };
 }

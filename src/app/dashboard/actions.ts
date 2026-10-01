@@ -719,6 +719,83 @@ export async function triggerManualSyncAction(): Promise<ActionResult<{ message:
   };
 }
 
+export interface GoogleSheetsSyncStatusPayload {
+  connection: {
+    enabled: boolean;
+    spreadsheet_id: string | null;
+    spreadsheet_title: string | null;
+    sync_interval_minutes: number;
+    last_sync_at: string | null;
+    last_sync_status: string | null;
+    last_error_code: string | null;
+    last_error_message: string | null;
+  } | null;
+  pendingJob: {
+    id: string;
+    status: string;
+    reason: string;
+    created_at: string;
+  } | null;
+  recentRuns: Array<{
+    id: string;
+    started_at: string;
+    finished_at: string | null;
+    status: string;
+    rows_transactions: number;
+    rows_products: number;
+    rows_daily_status: number;
+    error_code: string | null;
+    error_message: string | null;
+  }>;
+}
+
+/**
+ * Fetches real-time status of Google Sheets integration, queue jobs, and recent runs.
+ * Used by GoogleSheetsView to automatically poll and update the UI without manual page refresh.
+ */
+export async function getGoogleSheetsSyncStatusAction(): Promise<ActionResult<GoogleSheetsSyncStatusPayload>> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: connection } = await supabase
+    .from("google_sheets_connections")
+    .select(
+      "enabled, spreadsheet_id, spreadsheet_title, sync_interval_minutes, last_sync_at, last_sync_status, last_error_code, last_error_message"
+    )
+    .eq("business_id", session.business.id)
+    .maybeSingle();
+
+  const { data: pendingJobs } = await supabase
+    .from("google_sheets_sync_queue")
+    .select("id, status, reason, attempt_count, created_at, available_at")
+    .eq("business_id", session.business.id)
+    .in("status", ["pending", "processing"])
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const { data: recentRuns } = await supabase
+    .from("google_sheets_sync_runs")
+    .select(
+      "id, started_at, finished_at, status, rows_transactions, rows_products, rows_daily_status, error_code, error_message"
+    )
+    .eq("business_id", session.business.id)
+    .order("started_at", { ascending: false })
+    .limit(5);
+
+  return {
+    success: true,
+    data: {
+      connection: connection || null,
+      pendingJob: pendingJobs && pendingJobs.length > 0 ? pendingJobs[0] : null,
+      recentRuns: recentRuns || [],
+    },
+  };
+}
+
 /**
  * Signs out the currently authenticated user and redirects to login.
  */

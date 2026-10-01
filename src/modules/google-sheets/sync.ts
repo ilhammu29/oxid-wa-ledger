@@ -7,6 +7,7 @@ import {
   GoogleClientError,
   ManagedSheetName,
 } from "./client";
+import { applyManagedSheetsFormatting } from "./formatting";
 import {
   formatConfigSheet,
   formatDailyStatusSheet,
@@ -249,6 +250,11 @@ export async function executeBusinessSync(
 
     // 5. Write data in bulk with RAW input option
     await writeManagedSheets(spreadsheetId, sheetsData, options?.config);
+
+    // 5.5 Apply client-facing presentation polish, styling, banding, auto-filters, and safe chart
+    await applyManagedSheetsFormatting(spreadsheetId, sheetsData, options?.config).catch((formatErr) => {
+      console.warn("[GoogleSheetsSync] Formatting warning (non-fatal):", formatErr);
+    });
 
     // 6. Get updated spreadsheet title
     const meta = await getSpreadsheetMetadata(spreadsheetId, options?.config).catch(() => ({
