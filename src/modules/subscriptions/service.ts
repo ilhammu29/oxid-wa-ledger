@@ -284,7 +284,7 @@ export async function recordSubscriptionAudit(
   client: SupabaseClient,
   params: {
     businessId: string;
-    subscriptionId: string;
+    subscriptionId?: string | null;
     actorUserId?: string | null;
     actorEmail?: string | null;
     action: string;
@@ -296,7 +296,7 @@ export async function recordSubscriptionAudit(
 ): Promise<void> {
   await client.from("subscription_audit_logs").insert({
     business_id: params.businessId,
-    subscription_id: params.subscriptionId,
+    subscription_id: params.subscriptionId || null,
     actor_user_id: params.actorUserId || null,
     actor_email: params.actorEmail || null,
     action: params.action,

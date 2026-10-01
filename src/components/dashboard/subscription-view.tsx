@@ -7,7 +7,7 @@ import {
   SubscriptionPlan,
   BillingPaymentSetting,
 } from "@/modules/subscriptions/types";
-import { formatIDR } from "@/modules/subscriptions/plans";
+import { formatIDR, getPlanByCode } from "@/modules/subscriptions/plans";
 import { submitManualPaymentAction } from "@/app/dashboard/actions";
 import {
   CreditCard,
@@ -43,6 +43,11 @@ export function SubscriptionView({
   const canManage = role === "owner" || role === "admin";
   const { plan, status, remainingDays, currentPeriodEnd, isTrial, isGracePeriod, isSuspended, warningMessage } =
     subscriptionState;
+
+  const [selectedPlanCode, setSelectedPlanCode] = useState<string>(
+    plan.code === "pro" ? "pro" : "basic"
+  );
+  const activePlanToPay = plans.find((p) => p.code === selectedPlanCode) ?? getPlanByCode(selectedPlanCode);
 
   // Status Badge Configuration
   const getStatusBadge = () => {
@@ -417,17 +422,35 @@ export function SubscriptionView({
             <form onSubmit={handlePaymentSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-zinc-300 block mb-1.5">
-                  Nominal Transfer (IDR)
+                  Pilih Paket Langganan
+                </label>
+                <select
+                  name="planCode"
+                  value={selectedPlanCode}
+                  onChange={(e) => setSelectedPlanCode(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-emerald-500"
+                >
+                  {plans
+                    .filter((p) => p.priceIdr > 0)
+                    .map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.name} ({formatIDR(p.priceIdr)} / {p.durationDays} hari)
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-zinc-300 block mb-1.5">
+                  Nominal Transfer Resmi (IDR)
                 </label>
                 <input
-                  type="number"
-                  name="amount"
-                  defaultValue={plans.find((p) => p.code === "basic")?.priceIdr || 49000}
-                  required
-                  min={1000}
-                  step={1000}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-emerald-500 font-mono"
+                  type="text"
+                  readOnly
+                  value={activePlanToPay ? formatIDR(activePlanToPay.priceIdr) : "Paket tidak valid"}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800 text-emerald-400 font-bold text-sm focus:outline-none font-mono cursor-not-allowed"
                 />
+                <input type="hidden" name="amount" value={activePlanToPay?.priceIdr ?? 0} />
               </div>
 
               <div>

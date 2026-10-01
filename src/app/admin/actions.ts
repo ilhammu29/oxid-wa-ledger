@@ -2,7 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  isOxidSuperAdmin,
+  getPlatformAdminUser,
+  hasPlatformPermission,
+  PlatformPermission,
+  PlatformAdminRole,
   adminActivateSubscription,
   adminConfirmPayment,
   adminRejectPayment,
@@ -10,6 +13,12 @@ import {
   adminSuspendSubscription,
   adminReactivateSubscription,
   adminCancelSubscription,
+  createBillingPaymentSetting,
+  updateBillingPaymentSetting,
+  deleteBillingPaymentSetting,
+  updatePlatformAdminRole,
+  deactivatePlatformAdmin,
+  reactivatePlatformAdmin,
   SubscriptionPlanCode,
 } from "@/modules/subscriptions";
 import { revalidatePath } from "next/cache";
@@ -19,7 +28,12 @@ export interface AdminActionResult {
   error?: string;
 }
 
-async function requireAdminUser() {
+/**
+ * Server-side authorization guard for all platform administrative actions.
+ * Verifies authenticated session, checks public.platform_admins active status,
+ * and enforces fine-grained permission matrix.
+ */
+async function requirePlatformAdminWithPermission(permission: PlatformPermission) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,17 +43,21 @@ async function requireAdminUser() {
     throw new Error("UNAUTHENTICATED");
   }
 
-  const isAdmin = await isOxidSuperAdmin(user, supabase);
-  if (!isAdmin) {
-    throw new Error("FORBIDDEN: User is not an authorized OXID platform admin");
+  const adminRecord = await getPlatformAdminUser(user, supabase);
+  if (!adminRecord || !adminRecord.active) {
+    throw new Error("FORBIDDEN: User is not an authorized active OXID platform admin");
   }
 
-  return { user, supabase };
+  if (!hasPlatformPermission(adminRecord.role, permission)) {
+    throw new Error(`FORBIDDEN: Platform role '${adminRecord.role}' is not authorized for '${permission}'`);
+  }
+
+  return { user, supabase, adminRecord };
 }
 
 export async function adminActivateSubscriptionAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("subscriptions:write");
     const businessId = formData.get("businessId") as string;
     const planCode = (formData.get("planCode") as SubscriptionPlanCode) || "basic";
     const durationDays = parseInt(formData.get("durationDays") as string, 10) || 30;
@@ -58,6 +76,8 @@ export async function adminActivateSubscriptionAction(formData: FormData): Promi
 
     revalidatePath(`/admin/businesses/${businessId}`);
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -66,7 +86,7 @@ export async function adminActivateSubscriptionAction(formData: FormData): Promi
 
 export async function adminConfirmPaymentAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("payments:write");
     const paymentId = formData.get("paymentId") as string;
     const businessId = formData.get("businessId") as string;
     const extensionDays = parseInt(formData.get("extensionDays") as string, 10) || 30;
@@ -86,6 +106,9 @@ export async function adminConfirmPaymentAction(formData: FormData): Promise<Adm
       revalidatePath(`/admin/businesses/${businessId}`);
     }
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -94,7 +117,7 @@ export async function adminConfirmPaymentAction(formData: FormData): Promise<Adm
 
 export async function adminRejectPaymentAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("payments:write");
     const paymentId = formData.get("paymentId") as string;
     const businessId = formData.get("businessId") as string;
     const notes = (formData.get("notes") as string) || "";
@@ -112,6 +135,8 @@ export async function adminRejectPaymentAction(formData: FormData): Promise<Admi
       revalidatePath(`/admin/businesses/${businessId}`);
     }
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -120,7 +145,7 @@ export async function adminRejectPaymentAction(formData: FormData): Promise<Admi
 
 export async function adminExtendSubscriptionAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("subscriptions:write");
     const businessId = formData.get("businessId") as string;
     const days = parseInt(formData.get("days") as string, 10) || 30;
     const notes = (formData.get("notes") as string) || "";
@@ -137,6 +162,8 @@ export async function adminExtendSubscriptionAction(formData: FormData): Promise
 
     revalidatePath(`/admin/businesses/${businessId}`);
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -145,7 +172,7 @@ export async function adminExtendSubscriptionAction(formData: FormData): Promise
 
 export async function adminSuspendSubscriptionAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("subscriptions:write");
     const businessId = formData.get("businessId") as string;
     const notes = (formData.get("notes") as string) || "";
 
@@ -160,6 +187,8 @@ export async function adminSuspendSubscriptionAction(formData: FormData): Promis
 
     revalidatePath(`/admin/businesses/${businessId}`);
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -168,7 +197,7 @@ export async function adminSuspendSubscriptionAction(formData: FormData): Promis
 
 export async function adminReactivateSubscriptionAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("subscriptions:write");
     const businessId = formData.get("businessId") as string;
     const days = parseInt(formData.get("days") as string, 10) || 30;
     const notes = (formData.get("notes") as string) || "";
@@ -185,6 +214,8 @@ export async function adminReactivateSubscriptionAction(formData: FormData): Pro
 
     revalidatePath(`/admin/businesses/${businessId}`);
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -193,7 +224,7 @@ export async function adminReactivateSubscriptionAction(formData: FormData): Pro
 
 export async function adminCancelSubscriptionAction(formData: FormData): Promise<AdminActionResult> {
   try {
-    const { user, supabase } = await requireAdminUser();
+    const { user, supabase } = await requirePlatformAdminWithPermission("subscriptions:write");
     const businessId = formData.get("businessId") as string;
     const notes = (formData.get("notes") as string) || "";
 
@@ -208,6 +239,161 @@ export async function adminCancelSubscriptionAction(formData: FormData): Promise
 
     revalidatePath(`/admin/businesses/${businessId}`);
     revalidatePath("/admin/businesses");
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Billing Payment Settings Admin Actions
+// ----------------------------------------------------------------------------
+
+export async function adminCreateBillingSettingAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { user, supabase } = await requirePlatformAdminWithPermission("settings:write");
+    const bankName = (formData.get("bankName") as string) || "";
+    const accountName = (formData.get("accountName") as string) || "";
+    const maskedAccountNumber = (formData.get("maskedAccountNumber") as string) || "";
+    const paymentInstructions = (formData.get("paymentInstructions") as string) || "";
+    const active = formData.get("active") === "true";
+
+    if (!bankName || !accountName || !maskedAccountNumber) {
+      throw new Error("Bank name, account name, and masked account number are required.");
+    }
+
+    await createBillingPaymentSetting(supabase, {
+      bankName,
+      accountName,
+      maskedAccountNumber,
+      paymentInstructions,
+      active,
+      adminUserId: user.id,
+      adminEmail: user.email || undefined,
+    });
+
+    revalidatePath("/admin/settings/billing");
+    revalidatePath("/dashboard/subscription");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function adminUpdateBillingSettingAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { user, supabase } = await requirePlatformAdminWithPermission("settings:write");
+    const id = formData.get("id") as string;
+    if (!id) throw new Error("Missing setting id");
+
+    const bankName = formData.get("bankName") as string | undefined;
+    const accountName = formData.get("accountName") as string | undefined;
+    const maskedAccountNumber = formData.get("maskedAccountNumber") as string | undefined;
+    const paymentInstructions = formData.get("paymentInstructions") as string | undefined;
+    const active = formData.has("active") ? formData.get("active") === "true" : undefined;
+
+    await updateBillingPaymentSetting(supabase, {
+      id,
+      bankName,
+      accountName,
+      maskedAccountNumber,
+      paymentInstructions,
+      active,
+      adminUserId: user.id,
+      adminEmail: user.email || undefined,
+    });
+
+    revalidatePath("/admin/settings/billing");
+    revalidatePath("/dashboard/subscription");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function adminDeleteBillingSettingAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { supabase } = await requirePlatformAdminWithPermission("settings:write");
+    const id = formData.get("id") as string;
+    if (!id) throw new Error("Missing setting id");
+
+    await deleteBillingPaymentSetting(supabase, id);
+
+    revalidatePath("/admin/settings/billing");
+    revalidatePath("/dashboard/subscription");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// ----------------------------------------------------------------------------
+// User & Platform Admin Management Actions
+// ----------------------------------------------------------------------------
+
+export async function adminUpdatePlatformRoleAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { user, supabase } = await requirePlatformAdminWithPermission("users:write");
+    const targetUserId = formData.get("targetUserId") as string;
+    const role = formData.get("role") as PlatformAdminRole;
+
+    if (!targetUserId || !role) throw new Error("Missing targetUserId or role");
+
+    await updatePlatformAdminRole(supabase, {
+      userId: targetUserId,
+      role,
+      adminUserId: user.id,
+      adminEmail: user.email || undefined,
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function adminDeactivatePlatformAdminAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { user, supabase } = await requirePlatformAdminWithPermission("users:write");
+    const targetUserId = formData.get("targetUserId") as string;
+
+    if (!targetUserId) throw new Error("Missing targetUserId");
+
+    // Prevent self-deactivation
+    if (targetUserId === user.id) {
+      throw new Error("Admin cannot deactivate their own active session.");
+    }
+
+    await deactivatePlatformAdmin(supabase, {
+      userId: targetUserId,
+      adminUserId: user.id,
+      adminEmail: user.email || undefined,
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function adminReactivatePlatformAdminAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const { user, supabase } = await requirePlatformAdminWithPermission("users:write");
+    const targetUserId = formData.get("targetUserId") as string;
+
+    if (!targetUserId) throw new Error("Missing targetUserId");
+
+    await reactivatePlatformAdmin(supabase, {
+      userId: targetUserId,
+      adminUserId: user.id,
+      adminEmail: user.email || undefined,
+    });
+
+    revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };

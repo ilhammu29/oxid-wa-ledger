@@ -58,6 +58,17 @@ export function getPlan(code: string | null | undefined): SubscriptionPlan {
   return SUBSCRIPTION_PLANS.pilot;
 }
 
+/**
+ * Returns a plan strictly matching the given code, or null if invalid/not found.
+ * Prevents silent fallback assumptions.
+ */
+export function getPlanByCode(code: string | null | undefined): SubscriptionPlan | null {
+  if (code && code in SUBSCRIPTION_PLANS) {
+    return SUBSCRIPTION_PLANS[code as SubscriptionPlanCode];
+  }
+  return null;
+}
+
 export function getAllPlans(): SubscriptionPlan[] {
   return Object.values(SUBSCRIPTION_PLANS);
 }

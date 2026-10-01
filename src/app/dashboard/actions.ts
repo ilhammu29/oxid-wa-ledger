@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@/modules/transactions";
 import { normalizeProductTerm } from "@/modules/products";
-import { getBusinessSubscription, createPaymentRecord } from "@/modules/subscriptions";
+import { getBusinessSubscription, createPaymentRecord, getPlanByCode } from "@/modules/subscriptions";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -1053,19 +1053,27 @@ export async function submitManualPaymentAction(formData: FormData): Promise<Act
     return { success: false, error: "Hanya pemilik atau admin yang dapat mengirim konfirmasi pembayaran." };
   }
 
-  const amountStr = (formData.get("amount") as string) || "0";
-  const amount = parseInt(amountStr.replace(/[^0-9]/g, ""), 10);
-  const paymentMethod = (formData.get("paymentMethod") as string) || "manual_transfer";
-  const reference = (formData.get("reference") as string) || "";
-
-  if (isNaN(amount) || amount <= 0) {
-    return { success: false, error: "Nominal pembayaran tidak valid." };
-  }
-
   const supabase = await createClient();
   const sub = await getBusinessSubscription(supabase, session.business.id);
   if (!sub) {
     return { success: false, error: "Data langganan bisnis tidak ditemukan." };
+  }
+
+  // Authoritative plan resolution:
+  // Client specifies requested planCode (e.g. 'basic' or 'pro'). If omitted, fallback to non-pilot plan or 'basic'.
+  const requestedPlanCode = ((formData.get("planCode") as string) || "").trim() || (sub.planCode !== "pilot" ? sub.planCode : "basic");
+  const authoritativePlan = getPlanByCode(requestedPlanCode);
+  if (!authoritativePlan || authoritativePlan.priceIdr <= 0) {
+    return { success: false, error: "Paket langganan tidak valid atau belum dipilih." };
+  }
+
+  // Price cannot be overridden by client request: strictly enforce authoritative catalog price
+  const amount = authoritativePlan.priceIdr;
+  const paymentMethod = (formData.get("paymentMethod") as string) || "manual_transfer";
+  const reference = (formData.get("reference") as string)?.trim() || "";
+
+  if (!reference) {
+    return { success: false, error: "Nomor referensi atau nama pengirim transfer wajib diisi." };
   }
 
   try {

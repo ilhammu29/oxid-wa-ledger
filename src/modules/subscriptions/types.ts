@@ -113,3 +113,91 @@ export interface BillingPaymentSetting {
   paymentInstructions?: string | null;
   active: boolean;
 }
+
+export type PlatformAdminRole =
+  | "super_admin"
+  | "support_admin"
+  | "billing_admin"
+  | "viewer";
+
+export interface PlatformAdminRecord {
+  id: string;
+  userId: string;
+  email: string;
+  role: PlatformAdminRole;
+  active: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformOverviewKPIs {
+  totalBusinesses: number;
+  activeTrials: number;
+  activeSubscriptions: number;
+  gracePeriodSubscriptions: number;
+  suspendedSubscriptions: number;
+  pendingPaymentsCount: number;
+  pendingPaymentsTotalIdr: number;
+  totalTransactionsCount: number;
+  totalRevenueVolumeIdr: number;
+  connectedChannels: {
+    telegramCount: number;
+    whatsappCount: number;
+  };
+  googleSheetsConnectedCount: number;
+}
+
+export interface PlatformSystemStatusItem {
+  id: string;
+  name: string;
+  category: "database" | "adapter" | "worker" | "cron";
+  status: "healthy" | "warning" | "unavailable" | "deferred";
+  statusText: string;
+  lastExecutionAt?: string | null;
+  lastSuccessAt?: string | null;
+  recentFailureCount: number;
+  notes?: string;
+}
+
+export interface PlatformUserItem {
+  userId: string;
+  email: string;
+  businessName: string | null;
+  businessRole: string | null;
+  platformRole: PlatformAdminRole | null;
+  platformAdminActive: boolean | null;
+  createdAt: string;
+}
+
+export interface AdminSubscriptionListItem {
+  id: string;
+  businessId: string;
+  businessName: string;
+  planCode: SubscriptionPlanCode;
+  planName: string;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string;
+  gracePeriodEndsAt: string;
+  remainingDays: number;
+  trialStartedAt: string;
+  trialEndsAt: string;
+  activatedAt: string | null;
+  suspendedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminPaymentListItem {
+  id: string;
+  businessId: string;
+  businessName: string;
+  subscriptionId: string;
+  amountIdr: number;
+  paymentMethod: string;
+  status: string;
+  reference: string | null;
+  confirmedAt: string | null;
+  confirmedBy: string | null;
+  createdAt: string;
+}

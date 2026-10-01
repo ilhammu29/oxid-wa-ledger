@@ -65,31 +65,26 @@ export default async function AdminBusinessDetailPage({
   const plans = getAllPlans();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <Link
-            href="/admin/businesses"
-            className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors mb-3"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali ke Daftar Bisnis
-          </Link>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                ADMIN KLIEN
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-100 mt-1.5">
-                {detail.business.name}
-              </h1>
-              <p className="text-xs text-zinc-400 font-mono mt-0.5">{detail.business.id}</p>
-            </div>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div>
+        <Link
+          href="/admin/businesses"
+          className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors mb-3"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Kembali ke Daftar Bisnis
+        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+              {detail.business.name}
+            </h1>
+            <p className="text-xs text-zinc-400 font-mono mt-0.5">{detail.business.id}</p>
           </div>
         </div>
-
-        <AdminBusinessDetailView detail={detail} plans={plans} />
       </div>
+
+      <AdminBusinessDetailView detail={detail} plans={plans} />
     </div>
   );
 }

@@ -68,35 +68,18 @@ export default async function AdminBusinessesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                OXID PLATFORM ADMIN
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-              Manajemen Klien & Langganan
-            </h1>
-            <p className="text-xs text-zinc-400 mt-1">
-              Kelola status langganan, aktivasi manual, perpanjangan, dan monitoring seluruh tenant bisnis.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 text-xs">
-            <span className="text-zinc-500">Login sebagai:</span>
-            <span className="font-mono text-zinc-300 font-semibold">{user.email}</span>
-            <Link
-              href="/dashboard"
-              className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors"
-            >
-              Ke Dashboard
-            </Link>
-          </div>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+            Daftar Bisnis Klien
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Kelola seluruh tenant bisnis: status langganan, masa aktif, kanal terhubung, dan detail operasional.
+          </p>
         </div>
+      </div>
 
         {/* Business List Table */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
@@ -162,6 +145,5 @@ export default async function AdminBusinessesPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
