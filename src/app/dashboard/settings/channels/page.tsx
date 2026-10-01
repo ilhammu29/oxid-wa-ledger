@@ -8,6 +8,9 @@ import {
 } from "@/modules/channels";
 import { ChannelsView } from "@/components/dashboard/channels-view";
 
+import { getBusinessSubscriptionState } from "@/modules/subscriptions";
+import { getTelegramBotUsername } from "@/config/env.client";
+
 export const dynamic = "force-dynamic";
 
 export default async function ChannelsSettingsPage() {
@@ -15,21 +18,25 @@ export default async function ChannelsSettingsPage() {
   const business = session.business!;
   const supabase = await createClient();
 
-  const [channelSettings, whatsappReadiness, sendersRes, telegramOpsRes] = await Promise.all([
-    getBusinessChannelSettings(supabase, business.id),
-    checkWhatsAppReadiness(supabase, business.id),
-    supabase
-      .from("whatsapp_authorized_senders")
-      .select("id, phone_number, display_label, active, receive_reminders, created_at")
-      .eq("business_id", business.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("telegram_authorized_users")
-      .select("id, telegram_user_id, display_label, active, created_at")
-      .eq("business_id", business.id)
-      .eq("active", true)
-      .order("created_at", { ascending: true }),
-  ]);
+  const [channelSettings, whatsappReadiness, sendersRes, telegramOpsRes, subState] =
+    await Promise.all([
+      getBusinessChannelSettings(supabase, business.id),
+      checkWhatsAppReadiness(supabase, business.id),
+      supabase
+        .from("whatsapp_authorized_senders")
+        .select("id, phone_number, display_label, active, receive_reminders, created_at")
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("telegram_authorized_users")
+        .select(
+          "id, telegram_user_id, display_label, telegram_username, operator_role, active, receive_reminders, created_at"
+        )
+        .eq("business_id", business.id)
+        .eq("active", true)
+        .order("created_at", { ascending: true }),
+      getBusinessSubscriptionState(supabase, business.id),
+    ]);
 
   const senders = (sendersRes.data || []).map((s) => ({
     id: s.id,
@@ -44,9 +51,20 @@ export default async function ChannelsSettingsPage() {
     id: t.id,
     telegramUserId: Number(t.telegram_user_id),
     displayLabel: t.display_label,
+    telegramUsername: t.telegram_username,
+    operatorRole: t.operator_role || "Kasir",
     active: t.active,
+    receiveReminders: t.receive_reminders ?? false,
     createdAt: t.created_at,
   }));
+
+  const planInfo = {
+    code: subState.plan.code,
+    name: subState.plan.name,
+    maxOperators: subState.plan.maxOperators ?? 2,
+  };
+
+  const botUsername = getTelegramBotUsername();
 
   return (
     <div className="space-y-6">
@@ -70,6 +88,8 @@ export default async function ChannelsSettingsPage() {
         senders={senders}
         telegramOperators={telegramOperators}
         role={session.role || "member"}
+        plan={planInfo}
+        botUsername={botUsername}
       />
     </div>
   );

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Radio,
-  Send,
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   FileCode2,
+  Bot,
+  Plus,
 } from "lucide-react";
 import {
   saveChannelSettingsAction,
@@ -24,8 +26,12 @@ import {
   deleteWhatsAppAuthorizedSenderAction,
   saveWhatsAppTemplateAction,
   unlinkTelegramOperatorAction,
+  generateTelegramPairingCodeAction,
+  checkTelegramPairingStatusAction,
 } from "@/app/dashboard/actions";
 import { WhatsAppReadiness, WhatsAppConnectionStatus } from "@/modules/channels/types";
+import { TelegramPairingModal } from "@/components/telegram/telegram-pairing-modal";
+import { getTelegramBotUsername } from "@/config/env.client";
 
 export interface WhatsAppAuthorizedSenderItem {
   id: string;
@@ -40,7 +46,10 @@ export interface TelegramAuthorizedOperatorItem {
   id: string;
   telegramUserId: number;
   displayLabel?: string | null;
+  telegramUsername?: string | null;
+  operatorRole?: string | null;
   active: boolean;
+  receiveReminders?: boolean;
   createdAt: string;
 }
 
@@ -55,6 +64,12 @@ interface ChannelsViewProps {
   senders?: WhatsAppAuthorizedSenderItem[];
   telegramOperators?: TelegramAuthorizedOperatorItem[];
   role: "owner" | "admin" | "member";
+  plan?: {
+    code: string;
+    name: string;
+    maxOperators: number;
+  };
+  botUsername?: string;
 }
 
 function getStatusBadgeStyle(status: WhatsAppConnectionStatus) {
@@ -95,6 +110,8 @@ export function ChannelsView({
   senders = [],
   telegramOperators = [],
   role,
+  plan,
+  botUsername,
 }: ChannelsViewProps) {
   const [telegramEnabled, setTelegramEnabled] = useState(settings.telegramEnabled);
   const [whatsappEnabled, setWhatsappEnabled] = useState(settings.whatsappEnabled);
@@ -109,22 +126,50 @@ export function ChannelsView({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Telegram Operators State (10.1I)
+  // Telegram Operators State (10.2.1)
   const [telegramOps, setTelegramOps] = useState<TelegramAuthorizedOperatorItem[]>(telegramOperators);
   const [unlinkingOpId, setUnlinkingOpId] = useState<string | null>(null);
   const [unlinkOpMsg, setUnlinkOpMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleUnlinkTelegramOperator = async (operatorId: string) => {
-    if (!canEdit) return;
-    if (!confirm("Putuskan hubungan operator Telegram ini dari bisnis Anda? Akun ini tidak akan dapat mencatat transaksi lagi.")) return;
+  const [showPairingModal, setShowPairingModal] = useState(false);
+  const [operatorToUnlink, setOperatorToUnlink] = useState<TelegramAuthorizedOperatorItem | null>(null);
 
-    setUnlinkingOpId(operatorId);
+  const effectiveBotUsername = botUsername || getTelegramBotUsername();
+  const maxOperators = plan?.maxOperators ?? 2;
+  const isLimitReached = telegramOps.length >= maxOperators;
+
+  const maskTelegramUserId = (id: number | string): string => {
+    const str = String(id);
+    if (str.length <= 4) return `ID: ${str}`;
+    return `ID: ******${str.slice(-4)}`;
+  };
+
+  const formatConnectedAt = (dateStr: string): string => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleConfirmUnlink = async () => {
+    if (!canEdit || !operatorToUnlink) return;
+
+    setUnlinkingOpId(operatorToUnlink.id);
     setUnlinkOpMsg(null);
     try {
-      const res = await unlinkTelegramOperatorAction(operatorId);
+      const res = await unlinkTelegramOperatorAction(operatorToUnlink.id);
       if (res.success) {
-        setTelegramOps((prev) => prev.filter((o) => o.id !== operatorId));
+        setTelegramOps((prev) => prev.filter((o) => o.id !== operatorToUnlink.id));
         setUnlinkOpMsg({ type: "success", text: "Operator Telegram berhasil diputuskan." });
+        setOperatorToUnlink(null);
       } else {
         setUnlinkOpMsg({ type: "error", text: res.error || "Gagal memutuskan operator." });
       }
@@ -432,21 +477,22 @@ export function ChannelsView({
 
       {/* Channel Toggles Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Telegram Card */}
-        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between">
-          <div>
+        {/* Telegram Card (10.2.1A, 10.2.1N) */}
+        <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 shadow-xs flex flex-col justify-between space-y-5">
+          <div className="space-y-4">
+            {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center">
-                  <Send className="w-5 h-5" />
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-zinc-900 text-sm">Telegram Bot Adapter</h3>
-                  <p className="text-xs text-zinc-500">Kanal percontohan cepat & cadangan darurat</p>
+                  <h3 className="font-semibold text-zinc-900 text-sm">Telegram Bot</h3>
+                  <p className="text-xs text-zinc-500 font-mono">@{effectiveBotUsername}</p>
                 </div>
               </div>
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                   telegramEnabled
                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                     : "bg-zinc-100 text-zinc-600 border border-zinc-200"
@@ -457,100 +503,191 @@ export function ChannelsView({
                     telegramEnabled ? "bg-emerald-500" : "bg-zinc-400"
                   }`}
                 />
-                {telegramEnabled ? "Aktif" : "Nonaktif"}
+                {telegramEnabled ? "AKTIF" : "NONAKTIF"}
               </span>
             </div>
 
-            <div className="py-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-zinc-800">Aktifkan Kanal Telegram</p>
-                  <p className="text-[11px] text-zinc-500">
-                    Menerima perintah /sale, /batal, /status, dan pengingat via Telegram Bot.
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={telegramEnabled}
-                    onChange={(e) => setTelegramEnabled(e.target.checked)}
-                    disabled={!canEdit}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
+            {/* Connection Status Grid */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/70">
+                <span className="text-[10px] text-zinc-400 font-medium block uppercase tracking-wider">
+                  Webhook
+                </span>
+                <span className="font-semibold text-emerald-700 flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Aktif
+                </span>
               </div>
+              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/70">
+                <span className="text-[10px] text-zinc-400 font-medium block uppercase tracking-wider">
+                  Bot Status
+                </span>
+                <span className="font-semibold text-zinc-800 flex items-center gap-1 mt-0.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Siap
+                </span>
+              </div>
+            </div>
 
-              <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 space-y-1">
-                <div className="flex items-center gap-2 text-zinc-800 font-medium">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Kesiapan Telegram
-                </div>
+            {/* Toggle Channel */}
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <p className="text-xs font-medium text-zinc-800">Aktifkan Perintah Bot</p>
                 <p className="text-[11px] text-zinc-500">
-                  Bot token dan webhook terkonfigurasi. Tetap dapat dipertahankan aktif berdampingan (dual-run) untuk keamanan operasional.
+                  Menerima perintah /sale, /batal, /status, dan pengingat via Telegram Bot.
                 </p>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={telegramEnabled}
+                  onChange={(e) => setTelegramEnabled(e.target.checked)}
+                  disabled={!canEdit}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
 
-              {/* Connected Telegram Operators (10.1I) */}
-              <div className="pt-3 border-t border-zinc-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-800">Operator Telegram Terhubung</span>
-                  <span className="text-[11px] text-zinc-500 font-mono">
-                    {telegramOps.length} aktif
-                  </span>
-                </div>
-
-                {unlinkOpMsg && (
-                  <div
-                    className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
-                      unlinkOpMsg.type === "success"
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : "bg-rose-50 text-rose-800 border border-rose-200"
-                    }`}
-                  >
-                    <span>{unlinkOpMsg.text}</span>
-                  </div>
-                )}
-
-                {telegramOps.length === 0 ? (
-                  <p className="text-[11px] text-zinc-400 italic">
-                    Belum ada akun Telegram yang terhubung. Hubungkan akun melalui kode pairing di halaman Onboarding.
+            {/* Operators Section (10.2.1A, 10.2.1B, 10.2.1G) */}
+            <div className="pt-3 border-t border-zinc-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-zinc-800">Operator Telegram</span>
+                  <p className="text-[11px] text-zinc-500">
+                    {plan?.name ? `${plan.name}: ` : ""}
+                    {telegramOps.length} / {maxOperators} operator digunakan
                   </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {telegramOps.map((op) => (
-                      <div
-                        key={op.id}
-                        className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 border border-zinc-200/80 text-xs"
-                      >
+                </div>
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold ${
+                    isLimitReached
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  }`}
+                >
+                  {telegramOps.length} / {maxOperators}
+                </span>
+              </div>
+
+              {/* Status/Error banner */}
+              {unlinkOpMsg && (
+                <div
+                  className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
+                    unlinkOpMsg.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                  }`}
+                >
+                  <span>{unlinkOpMsg.text}</span>
+                </div>
+              )}
+
+              {/* Limit Reached Warning */}
+              {isLimitReached && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-amber-800">Batas operator tercapai</p>
+                    <p className="text-[11px] text-amber-700">
+                      Batas operator Telegram untuk paket Anda sudah tercapai ({telegramOps.length}/{maxOperators}).
+                    </p>
+                  </div>
+                  <Link
+                    href="/dashboard/subscription"
+                    className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] shrink-0 transition-colors"
+                  >
+                    Lihat Paket
+                  </Link>
+                </div>
+              )}
+
+              {/* Operator Cards / List */}
+              {telegramOps.length === 0 ? (
+                <div className="p-4 rounded-xl bg-zinc-50 border border-dashed border-zinc-200 text-center space-y-2">
+                  <p className="text-xs text-zinc-500">Belum ada operator Telegram yang terhubung.</p>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPairingModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors min-h-[44px]"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Hubungkan Telegram</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {telegramOps.map((op) => (
+                    <div
+                      key={op.id}
+                      className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 text-xs space-y-2.5 transition-all hover:border-zinc-300"
+                    >
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="font-medium text-zinc-800 truncate">
-                            {op.displayLabel || `Operator ID: ${op.telegramUserId}`}
-                          </p>
-                          <p className="text-[10px] text-zinc-400 font-mono">
-                            ID: {op.telegramUserId}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-zinc-900 text-xs">
+                              {op.operatorRole || op.displayLabel || "Operator"}
+                            </span>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                              Aktif
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-700 font-mono mt-0.5">
+                            {op.telegramUsername ? `@${op.telegramUsername.replace(/^@/, "")}` : maskTelegramUserId(op.telegramUserId)}
                           </p>
                         </div>
                         {canEdit && (
                           <button
                             type="button"
-                            onClick={() => handleUnlinkTelegramOperator(op.id)}
+                            onClick={() => setOperatorToUnlink(op)}
                             disabled={unlinkingOpId === op.id}
-                            className="text-[11px] text-rose-600 hover:text-rose-700 font-medium px-2 py-1 rounded hover:bg-rose-50 transition-colors disabled:opacity-50"
+                            className="text-xs text-rose-600 hover:text-rose-700 font-semibold px-2.5 py-1.5 rounded-lg hover:bg-rose-50 border border-rose-200 transition-colors disabled:opacity-50 min-h-[36px]"
                           >
-                            {unlinkingOpId === op.id ? "Memutuskan..." : "Putuskan"}
+                            Putuskan
                           </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-200/60 text-[11px] text-zinc-500">
+                        <div>
+                          <span>Terima Pengingat: </span>
+                          <span className="font-medium text-zinc-700">
+                            {op.receiveReminders ? "Ya" : "Tidak"}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span>Terhubung: </span>
+                          <span className="font-medium text-zinc-700">
+                            {formatConnectedAt(op.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Operator CTA */}
+                  {canEdit && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowPairingModal(true)}
+                        disabled={isLimitReached}
+                        className="w-full py-2.5 px-3 rounded-xl border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                      >
+                        <Plus className="w-4 h-4 text-emerald-600" />
+                        <span>+ Tambah Operator Telegram</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="text-[11px] text-zinc-400 pt-3 border-t border-zinc-100">
-            Dapat berfungsi sebagai jalur cadangan (emergency fallback) saat migrasi WhatsApp.
+          {/* Help Text (10.2.1N) */}
+          <div className="text-[11px] text-zinc-500 pt-3 border-t border-zinc-100 leading-relaxed">
+            Gunakan satu bot OXID Ledger untuk semua bisnis. Setiap operator dihubungkan melalui kode koneksi yang unik.
           </div>
         </div>
 
@@ -1097,6 +1234,92 @@ export function ChannelsView({
           </div>
         </div>
       )}
+
+      {/* Telegram Operator Unlink Confirmation Modal (10.2.1I, 10.2.1J) */}
+      {operatorToUnlink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-zinc-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-zinc-900 text-sm">Putuskan operator Telegram?</h3>
+                <p className="text-xs text-zinc-500">
+                  {operatorToUnlink.operatorRole || operatorToUnlink.displayLabel || "Operator"} &bull;{" "}
+                  {operatorToUnlink.telegramUsername
+                    ? `@${operatorToUnlink.telegramUsername.replace(/^@/, "")}`
+                    : maskTelegramUserId(operatorToUnlink.telegramUserId)}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 space-y-1">
+              <p className="font-semibold text-zinc-900">Perhatian:</p>
+              <p className="text-[11px] text-zinc-600 leading-relaxed">
+                Operator ini tidak akan bisa lagi mencatat transaksi melalui Telegram untuk bisnis ini.
+              </p>
+            </div>
+
+            {/* Lockout Warning if single operator (10.2.1J) */}
+            {telegramOps.length === 1 && (
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Ini adalah satu-satunya operator Telegram yang terhubung.</span>
+                </div>
+                <p className="text-[11px] text-amber-800/90 leading-relaxed">
+                  Setelah diputuskan, transaksi melalui Telegram tidak dapat dilakukan sampai operator baru dihubungkan.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setOperatorToUnlink(null)}
+                disabled={unlinkingOpId !== null}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors min-h-[44px]"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmUnlink}
+                disabled={unlinkingOpId !== null}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs disabled:opacity-50 min-h-[44px]"
+              >
+                {unlinkingOpId !== null ? "Memutuskan..." : "Putuskan Operator"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shared Telegram Pairing Modal (10.2.1C, 10.2.1P) */}
+      <TelegramPairingModal
+        isOpen={showPairingModal}
+        onClose={() => setShowPairingModal(false)}
+        generateToken={generateTelegramPairingCodeAction}
+        checkStatus={async (code) => {
+          const res = await checkTelegramPairingStatusAction(code);
+          if (res.paired && res.operators) {
+            setTelegramOps(res.operators);
+          }
+          return {
+            success: res.success,
+            paired: res.paired,
+            error: res.error,
+          };
+        }}
+        onSuccess={() => {
+          checkTelegramPairingStatusAction().then((res) => {
+            if (res.success && res.operators) {
+              setTelegramOps(res.operators);
+            }
+          });
+        }}
+      />
     </div>
   );
 }

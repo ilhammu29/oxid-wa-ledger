@@ -181,6 +181,21 @@ export async function generatePairingTokenAction(businessId: string) {
     return { success: false, error: "Sesi login tidak valid." };
   }
 
+  // 10.2.1K / 10.2.1L: Verify business membership and role (fail-closed)
+  const { data: member } = await supabase
+    .from("business_users")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return {
+      success: false,
+      error: "Hanya pemilik atau admin bisnis yang dapat membuat kode pairing Telegram.",
+    };
+  }
+
   return await generateTelegramPairingToken(supabase, businessId, user.id);
 }
 

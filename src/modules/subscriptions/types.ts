@@ -59,6 +59,7 @@ export interface SubscriptionPlan {
   description: string;
   priceIdr: number;
   durationDays: number;
+  maxOperators: number;
   features: string[];
 }
 

@@ -12,6 +12,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
     description: "Akses penuh gratis selama masa uji coba 14 hari.",
     priceIdr: 0,
     durationDays: 14,
+    maxOperators: 2,
     features: [
       "Pencatatan penjualan via Telegram & WhatsApp",
       "Sinkronisasi Google Sheets otomatis",
@@ -26,6 +27,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
     description: "Solusi pembukuan praktis harian untuk UMKM & pedagang.",
     priceIdr: 49000,
     durationDays: 30,
+    maxOperators: 2,
     features: [
       "Pencatatan transaksi tak terbatas",
       "Hingga 5 produk & alias aktif",
@@ -40,6 +42,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> 
     description: "Fitur lengkap dengan prioritas sinkronisasi dan dukungan kanal.",
     priceIdr: 149000,
     durationDays: 30,
+    maxOperators: 10,
     features: [
       "Semua fitur Paket Basic",
       "Produk & alias tak terbatas",
@@ -56,6 +59,10 @@ export function getPlan(code: string | null | undefined): SubscriptionPlan {
     return SUBSCRIPTION_PLANS[code as SubscriptionPlanCode];
   }
   return SUBSCRIPTION_PLANS.pilot;
+}
+
+export function getMaxOperatorsForPlan(code: string | null | undefined): number {
+  return getPlan(code).maxOperators ?? 2;
 }
 
 /**

@@ -114,7 +114,10 @@ export async function processIncomingTelegramWebhook(
 
     if (rawPairingCode) {
       const tokenHash = hashPairingToken(rawPairingCode);
-      const displayLabel = `Operator Telegram (${fromUser.first_name || "Utama"})`;
+      const telegramUsername = fromUser.username ? `@${fromUser.username}` : null;
+      const displayLabel = fromUser.username
+        ? `@${fromUser.username}`
+        : `Operator (${fromUser.first_name || "Utama"})`;
 
       const { data: pairData } = await client.rpc(
         "verify_and_consume_telegram_pairing_token",
@@ -122,6 +125,8 @@ export async function processIncomingTelegramWebhook(
           p_token_hash: tokenHash,
           p_telegram_user_id: telegramUserId,
           p_display_label: displayLabel,
+          p_telegram_username: telegramUsername,
+          p_operator_role: "Kasir",
         }
       );
 

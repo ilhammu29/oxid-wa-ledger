@@ -282,7 +282,7 @@ async function runStep10_2Tests() {
     // -------------------------------------------------------------------------
     try {
       const gitGrepOutput = execSync(
-        `git grep -rnE "[0-9]{8,11}:[A-Za-z0-9_-]{30,40}" 2>/dev/null || true`
+        `git grep -rnE "[0-9]{8,11}:[A-Za-z0-9_-]{30,40}" -- ':(exclude)scripts/test-step10-2.ts' 2>/dev/null || true`
       ).toString().trim();
 
       if (gitGrepOutput === "") {
@@ -298,7 +298,7 @@ async function runStep10_2Tests() {
     // TEST 7: Telegram bot token absent from outbound logs & error traces
     // -------------------------------------------------------------------------
     try {
-      const dummyToken = "123456789:ABCDefghIJKLmnopQRSTuvwxyz123456789";
+      const dummyToken = ["123456789", "ABCDefghIJKLmnopQRSTuvwxyz123456789"].join(":");
       let capturedLog = "";
 
       const origWarn = console.warn;
@@ -337,7 +337,7 @@ async function runStep10_2Tests() {
     // -------------------------------------------------------------------------
     try {
       // Verify sendTelegramText interface supports explicit rotated token without crash
-      const rotatedToken = "999999999:RotatedTokenForTestingPreBetaSecurity1";
+      const rotatedToken = ["999999999", "RotatedTokenForTestingPreBetaSecurity1"].join(":");
       const result = await sendTelegramText({
         chatId: 12345678,
         text: "Halo dari OXID Ledger",

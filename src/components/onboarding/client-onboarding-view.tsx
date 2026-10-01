@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -10,8 +10,6 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   ArrowRight,
-  Copy,
-  ExternalLink,
   RefreshCw,
   AlertCircle,
   ShieldCheck,
@@ -24,8 +22,9 @@ import {
   checkFirstTransactionAction,
   skipGoogleSheetsAction,
 } from "@/app/onboarding/actions";
-import { BusinessOnboardingProgress, TelegramPairingTokenResult } from "@/modules/onboarding/types";
+import { BusinessOnboardingProgress } from "@/modules/onboarding/types";
 import { formatIDR } from "@/modules/subscriptions/plans";
+import { TelegramPairingCard } from "@/components/telegram/telegram-pairing-card";
 
 interface ClientOnboardingViewProps {
   initialBusiness: {
@@ -71,8 +70,6 @@ export function ClientOnboardingView({
   const [aliases, setAliases] = useState("lele, ikan lele");
 
   // Step 3: Telegram Pairing State
-  const [pairingToken, setPairingToken] = useState<TelegramPairingTokenResult | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
   const [telegramConnected, setTelegramConnected] = useState(
     Boolean(initialProgress?.telegramCompleted)
   );
@@ -169,68 +166,6 @@ export function ClientOnboardingView({
     } finally {
       setLoading(false);
     }
-  };
-
-  // --------------------------------------------------------------------------
-  // Step 3: Telegram Pairing Generation & Polling
-  // --------------------------------------------------------------------------
-  const loadPairingToken = useCallback(async () => {
-    if (!business) return;
-    setLoading(true);
-    try {
-      const res = await generatePairingTokenAction(business.id);
-      if (res.success && res.result) {
-        setPairingToken(res.result);
-      } else {
-        setErrorMsg(res.error || "Gagal membuat kode pairing Telegram.");
-      }
-    } catch {
-      setErrorMsg("Kendala komunikasi dengan server.");
-    } finally {
-      setLoading(false);
-    }
-  }, [business]);
-
-  // Load pairing token when arriving on step 3
-  useEffect(() => {
-    let isCancelled = false;
-    if (currentStep === 3 && business && !telegramConnected && !pairingToken) {
-      generatePairingTokenAction(business.id)
-        .then((res) => {
-          if (!isCancelled && res.success && res.result) {
-            setPairingToken(res.result);
-          }
-        })
-        .catch(() => {
-          // Ignored, user can retry with manual refresh button
-        });
-    }
-    return () => {
-      isCancelled = true;
-    };
-  }, [currentStep, business, telegramConnected, pairingToken]);
-
-  // Poll for Telegram connection on Step 3
-  useEffect(() => {
-    if (currentStep !== 3 || !business || telegramConnected) return;
-
-    const interval = setInterval(async () => {
-      const res = await checkTelegramStatusAction(business.id);
-      if (res.connected) {
-        setTelegramConnected(true);
-        if (res.operatorLabel) setOperatorLabel(res.operatorLabel);
-        clearInterval(interval);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [currentStep, business, telegramConnected]);
-
-  const handleCopyCode = () => {
-    if (!pairingToken) return;
-    navigator.clipboard.writeText(`/connect ${pairingToken.code}`);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   // --------------------------------------------------------------------------
@@ -575,78 +510,26 @@ export function ClientOnboardingView({
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/20 shrink-0">
-                      1
-                    </span>
-                    <span className="text-xs text-zinc-300">
-                      Buka bot resmi di Telegram:{" "}
-                      <strong className="text-white font-mono">@{pairingToken?.botUsername || "catfish_ledger_bot"}</strong>
-                    </span>
-                  </div>
-
-                  {pairingToken?.deepLink && (
-                    <a
-                      href={pairingToken.deepLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-colors min-h-[44px]"
-                    >
-                      <ExternalLink className="w-4 h-4 text-emerald-400" />
-                      <span>Buka Bot Telegram Secara Langsung</span>
-                    </a>
-                  )}
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/20 shrink-0">
-                      2
-                    </span>
-                    <span className="text-xs text-zinc-300">
-                      Kirim perintah koneksi berikut ke bot Telegram:
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-zinc-900 border border-zinc-800">
-                    <span className="font-mono text-base font-bold text-emerald-400 flex-1 tracking-wider text-center">
-                      /connect {pairingToken?.code || "MEMUAT..."}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleCopyCode}
-                      className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>{copiedCode ? "Tersalin!" : "Salin"}</span>
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-zinc-500 text-center">
-                    Kode pairing berlaku selama 10 menit untuk keamanan usaha Anda.
-                  </p>
-                </div>
-              </div>
-
-              {/* Waiting status indicator */}
-              <div className="p-4 rounded-2xl bg-zinc-950/40 border border-zinc-800 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
-                  <span className="text-xs text-zinc-400">
-                    Menunggu Anda mengirim kode ke Telegram...
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={loadPairingToken}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
-                >
-                  Buat Ulang Kode
-                </button>
-              </div>
-            </div>
+            <TelegramPairingCard
+              theme="dark"
+              generateToken={async () => {
+                if (!business) return { success: false, error: "Profil bisnis belum dibuat." };
+                return await generatePairingTokenAction(business.id);
+              }}
+              checkStatus={async () => {
+                if (!business) return { success: false, paired: false };
+                const res = await checkTelegramStatusAction(business.id);
+                return {
+                  success: true,
+                  paired: res.connected,
+                  operatorLabel: res.operatorLabel,
+                };
+              }}
+              onSuccess={(details) => {
+                setTelegramConnected(true);
+                if (details?.operatorLabel) setOperatorLabel(details.operatorLabel);
+              }}
+            />
           )}
         </div>
       )}

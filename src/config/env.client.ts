@@ -54,3 +54,23 @@ export function getClientEnv(): ClientEnv {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   };
 }
+
+/**
+ * Retrieves public Telegram bot username without exposing bot tokens or secrets.
+ * Authoritative default is 'catfish_ledger_bot'.
+ */
+export function getTelegramBotUsername(): string {
+  return (
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
+    "catfish_ledger_bot"
+  );
+}
+
+/**
+ * Builds safe Telegram deep-link for pairing (/start OXID-XXXX).
+ * Never exposes tokens or secrets.
+ */
+export function buildTelegramPairingDeepLink(pairingCode: string, botUsername?: string): string {
+  const username = botUsername || getTelegramBotUsername();
+  return `https://t.me/${username}?start=${encodeURIComponent(pairingCode)}`;
+}

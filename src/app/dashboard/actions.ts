@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@/modules/transactions";
 import { normalizeProductTerm } from "@/modules/products";
-import { getBusinessSubscription, createPaymentRecord, getPlanByCode } from "@/modules/subscriptions";
+import { getBusinessSubscription, createPaymentRecord, getPlanByCode, getBusinessSubscriptionState } from "@/modules/subscriptions";
+import { generateTelegramPairingToken } from "@/modules/onboarding/client-launch";
+import { TelegramPairingTokenResult } from "@/modules/onboarding/types";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -1159,5 +1161,192 @@ export async function unlinkTelegramOperatorAction(
   }
 }
 
+/**
+ * Generates a short-lived Telegram pairing code for the authenticated business.
+ * Strictly verifies caller role (owner or admin) and enforces plan operator quota.
+ */
+export async function generateTelegramPairingCodeAction(): Promise<
+  ActionResult<TelegramPairingTokenResult>
+> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
 
+  if (session.role !== "owner" && session.role !== "admin") {
+    return {
+      success: false,
+      error: "Hanya pemilik atau admin bisnis yang dapat membuat kode pairing Telegram.",
+    };
+  }
 
+  const supabase = await createClient();
+
+  try {
+    // 1. Authoritative plan limit check
+    const subState = await getBusinessSubscriptionState(supabase, session.business.id);
+    const maxOps = subState.plan.maxOperators ?? 2;
+
+    const { count, error: countErr } = await supabase
+      .from("telegram_authorized_users")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", session.business.id)
+      .eq("active", true);
+
+    if (countErr) {
+      return { success: false, error: "Gagal memeriksa kuota operator." };
+    }
+
+    if ((count || 0) >= maxOps) {
+      return {
+        success: false,
+        error: "Batas operator Telegram untuk paket Anda sudah tercapai.",
+      };
+    }
+
+    // 2. Generate token
+    const res = await generateTelegramPairingToken(supabase, session.business.id, session.user.id);
+    if (!res.success || !res.result) {
+      return {
+        success: false,
+        error: res.error || "Gagal membuat kode koneksi Telegram.",
+      };
+    }
+
+    return {
+      success: true,
+      data: res.result,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg || "Terjadi kesalahan sistem saat membuat kode." };
+  }
+}
+
+/**
+ * Checks Telegram pairing token status and returns current active operators.
+ * Used for polling during operator pairing.
+ */
+export async function checkTelegramPairingStatusAction(tokenCode?: string): Promise<{
+  success: boolean;
+  paired: boolean;
+  operators: {
+    id: string;
+    telegramUserId: number;
+    displayLabel: string | null;
+    telegramUsername: string | null;
+    operatorRole: string;
+    active: boolean;
+    receiveReminders: boolean;
+    createdAt: string;
+  }[];
+  error?: string;
+}> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, paired: false, operators: [], error: "Akses bisnis tidak valid." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    let paired = false;
+
+    if (tokenCode) {
+      const { data: tok } = await supabase
+        .from("telegram_pairing_tokens")
+        .select("id, used_at, telegram_user_id")
+        .eq("business_id", session.business.id)
+        .eq("token_code", tokenCode.trim().toUpperCase())
+        .maybeSingle();
+
+      if (tok && tok.used_at) {
+        paired = true;
+      }
+    }
+
+    const { data: ops, error: opsErr } = await supabase
+      .from("telegram_authorized_users")
+      .select(
+        "id, telegram_user_id, display_label, telegram_username, operator_role, active, receive_reminders, created_at"
+      )
+      .eq("business_id", session.business.id)
+      .eq("active", true)
+      .order("created_at", { ascending: true });
+
+    if (opsErr) {
+      return { success: false, paired: false, operators: [], error: opsErr.message };
+    }
+
+    const operatorsList = (ops || []).map((t) => ({
+      id: t.id,
+      telegramUserId: Number(t.telegram_user_id),
+      displayLabel: t.display_label,
+      telegramUsername: t.telegram_username,
+      operatorRole: t.operator_role || "Kasir",
+      active: t.active,
+      receiveReminders: t.receive_reminders ?? false,
+      createdAt: t.created_at,
+    }));
+
+    if (paired) {
+      revalidatePath("/dashboard/settings/channels");
+    }
+
+    return {
+      success: true,
+      paired,
+      operators: operatorsList,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, paired: false, operators: [], error: msg };
+  }
+}
+
+/**
+ * Updates an authorized Telegram operator (display label, role, reminders).
+ * Strictly requires owner or admin role.
+ */
+export async function updateTelegramOperatorAction(
+  operatorId: string,
+  updates: { displayLabel?: string; operatorRole?: string; receiveReminders?: boolean }
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return {
+      success: false,
+      error: "Hanya pemilik atau admin bisnis yang dapat mengubah pengaturan operator.",
+    };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const patch: Record<string, unknown> = {};
+    if (updates.displayLabel !== undefined) patch.display_label = updates.displayLabel.trim();
+    if (updates.operatorRole !== undefined) patch.operator_role = updates.operatorRole.trim();
+    if (updates.receiveReminders !== undefined)
+      patch.receive_reminders = Boolean(updates.receiveReminders);
+
+    const { error } = await supabase
+      .from("telegram_authorized_users")
+      .update(patch)
+      .eq("id", operatorId)
+      .eq("business_id", session.business.id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/settings/channels");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
+}
