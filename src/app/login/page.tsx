@@ -25,10 +25,15 @@ export default function LoginPage() {
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("invalid login credentials") || error.code === "invalid_credentials") {
           setErrorMessage("Email atau kata sandi tidak sesuai. Silakan coba lagi.");
+        } else if (msg.includes("email not confirmed") || error.code === "email_not_confirmed") {
+          setErrorMessage("Email belum diverifikasi. Silakan periksa kotak masuk atau spam email Anda.");
+        } else if (msg.includes("rate limit") || error.status === 429) {
+          setErrorMessage("Terlalu banyak percobaan masuk. Silakan tunggu beberapa saat.");
         } else {
-          setErrorMessage("Gagal masuk. Periksa koneksi internet Anda dan coba lagi.");
+          setErrorMessage("Gagal masuk. Silakan periksa kembali email dan kata sandi Anda.");
         }
         return;
       }

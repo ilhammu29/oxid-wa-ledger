@@ -95,6 +95,30 @@ export async function createBusinessForUser(
   const ownerName = input.ownerName?.trim() || null;
 
   try {
+    // 0. Idempotency guard: check if user already has an active incomplete business (prevents duplicate provisioning on retry/refresh)
+    const { data: incompleteBiz } = await client
+      .from("businesses")
+      .select("id, onboarding_completed_at")
+      .eq("created_by", userId)
+      .is("onboarding_completed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (incompleteBiz?.id) {
+      // Ensure onboarding progress is initialized for existing business
+      await client.from("business_onboarding_progress").upsert(
+        {
+          business_id: incompleteBiz.id,
+          current_step: 2,
+          profile_completed: true,
+        },
+        { onConflict: "business_id" }
+      );
+
+      return { success: true, businessId: incompleteBiz.id };
+    }
+
     // 1. Create Business (DB Trigger trg_business_subscription_init automatically creates 14-day trial)
     const { data: bizData, error: bizError } = await client
       .from("businesses")

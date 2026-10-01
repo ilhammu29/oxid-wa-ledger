@@ -132,6 +132,9 @@ DECLARE
   v_token RECORD;
   v_biz_name TEXT;
   v_label TEXT;
+  v_plan_code TEXT;
+  v_max_operators INT;
+  v_current_operators INT;
 BEGIN
   -- 1. Find valid, unexpired, unused token
   SELECT t.id, t.business_id, t.expires_at, t.used_at, b.name AS business_name
@@ -147,6 +150,46 @@ BEGIN
     RETURN jsonb_build_object(
       'valid', false,
       'error', 'TOKEN_INVALID_OR_EXPIRED'
+    );
+  END IF;
+
+  -- 1.5 Check if Telegram user is already active in another business (10.1I: ONE TELEGRAM USER = ONE ACTIVE BUSINESS CONTEXT)
+  IF EXISTS (
+    SELECT 1 FROM public.telegram_authorized_users
+    WHERE telegram_user_id = p_telegram_user_id
+      AND active = true
+      AND business_id != v_token.business_id
+  ) THEN
+    RETURN jsonb_build_object(
+      'valid', false,
+      'error', 'ALREADY_CONNECTED_TO_OTHER_BUSINESS',
+      'message', 'Akun Telegram ini sudah terhubung ke bisnis lain. Putuskan koneksi sebelumnya melalui dashboard sebelum menghubungkan bisnis baru.'
+    );
+  END IF;
+
+  -- 1.6 Check plan operator capacity (10.1L, 10.1M: Pilot=2, Basic=2, Pro=10)
+  SELECT COALESCE(plan_code, 'pilot') INTO v_plan_code
+  FROM public.business_subscriptions
+  WHERE business_id = v_token.business_id
+  LIMIT 1;
+
+  IF v_plan_code = 'pro' THEN
+    v_max_operators := 10;
+  ELSE
+    v_max_operators := 2;
+  END IF;
+
+  SELECT COUNT(*)::INT INTO v_current_operators
+  FROM public.telegram_authorized_users
+  WHERE business_id = v_token.business_id
+    AND active = true
+    AND telegram_user_id != p_telegram_user_id;
+
+  IF v_current_operators >= v_max_operators THEN
+    RETURN jsonb_build_object(
+      'valid', false,
+      'error', 'OPERATOR_LIMIT_REACHED',
+      'message', 'Batas operator Telegram untuk paket Anda sudah tercapai.'
     );
   END IF;
 

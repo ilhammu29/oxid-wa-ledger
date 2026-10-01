@@ -1093,4 +1093,71 @@ export async function submitManualPaymentAction(formData: FormData): Promise<Act
   }
 }
 
+/**
+ * Unlinks an authorized Telegram operator from the business.
+ * Strictly checks that caller is business owner or admin.
+ */
+export async function unlinkTelegramOperatorAction(
+  operatorId: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin bisnis yang dapat memutuskan operator Telegram." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    // 1. Fetch operator to verify business ownership
+    const { data: opData } = await supabase
+      .from("telegram_authorized_users")
+      .select("id, telegram_user_id, display_label")
+      .eq("id", operatorId)
+      .eq("business_id", session.business.id)
+      .maybeSingle();
+
+    if (!opData) {
+      return { success: false, error: "Operator Telegram tidak ditemukan." };
+    }
+
+    // 2. Remove or deactivate operator
+    const { error: delError } = await supabase
+      .from("telegram_authorized_users")
+      .delete()
+      .eq("id", operatorId)
+      .eq("business_id", session.business.id);
+
+    if (delError) {
+      return { success: false, error: delError.message || "Gagal memutuskan operator." };
+    }
+
+    // 3. Record audit log
+    await supabase.from("subscription_audit_logs").insert({
+      business_id: session.business.id,
+      actor_user_id: session.user.id,
+      actor_email: session.user.email || null,
+      action: "TELEGRAM_OPERATOR_UNLINKED",
+      new_status: "active",
+      notes: `Operator Telegram (${opData.display_label || opData.telegram_user_id}) diputuskan dari bisnis oleh ${session.user.email}`,
+      metadata: {
+        operatorId,
+        telegramUserId: opData.telegram_user_id,
+        businessId: session.business.id,
+        unlinkedAt: new Date().toISOString(),
+      },
+    });
+
+    revalidatePath("/dashboard/settings/channels");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg || "Terjadi kesalahan sistem saat memutuskan operator." };
+  }
+}
+
+
 

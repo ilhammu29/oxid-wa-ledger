@@ -11,12 +11,10 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
-  ArrowRight,
   Send,
   Smartphone,
   Lock,
   AlertCircle,
-  Clock,
   Sparkles,
 } from "lucide-react";
 import { completeOnboardingAction } from "@/app/onboarding/actions";

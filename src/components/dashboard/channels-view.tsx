@@ -23,6 +23,7 @@ import {
   updateWhatsAppAuthorizedSenderAction,
   deleteWhatsAppAuthorizedSenderAction,
   saveWhatsAppTemplateAction,
+  unlinkTelegramOperatorAction,
 } from "@/app/dashboard/actions";
 import { WhatsAppReadiness, WhatsAppConnectionStatus } from "@/modules/channels/types";
 
@@ -35,6 +36,14 @@ export interface WhatsAppAuthorizedSenderItem {
   createdAt: string;
 }
 
+export interface TelegramAuthorizedOperatorItem {
+  id: string;
+  telegramUserId: number;
+  displayLabel?: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
 interface ChannelsViewProps {
   settings: {
     telegramEnabled: boolean;
@@ -44,6 +53,7 @@ interface ChannelsViewProps {
   };
   readiness: WhatsAppReadiness;
   senders?: WhatsAppAuthorizedSenderItem[];
+  telegramOperators?: TelegramAuthorizedOperatorItem[];
   role: "owner" | "admin" | "member";
 }
 
@@ -79,7 +89,13 @@ function getStatusDotColor(status: WhatsAppConnectionStatus) {
   }
 }
 
-export function ChannelsView({ settings, readiness, senders = [], role }: ChannelsViewProps) {
+export function ChannelsView({
+  settings,
+  readiness,
+  senders = [],
+  telegramOperators = [],
+  role,
+}: ChannelsViewProps) {
   const [telegramEnabled, setTelegramEnabled] = useState(settings.telegramEnabled);
   const [whatsappEnabled, setWhatsappEnabled] = useState(settings.whatsappEnabled);
   const [primaryChannel, setPrimaryChannel] = useState<"telegram" | "whatsapp">(
@@ -92,6 +108,32 @@ export function ChannelsView({ settings, readiness, senders = [], role }: Channe
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Telegram Operators State (10.1I)
+  const [telegramOps, setTelegramOps] = useState<TelegramAuthorizedOperatorItem[]>(telegramOperators);
+  const [unlinkingOpId, setUnlinkingOpId] = useState<string | null>(null);
+  const [unlinkOpMsg, setUnlinkOpMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleUnlinkTelegramOperator = async (operatorId: string) => {
+    if (!canEdit) return;
+    if (!confirm("Putuskan hubungan operator Telegram ini dari bisnis Anda? Akun ini tidak akan dapat mencatat transaksi lagi.")) return;
+
+    setUnlinkingOpId(operatorId);
+    setUnlinkOpMsg(null);
+    try {
+      const res = await unlinkTelegramOperatorAction(operatorId);
+      if (res.success) {
+        setTelegramOps((prev) => prev.filter((o) => o.id !== operatorId));
+        setUnlinkOpMsg({ type: "success", text: "Operator Telegram berhasil diputuskan." });
+      } else {
+        setUnlinkOpMsg({ type: "error", text: res.error || "Gagal memutuskan operator." });
+      }
+    } catch {
+      setUnlinkOpMsg({ type: "error", text: "Terjadi kesalahan saat memproses permintaan." });
+    } finally {
+      setUnlinkingOpId(null);
+    }
+  };
 
   // Cutover Modal State
   const [showCutoverModal, setShowCutoverModal] = useState(false);
@@ -447,6 +489,62 @@ export function ChannelsView({ settings, readiness, senders = [], role }: Channe
                 <p className="text-[11px] text-zinc-500">
                   Bot token dan webhook terkonfigurasi. Tetap dapat dipertahankan aktif berdampingan (dual-run) untuk keamanan operasional.
                 </p>
+              </div>
+
+              {/* Connected Telegram Operators (10.1I) */}
+              <div className="pt-3 border-t border-zinc-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-800">Operator Telegram Terhubung</span>
+                  <span className="text-[11px] text-zinc-500 font-mono">
+                    {telegramOps.length} aktif
+                  </span>
+                </div>
+
+                {unlinkOpMsg && (
+                  <div
+                    className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
+                      unlinkOpMsg.type === "success"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                        : "bg-rose-50 text-rose-800 border border-rose-200"
+                    }`}
+                  >
+                    <span>{unlinkOpMsg.text}</span>
+                  </div>
+                )}
+
+                {telegramOps.length === 0 ? (
+                  <p className="text-[11px] text-zinc-400 italic">
+                    Belum ada akun Telegram yang terhubung. Hubungkan akun melalui kode pairing di halaman Onboarding.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {telegramOps.map((op) => (
+                      <div
+                        key={op.id}
+                        className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 border border-zinc-200/80 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium text-zinc-800 truncate">
+                            {op.displayLabel || `Operator ID: ${op.telegramUserId}`}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 font-mono">
+                            ID: {op.telegramUserId}
+                          </p>
+                        </div>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            onClick={() => handleUnlinkTelegramOperator(op.id)}
+                            disabled={unlinkingOpId === op.id}
+                            className="text-[11px] text-rose-600 hover:text-rose-700 font-medium px-2 py-1 rounded hover:bg-rose-50 transition-colors disabled:opacity-50"
+                          >
+                            {unlinkingOpId === op.id ? "Memutuskan..." : "Putuskan"}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

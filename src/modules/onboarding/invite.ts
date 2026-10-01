@@ -36,7 +36,7 @@ export async function createClientInvite(
   const days = params.expiresInDays || 7;
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await client
+  const { error } = await client
     .from("client_onboarding_invites")
     .insert({
       email,

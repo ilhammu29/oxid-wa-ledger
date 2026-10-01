@@ -164,7 +164,13 @@ export async function processIncomingTelegramWebhook(
           telegramUserId: String(telegramUserId),
         };
       } else {
-        const pairFailReply = `❌ Kode pairing tidak valid atau sudah kedaluwarsa.\n\nPastikan kode masih aktif (berlaku 10 menit) dan dibuat melalui halaman onboarding OXID Ledger.`;
+        let pairFailReply = `❌ Kode pairing tidak valid atau sudah kedaluwarsa.\n\nPastikan kode masih aktif (berlaku 10 menit) dan dibuat melalui halaman onboarding OXID Ledger.`;
+
+        if (pairResult?.error === "ALREADY_CONNECTED_TO_OTHER_BUSINESS") {
+          pairFailReply = `❌ Akun Telegram ini sudah terhubung ke bisnis lain.\n\nPutuskan koneksi sebelumnya melalui dashboard sebelum menghubungkan bisnis baru.`;
+        } else if (pairResult?.error === "OPERATOR_LIMIT_REACHED") {
+          pairFailReply = `❌ Batas operator Telegram untuk paket Anda sudah tercapai.\n\nSilakan upgrade paket langganan Anda melalui dashboard untuk menambah operator baru.`;
+        }
 
         await client.rpc("claim_telegram_update", {
           p_update_id: updateId,
@@ -292,7 +298,30 @@ export async function processIncomingTelegramWebhook(
       };
     }
 
-    // Any other command from unauthorized user: ZERO financial writes, neutral silent ignore
+    // 10.1G: Unpaired Telegram Security: Send safe guidance, zero financial mutations
+    const unauthReply = `Telegram ini belum terhubung ke bisnis OXID Ledger.\n\nSilakan buka dashboard OXID Ledger dan gunakan kode penghubung Telegram.`;
+
+    await client.rpc("claim_telegram_update", {
+      p_update_id: updateId,
+      p_business_id: null,
+      p_telegram_user_id: telegramUserId,
+    });
+
+    await client.rpc("complete_telegram_update", {
+      p_update_id: updateId,
+      p_processing_status: "processed",
+      p_business_id: null,
+      p_response_text: unauthReply,
+      p_error_message: null,
+    });
+
+    if (options.sendOutbound !== false) {
+      await telegramSend({
+        chatId: replyChatId,
+        text: unauthReply,
+      });
+    }
+
     console.warn(
       `[TelegramWebhook] Unauthorized sender blocked | telegramUserId: ${maskTelegramUserId(
         telegramUserId
