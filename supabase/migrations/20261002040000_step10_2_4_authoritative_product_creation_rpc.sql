@@ -46,7 +46,12 @@ BEGIN
   -- 1. Identity & Authorization
   v_user_id := auth.uid();
   IF v_user_id IS NULL THEN
-    IF (session_user IN ('postgres', 'service_role') OR current_setting('request.jwt.claim.role', true) = 'service_role') AND p_user_id IS NOT NULL THEN
+    IF (
+      current_user IN ('postgres', 'service_role')
+      OR session_user IN ('postgres', 'service_role', 'authenticator')
+      OR COALESCE(current_setting('request.jwt.claim.role', true), '') = 'service_role'
+      OR COALESCE(auth.role(), '') = 'service_role'
+    ) AND p_user_id IS NOT NULL THEN
       v_user_id := p_user_id;
     ELSE
       RETURN jsonb_build_object(
@@ -58,7 +63,9 @@ BEGIN
   END IF;
 
   -- 2. Tenant isolation check: user must have owner or admin role in p_business_id
-  IF COALESCE(current_setting('request.jwt.claim.role', true), '') != 'service_role' THEN
+  IF COALESCE(current_setting('request.jwt.claim.role', true), '') != 'service_role'
+     AND COALESCE(auth.role(), '') != 'service_role'
+     AND session_user NOT IN ('postgres', 'supabase_admin') THEN
     IF NOT EXISTS (
       SELECT 1 FROM public.business_users
       WHERE business_id = p_business_id
