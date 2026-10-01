@@ -533,6 +533,7 @@ async function runStep7cTests() {
   // Mock fetcher to simulate Google API calls
   let batchUpdatePayload: any = null;
   let batchClearPayload: any = null;
+  let schemaBatchUpdatePayload: any = null;
   const mockExistingSheets = [
     { properties: { sheetId: 0, title: "Dashboard" } },
     { properties: { sheetId: 1, title: "Catatan Peternak (Custom)" } }, // User's custom sheet!
@@ -578,9 +579,9 @@ async function runStep7cTests() {
       });
     }
 
-    // 4. BatchUpdate spreadsheet schema endpoint (addSheet)
+    // 4. BatchUpdate spreadsheet schema endpoint (addSheet, updateSpreadsheetProperties)
     if (urlStr.endsWith(":batchUpdate")) {
-      const body = JSON.parse(String(init?.body || "{}"));
+      schemaBatchUpdatePayload = JSON.parse(String(init?.body || "{}"));
       return new Response(JSON.stringify({ replies: [] }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -622,9 +623,27 @@ async function runStep7cTests() {
     batchClearPayload?.ranges?.every((r: string) => r.startsWith("'Dashboard'") || r.startsWith("'Transactions'"))
   );
 
-  // Test error handling for 404 and 403
+  // Test successful testSpreadsheetConnection
+  const testSuccess = await testSpreadsheetConnection(validId, clientConfigWithMock);
+  record(
+    "7C_CLIENT",
+    "testSpreadsheetConnection succeeds and returns spreadsheet title",
+    testSuccess.success === true && testSuccess.spreadsheetTitle === "OXID WA Ledger - Lele Pilot"
+  );
+
+  record(
+    "7C_CLIENT",
+    "testSpreadsheetConnection sends valid non-empty updateSpreadsheetProperties request (never requests: [])",
+    schemaBatchUpdatePayload?.requests?.length >= 1 &&
+      schemaBatchUpdatePayload.requests[0].updateSpreadsheetProperties?.fields === "title" &&
+      schemaBatchUpdatePayload.requests[0].updateSpreadsheetProperties?.properties?.title === "OXID WA Ledger - Lele Pilot"
+  );
+
+  // Test error handling for 404, 403, 401, 503
   const notFoundFetcher: typeof fetch = async () => new Response("Requested entity was not found", { status: 404 });
   const forbiddenFetcher: typeof fetch = async () => new Response("The caller does not have permission", { status: 403 });
+  const unauthorizedFetcher: typeof fetch = async () => new Response("Invalid Credentials", { status: 401 });
+  const unavailableFetcher: typeof fetch = async () => new Response("Service Unavailable", { status: 503 });
 
   const test404 = await testSpreadsheetConnection(validId, { ...fakeConfig, fetchFn: notFoundFetcher });
   record(
@@ -638,6 +657,20 @@ async function runStep7cTests() {
     "7C_CLIENT",
     "testSpreadsheetConnection correctly maps 403 to PERMISSION_DENIED",
     test403.success === false && test403.errorCode === "PERMISSION_DENIED"
+  );
+
+  const test401 = await testSpreadsheetConnection(validId, { ...fakeConfig, fetchFn: unauthorizedFetcher });
+  record(
+    "7C_CLIENT",
+    "testSpreadsheetConnection correctly maps 401 to GOOGLE_AUTH_ERROR",
+    test401.success === false && test401.errorCode === "GOOGLE_AUTH_ERROR"
+  );
+
+  const test503 = await testSpreadsheetConnection(validId, { ...fakeConfig, fetchFn: unavailableFetcher });
+  record(
+    "7C_CLIENT",
+    "testSpreadsheetConnection correctly maps 503 to GOOGLE_API_UNAVAILABLE",
+    test503.success === false && test503.errorCode === "GOOGLE_API_UNAVAILABLE"
   );
 
   record(

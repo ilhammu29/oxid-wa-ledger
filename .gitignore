@@ -44,3 +44,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credentials & service accounts
+google sheet api/
+*serviceaccount*.json
+gen-lang-client-*.json

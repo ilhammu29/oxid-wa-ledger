@@ -156,6 +156,15 @@ function handleHttpError(status: number, responseBody: string): GoogleClientErro
     );
   }
 
+  if (status === 401) {
+    return new GoogleClientError(
+      "GOOGLE_AUTH_ERROR",
+      "Autentikasi Google Service Account gagal. Periksa kembali konfigurasi email dan private key.",
+      401,
+      false
+    );
+  }
+
   if (status === 403) {
     return new GoogleClientError(
       "PERMISSION_DENIED",
@@ -245,7 +254,8 @@ export async function testSpreadsheetConnection(
 
     const meta = await getSpreadsheetMetadata(spreadsheetId, config);
 
-    // Verify write access with an empty batchUpdate (no-op mutation, requires Editor permission)
+    // Verify write access with a safe valid non-destructive updateSpreadsheetProperties setting the title to itself.
+    // This validates write/Editor permission without modifying cells or altering spreadsheet structure.
     const token = await getGoogleAccessToken(config);
     const fetcher = config?.fetchFn || fetch;
     const testUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
@@ -258,7 +268,18 @@ export async function testSpreadsheetConnection(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ requests: [] }),
+      body: JSON.stringify({
+        requests: [
+          {
+            updateSpreadsheetProperties: {
+              properties: {
+                title: meta.title,
+              },
+              fields: "title",
+            },
+          },
+        ],
+      }),
     });
 
     if (!writeCheckRes.ok) {
