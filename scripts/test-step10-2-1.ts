@@ -151,29 +151,42 @@ function createPgSupabaseAdapter(pgClient: Client): SupabaseClient {
           }
           return { data: res.data[0], error: null };
         },
-        insert: async (records: any) => {
-          try {
-            const list = Array.isArray(records) ? records : [records];
-            const insertedRows: any[] = [];
-            for (const item of list) {
-              const keys = Object.keys(item);
-              const cols = keys.map((k) => `"${k}"`).join(", ");
-              const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
-              const values = keys.map((k) => item[k]);
-              const sql = `INSERT INTO public."${table}" (${cols}) VALUES (${placeholders}) RETURNING *;`;
-              const res = await pgClient.query(sql, values);
-              insertedRows.push(res.rows[0]);
+        insert: (rows: any) => {
+          const insertRows = Array.isArray(rows) ? rows : [rows];
+          const executeInsert = async () => {
+            try {
+              const inserted: any[] = [];
+              for (const row of insertRows) {
+                const keys = Object.keys(row);
+                const cols = keys.map((k) => `"${k}"`).join(", ");
+                const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
+                const vals = keys.map((k) =>
+                  typeof row[k] === "object" && row[k] !== null ? JSON.stringify(row[k]) : row[k]
+                );
+                const res = await pgClient.query(
+                  `INSERT INTO public."${table}" (${cols}) VALUES (${placeholders}) RETURNING *;`,
+                  vals
+                );
+                inserted.push(res.rows[0]);
+              }
+              return { data: Array.isArray(rows) ? inserted : inserted[0], error: null };
+            } catch (err: any) {
+              return { data: null, error: { message: err.message, code: err.code } };
             }
-            return {
-              data: Array.isArray(records) ? insertedRows : insertedRows[0],
-              error: null,
-              select: () => ({
-                single: async () => ({ data: insertedRows[0], error: null }),
-              }),
-            };
-          } catch (err: any) {
-            return { data: null, error: { message: err.message, code: err.code } };
-          }
+          };
+          const b: any = {
+            select: () => b,
+            single: async () => {
+              const res = await executeInsert();
+              return { data: Array.isArray(res.data) ? res.data[0] : res.data, error: res.error };
+            },
+            maybeSingle: async () => {
+              const res = await executeInsert();
+              return { data: Array.isArray(res.data) ? res.data[0] : res.data, error: res.error };
+            },
+            then: (resolve: any, reject: any) => executeInsert().then(resolve, reject),
+          };
+          return b;
         },
         delete: () => {
           return {
@@ -217,12 +230,20 @@ async function runStep1021TestSuite() {
   try {
     const supabase = createPgSupabaseAdapter(pgClient);
 
-    // Apply additive migration if not already applied
+    // Apply additive migrations
     const migrationSql = fs.readFileSync(
       "supabase/migrations/20261002000000_step10_2_1_telegram_operator_enhancements.sql",
       "utf8"
     );
     await pgClient.query(migrationSql);
+
+    if (fs.existsSync("supabase/migrations/20261002010000_step10_2_2_zero_plaintext_pairing_tokens.sql")) {
+      const mig1022 = fs.readFileSync(
+        "supabase/migrations/20261002010000_step10_2_2_zero_plaintext_pairing_tokens.sql",
+        "utf8"
+      );
+      await pgClient.query(mig1022);
+    }
 
     // -------------------------------------------------------------------------
     // Set up test businesses & users
@@ -336,8 +357,8 @@ async function runStep1021TestSuite() {
     // -------------------------------------------------------------------------
     try {
       const { rows } = await pgClient.query(
-        `SELECT business_id, token_code FROM public.telegram_pairing_tokens WHERE token_code = $1;`,
-        [tokenA.code]
+        `SELECT business_id, token_hash FROM public.telegram_pairing_tokens WHERE token_hash = $1;`,
+        [hashPairingToken(tokenA.code)]
       );
       if (rows.length === 1 && rows[0].business_id === bizA_Id) {
         record(3, "Pairing code cryptographically bound to correct business", true);
@@ -355,8 +376,8 @@ async function runStep1021TestSuite() {
       const expiredCode = "OXID-EXPD";
       const expiredHash = hashPairingToken(expiredCode);
       await pgClient.query(`
-        INSERT INTO public.telegram_pairing_tokens (business_id, token_code, token_hash, expires_at)
-        VALUES ('${bizA_Id}', '${expiredCode}', '${expiredHash}', now() - interval '5 seconds');
+        INSERT INTO public.telegram_pairing_tokens (business_id, token_hash, expires_at)
+        VALUES ('${bizA_Id}', '${expiredHash}', now() - interval '5 seconds');
       `);
 
       const pairRes = await supabase.rpc("verify_and_consume_telegram_pairing_token", {
@@ -389,8 +410,8 @@ async function runStep1021TestSuite() {
       if (pairRes.data?.valid === true && pairRes.data?.business_id === bizA_Id) {
         // Verify used_at set in DB
         const { rows: tokRows } = await pgClient.query(
-          `SELECT used_at, telegram_user_id FROM public.telegram_pairing_tokens WHERE token_code = $1;`,
-          [tokenA.code]
+          `SELECT used_at, telegram_user_id FROM public.telegram_pairing_tokens WHERE token_hash = $1;`,
+          [hashPairingToken(tokenA.code)]
         );
         if (tokRows[0]?.used_at && Number(tokRows[0]?.telegram_user_id) === 102101) {
           record(5, "Pairing code single-use successfully consumed and records user identity", true);

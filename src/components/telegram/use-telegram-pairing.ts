@@ -148,15 +148,15 @@ export function useTelegramPairing({
     };
   }, [state, clearTimers]);
 
-  // Polling for pairing status every 2.5s
+  // Polling for pairing status every 2.5s using zero-plaintext pairingId
   useEffect(() => {
-    if (state !== "ACTIVE" || !tokenResult?.code) return;
-
-    const codeToPoll = tokenResult.code;
+    if (state !== "ACTIVE") return;
+    const identifierToPoll = tokenResult?.pairingId || tokenResult?.code;
+    if (!identifierToPoll) return;
 
     pollingIntervalRef.current = setInterval(async () => {
       try {
-        const res = await checkStatus(codeToPoll);
+        const res = await checkStatus(identifierToPoll);
         if (!isMountedRef.current) return;
 
         if (res.paired) {
@@ -177,7 +177,7 @@ export function useTelegramPairing({
         pollingIntervalRef.current = null;
       }
     };
-  }, [state, tokenResult?.code, checkStatus, clearTimers, onSuccess]);
+  }, [state, tokenResult?.pairingId, tokenResult?.code, checkStatus, clearTimers, onSuccess]);
 
   const copyCode = useCallback(() => {
     if (!tokenResult?.code) return;

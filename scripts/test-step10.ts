@@ -581,13 +581,13 @@ async function runStep10Tests() {
       const isCodeValid = /^OXID-[A-Z0-9]{4,6}$/.test(tokenRes.result.code);
       const isDeepLinkValid = tokenRes.result.deepLink.includes(tokenRes.result.code);
 
-      // Verify database stored token_hash (SHA-256) and column is token_code
+      // Verify database stored token_hash (HMAC verifier) and zero plaintext code is stored
+      const expectedHash = hashPairingToken(pairingTokenCode);
       const tCheck = await pgClient.query(`
-        SELECT token_hash, token_code, expires_at, used_at FROM public.telegram_pairing_tokens WHERE token_code = $1;
-      `, [pairingTokenCode]);
+        SELECT token_hash, expires_at, used_at FROM public.telegram_pairing_tokens WHERE token_hash = $1;
+      `, [expectedHash]);
 
       const tRow = tCheck.rows[0];
-      const expectedHash = hashPairingToken(pairingTokenCode);
 
       const expDate = new Date(tRow.expires_at).getTime();
       const diffMinutes = (expDate - Date.now()) / (1000 * 60);
@@ -627,9 +627,9 @@ async function runStep10Tests() {
       const expiredHash = hashPairingToken("OXID-EXPD");
       await pgClient.query(`
         INSERT INTO public.telegram_pairing_tokens (
-          business_id, token_hash, token_code, expires_at, created_by
+          business_id, token_hash, expires_at, created_by
         ) VALUES (
-          $1, $2, 'OXID-EXPD', NOW() - INTERVAL '5 minutes', $3
+          $1, $2, NOW() - INTERVAL '5 minutes', $3
         );
       `, [createdBusinessId, expiredHash, testClientUser]);
 
@@ -642,7 +642,7 @@ async function runStep10Tests() {
       const expiredOk = expRes.data?.valid === false;
 
       // Clean up dummy expired token
-      await pgClient.query(`DELETE FROM public.telegram_pairing_tokens WHERE token_code = 'OXID-EXPD';`);
+      await pgClient.query(`DELETE FROM public.telegram_pairing_tokens WHERE token_hash = $1;`, [expiredHash]);
 
       if (fakeOk && expiredOk) {
         record(5, "10P", "Token security verifies fail-closed boundaries (non-existent, expired token rejected)", true);
@@ -686,8 +686,8 @@ async function runStep10Tests() {
 
       // Verify token consumed in DB (column is used_at, not consumed_at)
       const tokenConsumedCheck = await pgClient.query(`
-        SELECT used_at, telegram_user_id FROM public.telegram_pairing_tokens WHERE token_code = $1;
-      `, [pairingTokenCode]);
+        SELECT used_at, telegram_user_id FROM public.telegram_pairing_tokens WHERE token_hash = $1;
+      `, [hashPairingToken(pairingTokenCode)]);
 
       // Verify operator added to telegram_authorized_users
       const opCheck = await pgClient.query(`
@@ -1076,13 +1076,12 @@ async function runStep10Tests() {
       // 16.3 Super admin is properly verified
       const isAdminSuper = await isOxidSuperAdmin({ id: testAdminUser, email: testAdminEmail } as any, supabase);
 
-      // 16.4 Verify pairing token hashing: raw code used as hash key, never stored as raw plaintext secret
-      const rawCheck = await pgClient.query(`
-        SELECT count(*)::int AS count FROM public.telegram_pairing_tokens
-        WHERE token_hash = token_code AND business_id = $1;
-      `, [createdBusinessId]);
-
-      const rawTokenLeaked = rawCheck.rows[0]?.count > 0;
+      // 16.4 Verify pairing token zero-plaintext: token_code column dropped, only hash exists
+      const colCheck = await pgClient.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'telegram_pairing_tokens' AND column_name = 'token_code';
+      `);
+      const rawTokenLeaked = colCheck.rows.length > 0;
 
       if (!isClientAdmin && !isAnonAdmin && isAdminSuper && !rawTokenLeaked) {
         record(16, "10P", "Security boundaries: fail-closed auth, client denied admin, pairing tokens securely hashed", true);

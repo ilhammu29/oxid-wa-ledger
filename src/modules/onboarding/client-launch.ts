@@ -1,5 +1,4 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import crypto from "crypto";
 import {
   CreateBusinessInput,
   FirstProductInput,
@@ -7,26 +6,19 @@ import {
   TelegramPairingTokenResult,
 } from "./types";
 
-/**
- * Creates SHA-256 hash for Telegram pairing token
- */
-export function hashPairingToken(tokenCode: string): string {
-  const normalized = tokenCode.trim().toUpperCase();
-  return crypto.createHash("sha256").update(normalized).digest("hex");
-}
-
-/**
- * Generates a random, human-friendly pairing code e.g. "OXID-7K2P"
- */
-export function generateRandomPairingCode(): string {
-  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 characters, no 0/O, 1/I
-  let code = "";
-  const randomBytes = crypto.randomBytes(4);
-  for (let i = 0; i < 4; i++) {
-    code += chars[randomBytes[i] % chars.length];
-  }
-  return `OXID-${code}`;
-}
+// Re-export pairing crypto utilities from central module
+export {
+  generatePairingCode,
+  generatePairingCode as generateRandomPairingCode,
+  derivePairingTokenHash,
+  derivePairingTokenHash as hashPairingToken,
+  normalizePairingCode,
+  isValidPairingCodeFormat,
+} from "../telegram/pairing-crypto";
+import {
+  generatePairingCode,
+  derivePairingTokenHash,
+} from "../telegram/pairing-crypto";
 
 /**
  * Sanitizes metadata for audit logs, ensuring zero secret or credential leakage.
@@ -421,21 +413,24 @@ export async function generateTelegramPairingToken(
       .eq("business_id", businessId)
       .is("used_at", null);
 
-    const code = generateRandomPairingCode();
-    const tokenHash = hashPairingToken(code);
+    const code = generatePairingCode();
+    const tokenHash = derivePairingTokenHash(code);
     const expiresInSeconds = 600; // 10 minutes
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 
-    const { error } = await client.from("telegram_pairing_tokens").insert({
-      business_id: businessId,
-      token_code: code,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
-      created_by: userId || null,
-    });
+    const { data: inserted, error } = await client
+      .from("telegram_pairing_tokens")
+      .insert({
+        business_id: businessId,
+        token_hash: tokenHash,
+        expires_at: expiresAt,
+        created_by: userId || null,
+      })
+      .select("id")
+      .single();
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (error || !inserted) {
+      return { success: false, error: error?.message || "Gagal menyimpan token verifikasi." };
     }
 
     const botUsername =
@@ -446,6 +441,7 @@ export async function generateTelegramPairingToken(
     const deepLink = `https://t.me/${botUsername}?start=${encodeURIComponent(code)}`;
 
     const tokenResult: TelegramPairingTokenResult = {
+      pairingId: inserted.id,
       code,
       expiresAt,
       expiresInSeconds,

@@ -6,6 +6,7 @@ import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@
 import { normalizeProductTerm } from "@/modules/products";
 import { getBusinessSubscription, createPaymentRecord, getPlanByCode, getBusinessSubscriptionState } from "@/modules/subscriptions";
 import { generateTelegramPairingToken } from "@/modules/onboarding/client-launch";
+import { derivePairingTokenHash } from "@/modules/telegram/pairing-crypto";
 import { TelegramPairingTokenResult } from "@/modules/onboarding/types";
 import { revalidatePath } from "next/cache";
 
@@ -1310,8 +1311,9 @@ export async function generateTelegramPairingCodeAction(): Promise<
  * Checks Telegram pairing token status and returns current active operators.
  * Used for polling during operator pairing.
  */
-export async function checkTelegramPairingStatusAction(tokenCode?: string): Promise<{
+export async function checkTelegramPairingStatusAction(pairingIdentifier?: string): Promise<{
   success: boolean;
+  status?: "ACTIVE" | "CONSUMED" | "EXPIRED" | "INVALID";
   paired: boolean;
   operators: {
     id: string;
@@ -1327,24 +1329,43 @@ export async function checkTelegramPairingStatusAction(tokenCode?: string): Prom
 }> {
   const session = await getAuthenticatedBusiness();
   if (session.status !== "OK" || !session.business) {
-    return { success: false, paired: false, operators: [], error: "Akses bisnis tidak valid." };
+    return { success: false, status: "INVALID", paired: false, operators: [], error: "Akses bisnis tidak valid." };
   }
 
   const supabase = await createClient();
 
   try {
     let paired = false;
+    let tokenStatus: "ACTIVE" | "CONSUMED" | "EXPIRED" | "INVALID" = "ACTIVE";
 
-    if (tokenCode) {
-      const { data: tok } = await supabase
+    if (pairingIdentifier) {
+      const cleanId = pairingIdentifier.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+
+      let query = supabase
         .from("telegram_pairing_tokens")
-        .select("id, used_at, telegram_user_id")
-        .eq("business_id", session.business.id)
-        .eq("token_code", tokenCode.trim().toUpperCase())
-        .maybeSingle();
+        .select("id, used_at, telegram_user_id, expires_at")
+        .eq("business_id", session.business.id);
 
-      if (tok && tok.used_at) {
+      if (isUuid) {
+        query = query.eq("id", cleanId);
+      } else {
+        // Derive HMAC hash to match verifier without ever using plaintext column
+        const hash = derivePairingTokenHash(cleanId);
+        query = query.eq("token_hash", hash);
+      }
+
+      const { data: tok } = await query.maybeSingle();
+
+      if (!tok) {
+        tokenStatus = "INVALID";
+      } else if (tok.used_at) {
         paired = true;
+        tokenStatus = "CONSUMED";
+      } else if (new Date(tok.expires_at).getTime() < Date.now()) {
+        tokenStatus = "EXPIRED";
+      } else {
+        tokenStatus = "ACTIVE";
       }
     }
 
@@ -1358,7 +1379,7 @@ export async function checkTelegramPairingStatusAction(tokenCode?: string): Prom
       .order("created_at", { ascending: true });
 
     if (opsErr) {
-      return { success: false, paired: false, operators: [], error: opsErr.message };
+      return { success: false, status: tokenStatus, paired: false, operators: [], error: opsErr.message };
     }
 
     const operatorsList = (ops || []).map((t) => ({
@@ -1378,6 +1399,7 @@ export async function checkTelegramPairingStatusAction(tokenCode?: string): Prom
 
     return {
       success: true,
+      status: tokenStatus,
       paired,
       operators: operatorsList,
     };

@@ -723,8 +723,8 @@ async function runStep10_1Tests() {
       const expCode = "OXID-EX10";
       const expHash = hashPairingToken(expCode);
       await pgClient.query(`
-        INSERT INTO public.telegram_pairing_tokens (business_id, token_code, token_hash, expires_at)
-        VALUES ('${bizA_Id}', '${expCode}', '${expHash}', NOW() - INTERVAL '1 hour');
+        INSERT INTO public.telegram_pairing_tokens (business_id, token_hash, expires_at)
+        VALUES ('${bizA_Id}', '${expHash}', NOW() - INTERVAL '1 hour');
       `);
 
       const expRes = await supabase.rpc("verify_and_consume_telegram_pairing_token", {

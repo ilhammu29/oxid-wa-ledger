@@ -10,7 +10,7 @@ import { executeConversationAction } from "../conversation/executor";
 import { ExecutionContext } from "../transactions/types";
 import { captureConversationFailure, FailureType } from "../pilot-hardening";
 import { recordIntegrationEvent } from "../monitoring/telemetry";
-import { hashPairingToken } from "../onboarding/client-launch";
+import { derivePairingTokenHash } from "./pairing-crypto";
 
 export interface ProcessTelegramWebhookOptions {
   sendOutbound?: boolean;
@@ -107,13 +107,13 @@ export async function processIncomingTelegramWebhook(
   const connectMatch =
     rawText.match(/^\/connect(?:\s+([A-Za-z0-9\-]+))?$/i) ||
     rawText.match(/^\/start\s+([A-Za-z0-9\-]+)$/i) ||
-    rawText.match(/^(OXID-[A-Za-z0-9]{4,8})$/i);
+    rawText.match(/^(OXID-[A-Za-z0-9]{4,16})$/i);
 
   if (connectMatch) {
     const rawPairingCode = connectMatch[1]?.trim().toUpperCase();
 
     if (rawPairingCode) {
-      const tokenHash = hashPairingToken(rawPairingCode);
+      const tokenHash = derivePairingTokenHash(rawPairingCode);
       const telegramUsername = fromUser.username ? `@${fromUser.username}` : null;
       const displayLabel = fromUser.username
         ? `@${fromUser.username}`
@@ -154,6 +154,18 @@ export async function processIncomingTelegramWebhook(
           p_error_message: null,
         });
 
+        recordIntegrationEvent(client, {
+          businessId: pairResult.business_id,
+          channel: "telegram",
+          direction: "inbound",
+          eventType: "telegram.pairing.consumed",
+          status: "success",
+          metadata: {
+            event: "telegram_pairing_consumed",
+            telegram_user_id: maskTelegramUserId(telegramUserId),
+          },
+        }).catch(() => {});
+
         if (options.sendOutbound !== false) {
           await telegramSend({
             chatId: replyChatId,
@@ -169,9 +181,11 @@ export async function processIncomingTelegramWebhook(
           telegramUserId: String(telegramUserId),
         };
       } else {
-        let pairFailReply = `❌ Kode pairing tidak valid atau sudah kedaluwarsa.\n\nPastikan kode masih aktif (berlaku 10 menit) dan dibuat melalui halaman onboarding OXID Ledger.`;
+        let pairFailReply = `❌ Kode pairing tidak valid atau sudah kedaluwarsa.\n\nPastikan kode masih aktif (berlaku 10 menit) dan dibuat melalui halaman pengaturan OXID Ledger.`;
 
-        if (pairResult?.error === "ALREADY_CONNECTED_TO_OTHER_BUSINESS") {
+        if (pairResult?.error === "RATE_LIMITED") {
+          pairFailReply = `❌ Terlalu banyak percobaan kode koneksi. Silakan tunggu beberapa menit lalu coba lagi.`;
+        } else if (pairResult?.error === "ALREADY_CONNECTED_TO_OTHER_BUSINESS") {
           pairFailReply = `❌ Akun Telegram ini sudah terhubung ke bisnis lain.\n\nPutuskan koneksi sebelumnya melalui dashboard sebelum menghubungkan bisnis baru.`;
         } else if (pairResult?.error === "OPERATOR_LIMIT_REACHED") {
           pairFailReply = `❌ Batas operator Telegram untuk paket Anda sudah tercapai.\n\nSilakan upgrade paket langganan Anda melalui dashboard untuk menambah operator baru.`;
@@ -190,6 +204,19 @@ export async function processIncomingTelegramWebhook(
           p_response_text: pairFailReply,
           p_error_message: pairResult?.error || "INVALID_PAIRING_CODE",
         });
+
+        recordIntegrationEvent(client, {
+          businessId: pairResult?.business_id || "unassigned",
+          channel: "telegram",
+          direction: "inbound",
+          eventType: "telegram.pairing.failed",
+          status: "failed",
+          metadata: {
+            event: "telegram_pairing_failed",
+            safe_error_code: pairResult?.error || "INVALID_PAIRING_CODE",
+            telegram_user_id: maskTelegramUserId(telegramUserId),
+          },
+        }).catch(() => {});
 
         if (options.sendOutbound !== false) {
           await telegramSend({

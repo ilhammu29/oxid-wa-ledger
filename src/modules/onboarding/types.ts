@@ -68,6 +68,7 @@ export interface BusinessOnboardingProgress {
 }
 
 export interface TelegramPairingTokenResult {
+  pairingId: string;
   code: string;
   expiresAt: string;
   expiresInSeconds: number;
