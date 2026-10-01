@@ -174,8 +174,26 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
         )}
       </div>
 
-      {/* Products Table */}
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
+      {/* Products Table / Empty State */}
+      {products.length === 0 ? (
+        <div className="py-12 px-4 text-center rounded-2xl border border-zinc-200 bg-white shadow-2xs space-y-3">
+          <Package className="w-10 h-10 text-zinc-300 mx-auto" />
+          <h3 className="text-base font-bold text-zinc-800">Belum ada produk</h3>
+          <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">
+            Tambahkan produk pertama usaha Anda agar bot dapat mengenali pencatatan transaksi via Telegram.
+          </p>
+          {canManage && (
+            <button
+              onClick={() => setAddModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Produk</span>
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50/80 text-zinc-600 uppercase font-semibold tracking-wider text-[11px]">
@@ -286,6 +304,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Add Product Modal */}
       {addModalOpen && (

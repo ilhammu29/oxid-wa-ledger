@@ -18,6 +18,7 @@ import {
   Radio,
   FileSpreadsheet,
   CreditCard,
+  Sparkles,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -39,6 +40,11 @@ interface DashboardShellProps {
     is_default: boolean;
     active: boolean;
   }[];
+  subscriptionState?: {
+    status: string;
+    daysRemaining: number;
+    isTrial: boolean;
+  } | null;
   children: React.ReactNode;
 }
 
@@ -47,6 +53,7 @@ export function DashboardShell({
   role,
   userEmail,
   products,
+  subscriptionState,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
@@ -237,6 +244,39 @@ export function DashboardShell({
             </a>
           </div>
         </header>
+
+        {/* Trial Status Banner */}
+        {subscriptionState?.isTrial && (
+          <div
+            className={`px-4 sm:px-8 py-2.5 flex items-center justify-between text-xs font-medium border-b ${
+              subscriptionState.daysRemaining <= 3
+                ? "bg-rose-50 border-rose-200 text-rose-800"
+                : subscriptionState.daysRemaining <= 7
+                ? "bg-amber-50 border-amber-200 text-amber-800"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>
+                Masa Uji Coba: <strong>{subscriptionState.daysRemaining} hari tersisa</strong>
+                {subscriptionState.daysRemaining <= 3 && " — Segera pilih paket agar bot tetap aktif."}
+              </span>
+            </div>
+            <Link
+              href="/dashboard/subscription"
+              className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                subscriptionState.daysRemaining <= 3
+                  ? "bg-rose-600 hover:bg-rose-500 text-white"
+                  : subscriptionState.daysRemaining <= 7
+                  ? "bg-amber-600 hover:bg-amber-500 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
+              }`}
+            >
+              Lihat Paket
+            </Link>
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">

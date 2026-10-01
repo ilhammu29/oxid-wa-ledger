@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  ShieldAlert,
 } from "lucide-react";
 import {
   saveReminderSettingsAction,

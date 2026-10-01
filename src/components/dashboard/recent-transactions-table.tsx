@@ -90,12 +90,15 @@ export function RecentTransactionsTable({
 
   if (transactions.length === 0) {
     return (
-      <div className="py-12 text-center text-zinc-400 bg-white rounded-xl border border-zinc-200">
-        <Receipt className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-        <p className="text-sm font-medium text-zinc-600">Belum ada transaksi</p>
-        <p className="text-xs text-zinc-400 mt-0.5">
-          Kirim pesan penjualan via Telegram / WhatsApp atau gunakan tombol Catat Penjualan.
+      <div className="py-12 text-center text-zinc-400 bg-white rounded-xl border border-zinc-200 space-y-2">
+        <Receipt className="w-8 h-8 text-zinc-300 mx-auto" />
+        <p className="text-sm font-medium text-zinc-700">Belum ada transaksi</p>
+        <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+          Kirim pesan penjualan via Telegram atau gunakan tombol Catat Penjualan di atas.
         </p>
+        <div className="inline-block mt-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-mono">
+          Contoh chat: &ldquo;Kejual lele 10kg&rdquo;
+        </div>
       </div>
     );
   }

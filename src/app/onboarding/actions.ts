@@ -1,7 +1,16 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { executeClientOnboarding } from "@/modules/onboarding";
+import {
+  createBusinessForUser,
+  addFirstProductForBusiness,
+  generateTelegramPairingToken,
+  checkTelegramConnectionStatus,
+  checkFirstTransactionStatus,
+  skipOrCompleteGoogleSheets,
+  getBusinessOnboardingState,
+} from "@/modules/onboarding/client-launch";
+import { executeClientOnboarding } from "@/modules/onboarding/complete";
 import { revalidatePath } from "next/cache";
 
 export interface OnboardingActionResult {
@@ -75,4 +84,148 @@ export async function completeOnboardingAction(
     success: true,
     businessId: result.businessId,
   };
+}
+
+export async function createBusinessAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi login tidak valid. Silakan masuk terlebih dahulu." };
+  }
+
+  const businessName = formData.get("businessName") as string;
+  const category = (formData.get("category") as string) || "Lainnya";
+  const ownerName = (formData.get("ownerName") as string) || "";
+  const timezone = (formData.get("timezone") as string) || "Asia/Pontianak";
+  const defaultUnit = (formData.get("defaultUnit") as string) || "kg";
+
+  const result = await createBusinessForUser(supabase, user.id, {
+    name: businessName,
+    category,
+    ownerName,
+    timezone,
+    currency: "IDR",
+    defaultUnit,
+  });
+
+  if (result.success) {
+    revalidatePath("/onboarding");
+    revalidatePath("/dashboard");
+  }
+
+  return result;
+}
+
+export async function addFirstProductAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi login tidak valid." };
+  }
+
+  const businessId = formData.get("businessId") as string;
+  const productName = formData.get("productName") as string;
+  const unit = (formData.get("unit") as string) || "kg";
+  const priceIdr = Math.round(Number(formData.get("priceIdr")) || 0);
+  const rawAliases = (formData.get("aliases") as string) || "";
+  const aliases = rawAliases
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!businessId) {
+    return { success: false, error: "ID Usaha tidak valid." };
+  }
+
+  const result = await addFirstProductForBusiness(supabase, user.id, {
+    businessId,
+    name: productName,
+    unit,
+    priceIdr,
+    aliases,
+  });
+
+  if (result.success) {
+    revalidatePath("/onboarding");
+    revalidatePath("/dashboard/products");
+  }
+
+  return result;
+}
+
+export async function generatePairingTokenAction(businessId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi login tidak valid." };
+  }
+
+  return await generateTelegramPairingToken(supabase, businessId, user.id);
+}
+
+export async function checkTelegramStatusAction(businessId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { connected: false };
+  }
+
+  const status = await checkTelegramConnectionStatus(supabase, businessId);
+  if (status.connected) {
+    revalidatePath("/onboarding");
+  }
+  return status;
+}
+
+export async function checkFirstTransactionAction(businessId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { recorded: false };
+  }
+
+  const status = await checkFirstTransactionStatus(supabase, businessId);
+  if (status.recorded) {
+    revalidatePath("/onboarding");
+    revalidatePath("/dashboard");
+  }
+  return status;
+}
+
+export async function skipGoogleSheetsAction(businessId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi login tidak valid." };
+  }
+
+  const res = await skipOrCompleteGoogleSheets(supabase, businessId, true, user.id);
+  if (res.success) {
+    revalidatePath("/onboarding");
+    revalidatePath("/dashboard");
+  }
+  return res;
+}
+
+export async function getOnboardingProgressAction(businessId: string) {
+  const supabase = await createClient();
+  return await getBusinessOnboardingState(supabase, businessId);
 }

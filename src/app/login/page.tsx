@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -122,9 +123,15 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-zinc-800 text-center">
-            <p className="text-xs text-zinc-500">
-              OXID WA Ledger • Multi-Tenant Financial Core
+          <div className="mt-6 pt-5 border-t border-zinc-800 text-center space-y-2">
+            <p className="text-xs text-zinc-400">
+              Belum punya akun?{" "}
+              <Link href="/signup" className="text-emerald-400 hover:text-emerald-300 font-semibold">
+                Daftar uji coba 14 hari gratis
+              </Link>
+            </p>
+            <p className="text-[11px] text-zinc-500">
+              OXID Ledger • Sistem Pembukuan WhatsApp & Telegram
             </p>
           </div>
         </div>

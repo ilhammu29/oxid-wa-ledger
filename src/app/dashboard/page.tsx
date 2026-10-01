@@ -13,7 +13,14 @@ import {
   Scale,
   Hash,
   FileSpreadsheet,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  HelpCircle,
+  Package,
+  Receipt,
 } from "lucide-react";
+import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +29,11 @@ export default async function DashboardOverviewPage() {
   const business = session.business!;
   const supabase = await createClient();
 
-  // 1. Fetch KPIs & 14-day sales time-series
-  const [kpis, dailySeries] = await Promise.all([
+  // 1. Fetch KPIs, 14-day sales time-series, and onboarding progress
+  const [kpis, dailySeries, onboardingProgress] = await Promise.all([
     getOverviewKPIs(supabase, business.id),
     getDailySalesSeries(supabase, business.id, 14),
+    getBusinessOnboardingState(supabase, business.id),
   ]);
 
   // 2. Fetch products map
@@ -61,13 +69,6 @@ export default async function DashboardOverviewPage() {
     raw_message: t.raw_message,
   }));
 
-  // 4. Fetch Google Sheets connection status for optional onboarding card (Requirement 44)
-  const { data: sheetsConn } = await supabase
-    .from("google_sheets_connections")
-    .select("enabled, spreadsheet_id")
-    .eq("business_id", business.id)
-    .maybeSingle();
-
   const formatIDR = (amount: number) =>
     `Rp${new Intl.NumberFormat("id-ID").format(amount)}`;
 
@@ -83,26 +84,98 @@ export default async function DashboardOverviewPage() {
         </p>
       </div>
 
-      {/* Optional Google Sheets Onboarding Card */}
-      {(!sheetsConn || !sheetsConn.spreadsheet_id) && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs">
-              <FileSpreadsheet className="w-5 h-5" />
+      {/* Onboarding Checklist Card (Step 10J) - Shown until onboarding is 100% complete */}
+      {!onboardingProgress.completedAt && (
+        <div className="p-5 bg-white border border-emerald-500/40 rounded-2xl space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-zinc-900">
+                  Mulai Menggunakan OXID Ledger ({onboardingProgress.percentage}% Selesai)
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Selesaikan beberapa langkah awal agar pencatatan otomatis via Telegram berjalan optimal.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-bold text-zinc-900">Hubungkan Google Sheets</p>
-              <p className="text-[11px] text-zinc-600">
-                Buat mirror laporan spreadsheet otomatis satu arah dari buku kas Anda.
-              </p>
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs self-start sm:self-center transition-colors"
+            >
+              <span>Lanjutkan Pengaturan</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-3 border-t border-zinc-100 text-xs">
+            <div className="flex items-center gap-2 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>1. Profil Bisnis</span>
+            </div>
+            <div className={`flex items-center gap-2 ${onboardingProgress.productCompleted ? "text-emerald-700 font-medium" : "text-zinc-400"}`}>
+              {onboardingProgress.productCompleted ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <span className="w-4 h-4 rounded-full border border-zinc-300 text-[10px] flex items-center justify-center">2</span>
+              )}
+              <span>2. Tambah Produk</span>
+            </div>
+            <div className={`flex items-center gap-2 ${onboardingProgress.telegramCompleted ? "text-emerald-700 font-medium" : "text-zinc-400"}`}>
+              {onboardingProgress.telegramCompleted ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <span className="w-4 h-4 rounded-full border border-zinc-300 text-[10px] flex items-center justify-center">3</span>
+              )}
+              <span>3. Hubungkan Telegram</span>
+            </div>
+            <div className={`flex items-center gap-2 ${onboardingProgress.firstTransactionCompleted ? "text-emerald-700 font-medium" : "text-zinc-400"}`}>
+              {onboardingProgress.firstTransactionCompleted ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <span className="w-4 h-4 rounded-full border border-zinc-300 text-[10px] flex items-center justify-center">4</span>
+              )}
+              <span>4. Transaksi Pertama</span>
+            </div>
+            <div className={`flex items-center gap-2 ${onboardingProgress.googleSheetsCompleted ? "text-emerald-700 font-medium" : "text-zinc-400"}`}>
+              {onboardingProgress.googleSheetsCompleted ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <span className="w-4 h-4 rounded-full border border-zinc-300 text-[10px] flex items-center justify-center">5</span>
+              )}
+              <span>5. Google Sheets</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Quick Actions (Step 10J) - Shown when onboarding is complete */}
+      {onboardingProgress.completedAt && (
+        <div className="flex flex-wrap items-center gap-3">
           <Link
-            href="/dashboard/settings/google-sheets"
-            className="text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-xs whitespace-nowrap"
+            href="/dashboard/transactions"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-800 text-xs font-semibold shadow-2xs transition-colors"
           >
-            Hubungkan Sekarang &rarr;
+            <Receipt className="w-4 h-4 text-emerald-600" />
+            <span>Lihat Semua Transaksi</span>
           </Link>
+          <Link
+            href="/dashboard/products"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-800 text-xs font-semibold shadow-2xs transition-colors"
+          >
+            <Package className="w-4 h-4 text-sky-600" />
+            <span>Kelola Produk & Alias</span>
+          </Link>
+          <a
+            href="/api/export/ledger.xlsx"
+            download
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-800 text-xs font-semibold shadow-2xs transition-colors"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Unduh Laporan Excel</span>
+          </a>
         </div>
       )}
 
@@ -212,6 +285,36 @@ export default async function DashboardOverviewPage() {
           transactions={recentTransactions}
           timezone={business.timezone}
         />
+      </div>
+
+      {/* Contextual Help Card (Step 10M) */}
+      <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-2xs space-y-3">
+        <div className="flex items-center gap-2 text-zinc-900 font-bold text-sm">
+          <HelpCircle className="w-4 h-4 text-emerald-600" />
+          <span>Panduan Cepat Chat Telegram</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 space-y-1">
+            <span className="font-semibold text-zinc-700 block">Catat Penjualan:</span>
+            <p className="font-mono text-emerald-700 text-[11px] bg-emerald-50 px-2 py-1 rounded">&ldquo;Kejual lele 10kg&rdquo;</p>
+            <p className="text-[11px] text-zinc-500">Mencatat kg dan menghitung total rupiah.</p>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 space-y-1">
+            <span className="font-semibold text-zinc-700 block">Laporan Hari Ini:</span>
+            <p className="font-mono text-sky-700 text-[11px] bg-sky-50 px-2 py-1 rounded">&ldquo;Laporan hari ini&rdquo;</p>
+            <p className="text-[11px] text-zinc-500">Melihat rekap omzet & volume produk.</p>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 space-y-1">
+            <span className="font-semibold text-zinc-700 block">Tanpa Penjualan:</span>
+            <p className="font-mono text-amber-700 text-[11px] bg-amber-50 px-2 py-1 rounded">&ldquo;Gak ada penjualan&rdquo;</p>
+            <p className="text-[11px] text-zinc-500">Konfirmasi kas tetap nol hari ini.</p>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 space-y-1">
+            <span className="font-semibold text-zinc-700 block">Toko Tutup / Libur:</span>
+            <p className="font-mono text-rose-700 text-[11px] bg-rose-50 px-2 py-1 rounded">&ldquo;Libur hari ini&rdquo;</p>
+            <p className="text-[11px] text-zinc-500">Mencatat status libur operasional.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

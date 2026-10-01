@@ -5,7 +5,7 @@ import { getPlatformAdminUser } from "@/modules/subscriptions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/admin-nav";
-import { ShieldCheck, ArrowLeft, ShieldAlert, UserCheck } from "lucide-react";
+import { ShieldCheck, ArrowLeft, UserCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 

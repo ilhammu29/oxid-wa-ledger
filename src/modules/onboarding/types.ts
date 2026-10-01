@@ -26,3 +26,52 @@ export interface OnboardingWizardState {
 export interface CompleteOnboardingInput extends OnboardingWizardState {
   inviteToken: string;
 }
+
+export type BusinessCategory =
+  | "F&B"
+  | "Perikanan"
+  | "Peternakan"
+  | "Reseller"
+  | "Toko"
+  | "Distributor"
+  | "Lainnya";
+
+export interface CreateBusinessInput {
+  name: string;
+  category?: string;
+  ownerName?: string;
+  timezone?: string;
+  currency?: string;
+  defaultUnit?: string;
+}
+
+export interface FirstProductInput {
+  businessId: string;
+  name: string;
+  unit: string;
+  priceIdr: number;
+  aliases?: string[];
+}
+
+export interface BusinessOnboardingProgress {
+  id: string;
+  businessId: string;
+  currentStep: number;
+  profileCompleted: boolean;
+  productCompleted: boolean;
+  telegramCompleted: boolean;
+  firstTransactionCompleted: boolean;
+  googleSheetsCompleted: boolean;
+  googleSheetsSkipped: boolean;
+  completedAt: string | null;
+  percentage: number;
+}
+
+export interface TelegramPairingTokenResult {
+  code: string;
+  expiresAt: string;
+  expiresInSeconds: number;
+  botUsername: string;
+  deepLink: string;
+}
+

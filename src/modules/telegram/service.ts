@@ -10,6 +10,7 @@ import { executeConversationAction } from "../conversation/executor";
 import { ExecutionContext } from "../transactions/types";
 import { captureConversationFailure, FailureType } from "../pilot-hardening";
 import { recordIntegrationEvent } from "../monitoring/telemetry";
+import { hashPairingToken } from "../onboarding/client-launch";
 
 export interface ProcessTelegramWebhookOptions {
   sendOutbound?: boolean;
@@ -102,6 +103,132 @@ export async function processIncomingTelegramWebhook(
   const rawText = msg.text.trim();
   const { isStart, normalizedText } = normalizeTelegramCommand(rawText);
 
+  // 5.5 Handle Telegram Pairing Token (/connect OXID-XXXX or /start OXID-XXXX or raw code)
+  const connectMatch =
+    rawText.match(/^\/connect(?:\s+([A-Za-z0-9\-]+))?$/i) ||
+    rawText.match(/^\/start\s+([A-Za-z0-9\-]+)$/i) ||
+    rawText.match(/^(OXID-[A-Za-z0-9]{4,8})$/i);
+
+  if (connectMatch) {
+    const rawPairingCode = connectMatch[1]?.trim().toUpperCase();
+
+    if (rawPairingCode) {
+      const tokenHash = hashPairingToken(rawPairingCode);
+      const displayLabel = `Operator Telegram (${fromUser.first_name || "Utama"})`;
+
+      const { data: pairData } = await client.rpc(
+        "verify_and_consume_telegram_pairing_token",
+        {
+          p_token_hash: tokenHash,
+          p_telegram_user_id: telegramUserId,
+          p_display_label: displayLabel,
+        }
+      );
+
+      const pairResult = pairData as {
+        valid?: boolean;
+        business_id?: string;
+        business_name?: string;
+        error?: string;
+      } | null;
+
+      if (pairResult?.valid && pairResult.business_id) {
+        const pairSuccessReply = `✅ Telegram Berhasil Terhubung!\n\nUsaha: ${pairResult.business_name}\nOperator: ${fromUser.first_name || "Utama"}\n\nAkun Telegram Anda telah terhubung resmi. Anda bisa langsung mulai mencatat penjualan lewat obrolan ini.\n\nContoh pencatatan:\n"Kejual lele 10kg"`;
+
+        await client.rpc("claim_telegram_update", {
+          p_update_id: updateId,
+          p_business_id: pairResult.business_id,
+          p_telegram_user_id: telegramUserId,
+        });
+
+        await client.rpc("complete_telegram_update", {
+          p_update_id: updateId,
+          p_processing_status: "processed",
+          p_business_id: pairResult.business_id,
+          p_response_text: pairSuccessReply,
+          p_error_message: null,
+        });
+
+        if (options.sendOutbound !== false) {
+          await telegramSend({
+            chatId: replyChatId,
+            text: pairSuccessReply,
+          });
+        }
+
+        return {
+          acknowledged: true,
+          type: "pairing_success",
+          updateId,
+          businessId: pairResult.business_id,
+          telegramUserId: String(telegramUserId),
+        };
+      } else {
+        const pairFailReply = `❌ Kode pairing tidak valid atau sudah kedaluwarsa.\n\nPastikan kode masih aktif (berlaku 10 menit) dan dibuat melalui halaman onboarding OXID Ledger.`;
+
+        await client.rpc("claim_telegram_update", {
+          p_update_id: updateId,
+          p_business_id: null,
+          p_telegram_user_id: telegramUserId,
+        });
+
+        await client.rpc("complete_telegram_update", {
+          p_update_id: updateId,
+          p_processing_status: "failed",
+          p_business_id: null,
+          p_response_text: pairFailReply,
+          p_error_message: pairResult?.error || "INVALID_PAIRING_CODE",
+        });
+
+        if (options.sendOutbound !== false) {
+          await telegramSend({
+            chatId: replyChatId,
+            text: pairFailReply,
+          });
+        }
+
+        return {
+          acknowledged: true,
+          type: "pairing_failed",
+          updateId,
+          telegramUserId: String(telegramUserId),
+          reason: pairResult?.error || "INVALID_PAIRING_CODE",
+        };
+      }
+    } else {
+      // User sent bare /connect with no code
+      const pairHelpReply = `Gunakan format:\n/connect <KODE-PAIRING>\n\nContoh:\n/connect OXID-7K2P\n\nKode pairing bisa Anda dapatkan dari halaman onboarding dashboard OXID Ledger.`;
+
+      await client.rpc("claim_telegram_update", {
+        p_update_id: updateId,
+        p_business_id: null,
+        p_telegram_user_id: telegramUserId,
+      });
+
+      await client.rpc("complete_telegram_update", {
+        p_update_id: updateId,
+        p_processing_status: "processed",
+        p_business_id: null,
+        p_response_text: pairHelpReply,
+        p_error_message: null,
+      });
+
+      if (options.sendOutbound !== false) {
+        await telegramSend({
+          chatId: replyChatId,
+          text: pairHelpReply,
+        });
+      }
+
+      return {
+        acknowledged: true,
+        type: "pairing_help",
+        updateId,
+        telegramUserId: String(telegramUserId),
+      };
+    }
+  }
+
   // 6. Resolve Business Authorization
   const { data: userRecords, error: authError } = await client
     .from("telegram_authorized_users")
@@ -127,7 +254,7 @@ export async function processIncomingTelegramWebhook(
   // CASE A: Unauthorized User
   if (!userRecords || userRecords.length === 0) {
     if (isStart) {
-      const bootstrapReply = `OXID Ledger belum mengizinkan akun Telegram ini.\n\nTelegram User ID Anda:\n${telegramUserId}\n\nHubungkan ID ini melalui setup OXID.`;
+      const bootstrapReply = `OXID Ledger belum mengizinkan akun Telegram ini.\n\nTelegram User ID Anda:\n${telegramUserId}\n\nHubungkan ID ini melalui setup OXID, atau kirim:\n/connect <KODE-PAIRING>`;
 
       // Atomic claim to prevent duplicate bootstrap replies on retry
       const { data: claimData } = await client.rpc("claim_telegram_update", {

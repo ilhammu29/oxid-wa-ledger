@@ -194,6 +194,11 @@ export interface AdminBusinessListItem {
   remainingDays: number;
   primaryChannel: string;
   lastActivityAt: string | null;
+  category?: string | null;
+  onboardingPercentage?: number;
+  telegramConnected?: boolean;
+  firstTransactionRecorded?: boolean;
+  googleSheetsConnected?: boolean;
 }
 
 /**
@@ -207,6 +212,7 @@ export async function listAllBusinessesForAdmin(
     .select(`
       id,
       name,
+      category,
       status,
       created_at,
       created_by
@@ -254,6 +260,35 @@ export async function listAllBusinessesForAdmin(
       .limit(1)
       .maybeSingle();
 
+    // 5. Get onboarding progress (Step 10)
+    let onboardingPercentage = 0;
+    let telegramConnected = false;
+    let firstTransactionRecorded = false;
+    let googleSheetsConnected = false;
+
+    try {
+      const { data: onboarding } = await client
+        .from("business_onboarding_progress")
+        .select("current_step, product_completed, telegram_completed, first_transaction_completed, google_sheets_completed, completed_at")
+        .eq("business_id", biz.id)
+        .maybeSingle();
+
+      if (onboarding) {
+        // Calculate percentage from step completions
+        let pct = 20; // profile always done
+        if (onboarding.product_completed) pct += 20;
+        if (onboarding.telegram_completed) pct += 20;
+        if (onboarding.first_transaction_completed) pct += 20;
+        if (onboarding.google_sheets_completed) pct += 20;
+        onboardingPercentage = pct;
+        telegramConnected = onboarding.telegram_completed ?? false;
+        firstTransactionRecorded = onboarding.first_transaction_completed ?? false;
+        googleSheetsConnected = onboarding.google_sheets_completed ?? false;
+      }
+    } catch {
+      // Table fallback
+    }
+
     items.push({
       id: biz.id,
       name: biz.name,
@@ -267,6 +302,11 @@ export async function listAllBusinessesForAdmin(
       remainingDays: subState.remainingDays,
       primaryChannel: channelSettings?.primary_channel || "telegram",
       lastActivityAt: lastTx?.created_at || null,
+      category: (biz as Record<string, unknown>).category as string || null,
+      onboardingPercentage,
+      telegramConnected,
+      firstTransactionRecorded,
+      googleSheetsConnected,
     });
   }
 

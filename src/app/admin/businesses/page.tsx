@@ -97,6 +97,7 @@ export default async function AdminBusinessesPage() {
                   <th className="py-3 px-4">Nama Bisnis</th>
                   <th className="py-3 px-4">Paket</th>
                   <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Onboarding</th>
                   <th className="py-3 px-4">Kanal Utama</th>
                   <th className="py-3 px-4">Masa Berlaku</th>
                   <th className="py-3 px-4">Sisa Hari</th>
@@ -112,17 +113,45 @@ export default async function AdminBusinessesPage() {
                   if (b.subscriptionStatus === "suspended") statusColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
                   if (b.subscriptionStatus === "cancelled") statusColor = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
 
+                  const pct = b.onboardingPercentage ?? 0;
+                  const isComplete = pct === 100;
+
                   return (
                     <tr key={b.id} className="hover:bg-zinc-800/30">
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-zinc-100">{b.name}</div>
-                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{b.id}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {b.category && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium capitalize">
+                              {b.category}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-zinc-500 font-mono">{b.id}</span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium capitalize text-zinc-200">{b.planName}</td>
                       <td className="py-3.5 px-4">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border ${statusColor}`}>
                           {b.subscriptionStatus}
                         </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            isComplete
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                          }`}>
+                            {pct}% {isComplete ? "Selesai" : ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-zinc-500 mt-1">
+                          <span title="Telegram">{b.telegramConnected ? "🤖 TG ✓" : "🤖 TG -"}</span>
+                          <span>·</span>
+                          <span title="Transaksi Pertama">{b.firstTransactionRecorded ? "💵 Tx ✓" : "💵 Tx -"}</span>
+                          <span>·</span>
+                          <span title="Google Sheets">{b.googleSheetsConnected ? "📊 Sheets ✓" : "📊 Sheets -"}</span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 capitalize font-mono text-[11px] text-zinc-400">{b.primaryChannel}</td>
                       <td className="py-3.5 px-4 text-zinc-300">{formatDate(b.currentPeriodEnd)}</td>
