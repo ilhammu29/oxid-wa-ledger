@@ -96,6 +96,18 @@ export async function createBusinessAction(formData: FormData) {
     return { success: false, error: "Sesi login tidak valid. Silakan masuk terlebih dahulu." };
   }
 
+  // Enforce verified email before business provisioning (Step 10.2)
+  if (
+    process.env.ALLOW_UNVERIFIED_INTERNAL_SIGNUP !== "true" &&
+    !user.email_confirmed_at &&
+    !user.confirmed_at
+  ) {
+    return {
+      success: false,
+      error: "Email akun Anda belum diverifikasi. Silakan periksa kotak masuk email Anda dan lakukan verifikasi sebelum membuat bisnis.",
+    };
+  }
+
   const businessName = formData.get("businessName") as string;
   const category = (formData.get("category") as string) || "Lainnya";
   const ownerName = (formData.get("ownerName") as string) || "";

@@ -95,7 +95,18 @@ export async function createBusinessForUser(
   const ownerName = input.ownerName?.trim() || null;
 
   try {
-    // 0. Idempotency guard: check if user already has an active incomplete business (prevents duplicate provisioning on retry/refresh)
+    // 0. Verification check: unverified users cannot provision a business unless internal bypass is active
+    if (process.env.ALLOW_UNVERIFIED_INTERNAL_SIGNUP !== "true" && client.auth?.getUser) {
+      const { data: authData } = await client.auth.getUser().catch(() => ({ data: { user: null } }));
+      if (authData?.user && !authData.user.email_confirmed_at && !authData.user.confirmed_at) {
+        return {
+          success: false,
+          error: "Email belum diverifikasi. Verifikasi email diperlukan sebelum membuat bisnis.",
+        };
+      }
+    }
+
+    // 0.1 Idempotency guard: check if user already has an active incomplete business (prevents duplicate provisioning on retry/refresh)
     const { data: incompleteBiz } = await client
       .from("businesses")
       .select("id, onboarding_completed_at")

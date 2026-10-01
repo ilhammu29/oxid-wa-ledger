@@ -6,7 +6,7 @@ import { validateInviteToken } from "@/modules/onboarding/invite";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { ClientOnboardingView } from "@/components/onboarding/client-onboarding-view";
 import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Mail } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,35 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   // If user is not logged in
   if (!user) {
     redirect("/signup");
+  }
+
+  // Email verification enforcement (Step 10.2)
+  if (
+    process.env.ALLOW_UNVERIFIED_INTERNAL_SIGNUP !== "true" &&
+    !user.email_confirmed_at &&
+    !user.confirmed_at
+  ) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center p-4 font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl">
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center mb-4">
+            <Mail className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-zinc-100 mb-2">Verifikasi Email Diperlukan</h2>
+          <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+            Akun Anda (<strong>{user.email}</strong>) belum diverifikasi. Silakan periksa kotak masuk atau spam email Anda dan klik tautan konfirmasi sebelum memulai onboarding.
+          </p>
+          <div className="space-y-3">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
+            >
+              Kembali ke Halaman Masuk
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // 1. Support legacy invite token if explicitly provided in query params

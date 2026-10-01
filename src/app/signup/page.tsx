@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { registerUserAction } from "./actions";
+import { registerUserAction, resendVerificationEmailAction } from "./actions";
 import Link from "next/link";
 import { ArrowRight, AlertCircle, Sparkles, CheckCircle2, Mail } from "lucide-react";
 
@@ -16,6 +16,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<SignupStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +89,24 @@ export default function SignupPage() {
     }
   };
 
+  const handleResend = async () => {
+    if (resending || !email) return;
+    setResending(true);
+    setResendStatus(null);
+    try {
+      const res = await resendVerificationEmailAction(email);
+      if (res.success) {
+        setResendStatus("Email verifikasi telah dikirim ulang. Silakan periksa kotak masuk atau spam.");
+      } else {
+        setResendStatus(res.error || "Gagal mengirim ulang email verifikasi. Silakan coba lagi.");
+      }
+    } catch {
+      setResendStatus("Terjadi kendala koneksi.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const isSubmitting = status === "submitting";
 
   return (
@@ -116,10 +136,17 @@ export default function SignupPage() {
               <div className="space-y-1">
                 <h3 className="text-base font-semibold text-zinc-100">Pendaftaran Berhasil</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Silakan periksa kotak masuk atau spam email <strong>{email}</strong> untuk verifikasi akun, kemudian masuk ke dashboard.
+                  Tautan konfirmasi telah dikirim ke <strong>{email}</strong>. Silakan periksa kotak masuk atau spam email Anda untuk mengaktifkan akun.
                 </p>
               </div>
-              <div className="pt-2">
+
+              {resendStatus && (
+                <div className="rounded-xl bg-zinc-950/80 border border-zinc-800 p-2.5 text-xs text-zinc-300 text-left">
+                  {resendStatus}
+                </div>
+              )}
+
+              <div className="space-y-2 pt-2">
                 <Link
                   href="/login"
                   className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-zinc-950 bg-emerald-500 hover:bg-emerald-400 transition-colors"
@@ -127,6 +154,15 @@ export default function SignupPage() {
                   <span>Lanjutkan ke Halaman Masuk</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 disabled:opacity-50 py-1 transition-colors block mx-auto"
+                >
+                  {resending ? "Mengirim ulang..." : "Kirim ulang email verifikasi"}
+                </button>
               </div>
             </div>
           ) : status === "success" ? (

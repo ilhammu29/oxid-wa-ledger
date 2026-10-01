@@ -428,17 +428,15 @@ async function runStep10_1Tests() {
       fd.set("email", "budi_fresh_signup@barokah.com");
       fd.set("password", "rahasia12345");
 
-      const mockAdminClient = {
+      const mockSignUpClient = {
         auth: {
-          admin: {
-            createUser: async ({ email }: { email: string }) => {
-              return { data: { user: { id: "mock-user-id", email } }, error: null };
-            },
+          signUp: async ({ email }: { email: string }) => {
+            return { data: { user: { id: "mock-user-id", email, email_confirmed_at: "2026-10-01" }, session: {} }, error: null };
           },
         },
       };
 
-      const res = await registerUserAction(fd, mockAdminClient);
+      const res = await registerUserAction(fd, mockSignUpClient);
       if (res.success) {
         record(1, "10.1A", "New signup succeeds with valid credentials", true);
       } else {
@@ -457,17 +455,15 @@ async function runStep10_1Tests() {
       fd.set("email", userA_Email); // already registered
       fd.set("password", "rahasia12345");
 
-      const mockAdminDuplicateClient = {
+      const mockDuplicateClient = {
         auth: {
-          admin: {
-            createUser: async () => {
-              return { data: null, error: { message: "User already registered", code: "email_exists" } };
-            },
+          signUp: async () => {
+            return { data: null, error: { message: "User already registered", code: "email_exists" } };
           },
         },
       };
 
-      const res = await registerUserAction(fd, mockAdminDuplicateClient);
+      const res = await registerUserAction(fd, mockDuplicateClient);
       if (!res.success && res.error === "Email ini sudah terdaftar. Silakan masuk.") {
         record(2, "10.1B", "Duplicate email returns safe Indonesian message", true);
       } else {
