@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Activity,
   FileSpreadsheet,
+  X,
 } from "lucide-react";
 
 interface AdminBusinessDetailViewProps {
@@ -50,7 +51,10 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
     }
   };
 
-  const handleAction = async (actionFn: (fd: FormData) => Promise<AdminActionResult>, e: React.FormEvent<HTMLFormElement>) => {
+  const handleAction = async (
+    actionFn: (fd: FormData) => Promise<AdminActionResult>,
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFeedback(null);
@@ -72,60 +76,91 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
     }
   };
 
+  const getStatusBadge = (st: string) => {
+    switch (st) {
+      case "active":
+        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+      case "trialing":
+        return "bg-sky-500/10 text-sky-500 border-sky-500/20";
+      case "grace_period":
+        return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+      case "suspended":
+        return "bg-rose-500/10 text-rose-500 border-rose-500/20";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Feedback banner */}
+      {/* ─────────────────────────────────────────────────────────────
+          1. FEEDBACK BANNER
+      ────────────────────────────────────────────────────────────── */}
       {feedback && (
         <div
-          className={`p-4 rounded-xl border text-sm flex items-start gap-3 ${
+          className={`p-4 rounded-xl border text-xs flex items-start justify-between gap-3 ${
             feedback.success
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-              : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+              : "bg-rose-500/10 border-rose-500/20 text-rose-500"
           }`}
         >
-          {feedback.success ? (
-            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-          ) : (
-            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-          )}
-          <div>{feedback.message}</div>
+          <div className="flex items-center gap-2">
+            {feedback.success ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
+          <button
+            onClick={() => setFeedback(null)}
+            className="p-1 rounded hover:bg-muted/30 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
-      {/* Subscription Card & Admin Actions */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      {/* ─────────────────────────────────────────────────────────────
+          2. SUBSCRIPTION CARD & ADMIN ACTION BAR
+      ────────────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <span className="text-lg font-bold text-zinc-100">{plan.name}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-zinc-800 text-zinc-200 border border-zinc-700">
+            <div className="flex items-center gap-2.5 mb-1">
+              <span className="text-xl font-bold text-foreground">{plan.name}</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getStatusBadge(
+                  status
+                )}`}
+              >
                 {status}
               </span>
             </div>
-            <p className="text-xs text-zinc-400">
-              Sisa masa aktif: <strong className="text-zinc-200">{remainingDays} hari</strong> • Berlaku hingga:{" "}
-              <strong className="text-zinc-200">{formatDate(currentPeriodEnd)}</strong>
+            <p className="text-xs text-muted-foreground">
+              Sisa masa aktif: <strong className="text-foreground">{remainingDays} hari</strong> · Berlaku hingga:{" "}
+              <strong className="text-foreground">{formatDate(currentPeriodEnd)}</strong>
             </p>
           </div>
 
-          {/* Action triggers */}
-          <div className="flex flex-wrap gap-2">
+          {/* Action Trigger Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveModal("activate")}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-colors shadow-2xs"
             >
               Aktivasi Paket
             </button>
             <button
               onClick={() => setActiveModal("extend")}
-              className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-colors border border-zinc-700"
+              className="px-3 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors border border-border"
             >
               Perpanjang (+Hari)
             </button>
             {status !== "suspended" && (
               <button
                 onClick={() => setActiveModal("suspend")}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 text-xs font-semibold transition-colors"
               >
                 Tangguhkan
               </button>
@@ -133,7 +168,7 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
             {status === "suspended" && (
               <button
                 onClick={() => setActiveModal("reactivate")}
-                className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs font-semibold transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 border border-sky-500/20 text-xs font-semibold transition-colors"
               >
                 Aktifkan Kembali
               </button>
@@ -141,7 +176,7 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
             {status !== "cancelled" && (
               <button
                 onClick={() => setActiveModal("cancel")}
-                className="px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs font-semibold transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-colors"
               >
                 Batalkan
               </button>
@@ -149,101 +184,115 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
           </div>
         </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-6 text-xs">
+        {/* Info Key-Value Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
-            <span className="text-zinc-500 block mb-1">ID Bisnis</span>
-            <span className="font-mono text-zinc-300 font-semibold">{business.id}</span>
+            <span className="text-muted-foreground block mb-0.5 text-[11px]">ID Bisnis</span>
+            <span className="font-mono text-foreground font-semibold break-all">{business.id}</span>
           </div>
           <div>
-            <span className="text-zinc-500 block mb-1">Zona Waktu / Mata Uang</span>
-            <span className="text-zinc-300">{business.timezone} • {business.currency}</span>
+            <span className="text-muted-foreground block mb-0.5 text-[11px]">Zona Waktu / Kurs</span>
+            <span className="text-foreground font-medium">{business.timezone} · {business.currency}</span>
           </div>
           <div>
-            <span className="text-zinc-500 block mb-1">Tanggal Terdaftar</span>
-            <span className="text-zinc-300">{formatDate(business.createdAt)}</span>
+            <span className="text-muted-foreground block mb-0.5 text-[11px]">Tanggal Terdaftar</span>
+            <span className="text-foreground font-medium">{formatDate(business.createdAt)}</span>
           </div>
           <div>
-            <span className="text-zinc-500 block mb-1">Hak Mutasi Finansial</span>
-            <span className={subscriptionState.canCreateMutations ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+            <span className="text-muted-foreground block mb-0.5 text-[11px]">Hak Mutasi Finansial</span>
+            <span className={subscriptionState.canCreateMutations ? "text-emerald-500 font-semibold" : "text-rose-500 font-semibold"}>
               {subscriptionState.canCreateMutations ? "Diizinkan (Aktif)" : "Dibatasi"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Integration & Channel Status Cards */}
+      {/* ─────────────────────────────────────────────────────────────
+          3. INTEGRATION & CHANNELS
+      ────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-zinc-100">Kanal Komunikasi</h3>
+        {/* Communication Channels */}
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-border">
+            <Activity className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Kanal Komunikasi
+            </h3>
           </div>
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between py-1 border-b border-zinc-800/60">
-              <span className="text-zinc-400">Telegram Bot</span>
-              <span className={channels.telegramEnabled ? "text-emerald-400 font-semibold" : "text-zinc-500"}>
+            <div className="flex justify-between py-1 border-b border-border/60">
+              <span className="text-muted-foreground">Telegram Bot</span>
+              <span className={channels.telegramEnabled ? "text-emerald-500 font-semibold" : "text-muted-foreground"}>
                 {channels.telegramEnabled ? "Aktif" : "Nonaktif"}
               </span>
             </div>
-            <div className="flex justify-between py-1 border-b border-zinc-800/60">
-              <span className="text-zinc-400">WhatsApp Cloud</span>
-              <span className={channels.whatsappEnabled ? "text-emerald-400 font-semibold" : "text-zinc-500"}>
+            <div className="flex justify-between py-1 border-b border-border/60">
+              <span className="text-muted-foreground">WhatsApp Cloud API</span>
+              <span className={channels.whatsappEnabled ? "text-emerald-500 font-semibold" : "text-muted-foreground"}>
                 {channels.whatsappEnabled ? "Aktif" : "Nonaktif"}
               </span>
             </div>
-            <div className="flex justify-between py-1 border-b border-zinc-800/60">
-              <span className="text-zinc-400">Kanal Utama</span>
-              <span className="font-mono text-zinc-300 capitalize">{channels.primaryChannel}</span>
+            <div className="flex justify-between py-1 border-b border-border/60">
+              <span className="text-muted-foreground">Kanal Pencatatan Utama</span>
+              <span className="font-mono text-foreground capitalize">{channels.primaryChannel}</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-zinc-400">Kanal Pengingat</span>
-              <span className="font-mono text-zinc-300 capitalize">{channels.reminderChannel}</span>
+              <span className="text-muted-foreground">Kanal Pengingat Ringkasan</span>
+              <span className="font-mono text-foreground capitalize">{channels.reminderChannel}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-zinc-100">Google Sheets One-Way Sync</h3>
+        {/* Google Sheets Sync */}
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-border">
+            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Google Sheets Sync
+            </h3>
           </div>
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between py-1 border-b border-zinc-800/60">
-              <span className="text-zinc-400">Status Sinkronisasi</span>
-              <span className={googleSheets?.enabled ? "text-emerald-400 font-semibold" : "text-zinc-500"}>
+            <div className="flex justify-between py-1 border-b border-border/60">
+              <span className="text-muted-foreground">Status Sinkronisasi</span>
+              <span className={googleSheets?.enabled ? "text-emerald-500 font-semibold" : "text-muted-foreground"}>
                 {googleSheets?.enabled ? "Aktif" : "Belum Terhubung"}
               </span>
             </div>
-            <div className="flex justify-between py-1 border-b border-zinc-800/60">
-              <span className="text-zinc-400">Spreadsheet ID</span>
-              <span className="font-mono text-[11px] text-zinc-400 truncate max-w-[200px]">
+            <div className="flex justify-between py-1 border-b border-border/60">
+              <span className="text-muted-foreground">Spreadsheet ID</span>
+              <span className="font-mono text-[11px] text-muted-foreground truncate max-w-[200px]">
                 {googleSheets?.spreadsheetId || "-"}
               </span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-zinc-400">Terakhir Disinkronkan</span>
-              <span className="text-zinc-300">{formatDate(googleSheets?.lastSyncedAt || null)}</span>
+              <span className="text-muted-foreground">Terakhir Sinkron</span>
+              <span className="text-foreground font-medium">{formatDate(googleSheets?.lastSyncedAt || null)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Payment Records Section */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-5 border-b border-zinc-800">
-          <h3 className="text-sm font-bold text-zinc-100">Pembayaran Klien ({payments.length})</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Daftar transfer manual yang diajukan oleh pemilik bisnis.</p>
+      {/* ─────────────────────────────────────────────────────────────
+          4. PAYMENT RECORDS TABLE
+      ────────────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-2xs">
+        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Riwayat Pembayaran Klien ({payments.length})</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Daftar transfer konfirmasi yang diajukan oleh pemilik bisnis.
+            </p>
+          </div>
         </div>
 
         {payments.length === 0 ? (
-          <div className="p-8 text-center text-xs text-zinc-500">
+          <div className="p-8 text-center text-xs text-muted-foreground">
             Belum ada bukti pembayaran dari klien ini.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800 font-medium">
+              <thead className="bg-muted/30 text-muted-foreground border-b border-border font-semibold">
                 <tr>
                   <th className="py-3 px-4">Tanggal</th>
                   <th className="py-3 px-4">Nominal</th>
@@ -253,26 +302,26 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
                   <th className="py-3 px-4 text-right">Aksi Admin</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+              <tbody className="divide-y divide-border/60 text-foreground">
                 {payments.map((p) => (
-                  <tr key={p.id} className="hover:bg-zinc-800/30">
-                    <td className="py-3 px-4 text-zinc-400">{formatDate(p.createdAt)}</td>
-                    <td className="py-3 px-4 font-semibold text-zinc-100">{formatIDR(p.amountIdr)}</td>
+                  <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">{formatDate(p.createdAt)}</td>
+                    <td className="py-3 px-4 font-semibold tabular-nums text-foreground">{formatIDR(p.amountIdr)}</td>
                     <td className="py-3 px-4 capitalize">{p.paymentMethod.replace("_", " ")}</td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-zinc-300">{p.reference || "-"}</td>
+                    <td className="py-3 px-4 font-mono text-[11px] text-foreground">{p.reference || "-"}</td>
                     <td className="py-3 px-4">
                       {p.status === "pending" && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           Menunggu
                         </span>
                       )}
                       {p.status === "confirmed" && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           Dikonfirmasi
                         </span>
                       )}
                       {p.status === "rejected" && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20">
                           Ditolak
                         </span>
                       )}
@@ -285,7 +334,7 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
                               setSelectedPaymentId(p.id);
                               setActiveModal("confirmPayment");
                             }}
-                            className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-[11px] font-semibold transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/20 text-xs font-semibold transition-colors"
                           >
                             Konfirmasi
                           </button>
@@ -294,14 +343,11 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
                               setSelectedPaymentId(p.id);
                               setActiveModal("rejectPayment");
                             }}
-                            className="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-[11px] font-semibold transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-semibold transition-colors"
                           >
                             Tolak
                           </button>
                         </div>
-                      )}
-                      {p.status !== "pending" && (
-                        <span className="text-[11px] text-zinc-500">Selesai</span>
                       )}
                     </td>
                   </tr>
@@ -312,31 +358,29 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
         )}
       </div>
 
-      {/* Subscription Audit Trail */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-5 border-b border-zinc-800">
-          <h3 className="text-sm font-bold text-zinc-100">Audit Trail Langganan</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Catatan riwayat perubahan status langganan oleh admin atau sistem.</p>
-        </div>
-
+      {/* ─────────────────────────────────────────────────────────────
+          5. TENANT AUDIT TRAIL
+      ────────────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Audit Trail Tenant ({auditLogs.length})</h3>
         {auditLogs.length === 0 ? (
-          <div className="p-6 text-center text-xs text-zinc-500">Belum ada catatan audit.</div>
+          <p className="text-xs text-muted-foreground py-4 text-center">Belum ada catatan audit khusus tenant ini.</p>
         ) : (
-          <div className="divide-y divide-zinc-800/60 text-xs">
+          <div className="divide-y divide-border/60">
             {auditLogs.map((log) => (
-              <div key={log.id} className="p-4 flex items-start justify-between gap-4">
+              <div key={log.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-zinc-200">{log.action}</span>
-                    <span className="px-2 py-0.2 rounded text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{log.action}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-muted text-muted-foreground border border-border">
                       {log.new_status}
                     </span>
                   </div>
-                  <p className="text-zinc-400 text-[11px]">{log.notes || "-"}</p>
+                  <p className="text-muted-foreground text-[11px] mt-0.5">{log.notes || "-"}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-zinc-500 block text-[11px]">{formatDate(log.created_at)}</span>
-                  <span className="text-[10px] text-zinc-400 font-mono">{log.actor_email || "System Job"}</span>
+                  <span className="text-muted-foreground block text-[11px]">{formatDate(log.created_at)}</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">{log.actor_email || "System"}</span>
                 </div>
               </div>
             ))}
@@ -344,20 +388,22 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
         )}
       </div>
 
-      {/* MODALS */}
+      {/* ─────────────────────────────────────────────────────────────
+          6. MODALS
+      ────────────────────────────────────────────────────────────── */}
       {/* 1. Modal Activate */}
       {activeModal === "activate" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-zinc-100 mb-1">Aktivasi Paket Langganan</h3>
-            <p className="text-xs text-zinc-400 mb-4">Pilih paket dan durasi hari aktif untuk bisnis ini.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-foreground mb-1">Aktivasi Paket Langganan</h3>
+            <p className="text-xs text-muted-foreground mb-4">Pilih paket dan durasi hari aktif untuk bisnis ini.</p>
             <form onSubmit={(e) => handleAction(adminActivateSubscriptionAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Pilihan Paket</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Pilihan Paket</label>
                 <select
                   name="planCode"
                   defaultValue="basic"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none"
                 >
                   {plans.map((p) => (
                     <option key={p.code} value={p.code}>
@@ -367,36 +413,36 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Durasi Hari Aktif</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Durasi Hari Aktif</label>
                 <input
                   type="number"
                   name="durationDays"
                   defaultValue={30}
                   min={1}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-mono focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Catatan Audit</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Catatan Audit</label>
                 <input
                   type="text"
                   name="notes"
                   placeholder="Contoh: Aktivasi perdana klien pilot"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs"
                 >
                   {isSubmitting ? "Memproses..." : "Aktifkan"}
                 </button>
@@ -408,44 +454,44 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 2. Modal Confirm Payment */}
       {activeModal === "confirmPayment" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-zinc-100 mb-1">Konfirmasi Pembayaran</h3>
-            <p className="text-xs text-zinc-400 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-foreground mb-1">Konfirmasi Pembayaran</h3>
+            <p className="text-xs text-muted-foreground mb-4">
               Konfirmasi pembayaran ini akan memperpanjang masa aktif langganan bisnis.
             </p>
             <form onSubmit={(e) => handleAction(adminConfirmPaymentAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Perpanjangan Hari (+)</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Perpanjangan Hari (+)</label>
                 <input
                   type="number"
                   name="extensionDays"
                   defaultValue={30}
                   min={1}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-mono focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Catatan</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Catatan</label>
                 <input
                   type="text"
                   name="notes"
                   placeholder="Contoh: Bukti transfer valid / mutasi cocok"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs"
                 >
                   {isSubmitting ? "Memproses..." : "Konfirmasi Pembayaran"}
                 </button>
@@ -457,35 +503,35 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 3. Modal Reject Payment */}
       {activeModal === "rejectPayment" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-zinc-100 mb-1">Tolak Bukti Pembayaran</h3>
-            <p className="text-xs text-zinc-400 mb-4">Tolak pengajuan pembayaran jika bukti tidak valid.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-rose-500 mb-1">Tolak Bukti Pembayaran</h3>
+            <p className="text-xs text-muted-foreground mb-4">Berikan alasan mengapa bukti transfer ini ditolak.</p>
             <form onSubmit={(e) => handleAction(adminRejectPaymentAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Alasan Penolakan</label>
-                <input
-                  type="text"
+                <label className="text-xs font-medium text-foreground block mb-1">Alasan Penolakan</label>
+                <textarea
                   name="notes"
-                  placeholder="Contoh: Mutasi rekening tidak ditemukan"
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  rows={3}
+                  placeholder="Contoh: Bukti transfer tidak terbaca / nominal tidak sesuai"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none resize-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs"
                 >
-                  {isSubmitting ? "Memproses..." : "Tolak Bukti"}
+                  {isSubmitting ? "Memproses..." : "Tolak Pembayaran"}
                 </button>
               </div>
             </form>
@@ -495,44 +541,44 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 4. Modal Extend */}
       {activeModal === "extend" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-zinc-100 mb-1">Perpanjang Masa Aktif</h3>
-            <p className="text-xs text-zinc-400 mb-4">Tambahkan durasi hari ekstra ke masa berlaku saat ini.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-foreground mb-1">Perpanjang Masa Aktif</h3>
+            <p className="text-xs text-muted-foreground mb-4">Tambahkan hari aktif ke siklus langganan yang berjalan.</p>
             <form onSubmit={(e) => handleAction(adminExtendSubscriptionAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Jumlah Hari Tambahan</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Jumlah Hari Tambahan</label>
                 <input
                   type="number"
                   name="days"
-                  defaultValue={7}
+                  defaultValue={30}
                   min={1}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-mono focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Catatan</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Catatan Audit</label>
                 <input
                   type="text"
                   name="notes"
-                  placeholder="Contoh: Kompensasi kendala teknis / masa promosi"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  placeholder="Contoh: Kompensasi downtime / perpanjangan manual"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs"
                 >
-                  {isSubmitting ? "Memproses..." : "Tambahkan Hari"}
+                  {isSubmitting ? "Memproses..." : "Simpan Perpanjangan"}
                 </button>
               </div>
             </form>
@@ -542,37 +588,37 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 5. Modal Suspend */}
       {activeModal === "suspend" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-rose-400 mb-1">Tangguhkan Langganan Bisnis</h3>
-            <p className="text-xs text-zinc-400 mb-4">
-              Penangguhan akan membatasi pencatatan penjualan via bot dan dashboard. Riwayat data tetap aman tersimpan.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-rose-500 mb-1">Tangguhkan Akun Bisnis</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Penangguhan akan membatasi merchant dari pencatatan mutasi transaksi.
             </p>
             <form onSubmit={(e) => handleAction(adminSuspendSubscriptionAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Alasan Penangguhan</label>
-                <input
-                  type="text"
+                <label className="text-xs font-medium text-foreground block mb-1">Alasan Penangguhan</label>
+                <textarea
                   name="notes"
-                  placeholder="Contoh: Masa tenggang terlewati tanpa pembayaran"
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  rows={3}
+                  placeholder="Contoh: Menunggak pembayaran tagihan lewat batas tenggang"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none resize-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs"
                 >
-                  {isSubmitting ? "Memproses..." : "Ya, Tangguhkan Akun"}
+                  {isSubmitting ? "Memproses..." : "Tangguhkan Sekarang"}
                 </button>
               </div>
             </form>
@@ -582,46 +628,46 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 6. Modal Reactivate */}
       {activeModal === "reactivate" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-blue-400 mb-1">Aktifkan Kembali Langganan</h3>
-            <p className="text-xs text-zinc-400 mb-4">
-              Mengaktifkan kembali akun yang ditangguhkan dan membuka kembali hak pencatatan transaksi.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-sky-500 mb-1">Aktifkan Kembali Bisnis</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Mengembalikan status akun dari ditangguhkan menjadi aktif normal.
             </p>
             <form onSubmit={(e) => handleAction(adminReactivateSubscriptionAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Durasi Hari Aktif</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Durasi Hari Aktif</label>
                 <input
                   type="number"
                   name="days"
                   defaultValue={30}
                   min={1}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-mono focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Catatan</label>
+                <label className="text-xs font-medium text-foreground block mb-1">Catatan</label>
                 <input
                   type="text"
                   name="notes"
-                  placeholder="Contoh: Reaktivasi atas persetujuan pimpinan"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  placeholder="Contoh: Pembayaran pelunasan telah diterima"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold text-xs"
                 >
-                  {isSubmitting ? "Memproses..." : "Aktifkan Kembali"}
+                  {isSubmitting ? "Memproses..." : "Reaktivasi Bisnis"}
                 </button>
               </div>
             </form>
@@ -631,35 +677,35 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 7. Modal Cancel */}
       {activeModal === "cancel" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-zinc-200 mb-1">Batalkan Langganan</h3>
-            <p className="text-xs text-zinc-400 mb-4">
-              Status langganan akan diubah menjadi batal. Seluruh riwayat transaksi di ledger tetap dipertahankan.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-foreground mb-1">Batalkan Langganan</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Langganan akan dihentikan dan ditandai sebagai dibatalkan.
             </p>
             <form onSubmit={(e) => handleAction(adminCancelSubscriptionAction, e)} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-zinc-300 block mb-1">Alasan Pembatalan</label>
-                <input
-                  type="text"
+                <label className="text-xs font-medium text-foreground block mb-1">Alasan Pembatalan</label>
+                <textarea
                   name="notes"
-                  placeholder="Contoh: Permintaan penutupan akun oleh pemilik"
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-xs"
+                  rows={3}
+                  placeholder="Contoh: Permintaan penutupan akun oleh pemilik usaha"
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none resize-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-zinc-100 font-semibold text-xs"
+                  className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs border border-border"
                 >
                   {isSubmitting ? "Memproses..." : "Batalkan Langganan"}
                 </button>

@@ -18,12 +18,12 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Manajemen Pengguna & Platform Admin
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Pengguna & Admin Platform
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Direktori pengguna sistem: pemisahan hak akses bisnis tenant dengan peran platform administrator internal.
           </p>
         </div>

@@ -22,12 +22,12 @@ export default async function AdminAuditPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Log Audit & Jejak Aktivitas Platform
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Audit Trail Platform
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Rekaman permanen seluruh tindakan administratif: aktivasi, perubahan peran, perpanjangan masa aktif, dan mutasi langganan.
           </p>
         </div>

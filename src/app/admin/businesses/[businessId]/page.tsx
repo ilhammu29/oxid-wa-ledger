@@ -22,14 +22,14 @@ export default async function AdminBusinessDetailPage({
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center">
-          <ShieldAlert className="w-10 h-10 text-rose-400 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-zinc-100 mb-1">Akses Ditolak</h1>
-          <p className="text-xs text-zinc-400 mb-4">Silakan login sebagai admin platform.</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center">
+          <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <h1 className="text-lg font-bold text-foreground mb-1">Akses Ditolak</h1>
+          <p className="text-xs text-muted-foreground mb-4">Silakan login sebagai admin platform.</p>
           <Link
             href="/login"
-            className="inline-flex px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-xs font-semibold hover:bg-zinc-700"
+            className="inline-flex px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80"
           >
             Menuju Login
           </Link>
@@ -41,14 +41,14 @@ export default async function AdminBusinessDetailPage({
   const isAdmin = await isOxidSuperAdmin(user, supabase);
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center">
-          <ShieldAlert className="w-10 h-10 text-rose-400 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-zinc-100 mb-1">403 Terlarang</h1>
-          <p className="text-xs text-zinc-400 mb-4">Akun Anda tidak memiliki hak akses admin platform.</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center">
+          <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <h1 className="text-lg font-bold text-foreground mb-1">403 Terlarang</h1>
+          <p className="text-xs text-muted-foreground mb-4">Akun Anda tidak memiliki hak akses admin platform.</p>
           <Link
             href="/dashboard"
-            className="inline-flex px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-xs font-semibold hover:bg-zinc-700"
+            className="inline-flex px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80"
           >
             Kembali
           </Link>
@@ -69,17 +69,17 @@ export default async function AdminBusinessDetailPage({
       <div>
         <Link
           href="/admin/businesses"
-          className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors mb-3"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Daftar Bisnis
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Kembali ke Daftar Bisnis</span>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {detail.business.name}
             </h1>
-            <p className="text-xs text-zinc-400 font-mono mt-0.5">{detail.business.id}</p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">{detail.business.id}</p>
           </div>
         </div>
       </div>

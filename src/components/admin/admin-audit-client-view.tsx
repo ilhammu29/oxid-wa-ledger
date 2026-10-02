@@ -18,12 +18,13 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
 
   const filteredLogs = logs.filter((log) => {
     const bizName = businessMap[log.business_id] || "";
+    const q = searchTerm.toLowerCase();
     const matchesSearch =
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (log.actor_email && log.actor_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (log.notes && log.notes.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      bizName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.business_id.toLowerCase().includes(searchTerm.toLowerCase());
+      log.action.toLowerCase().includes(q) ||
+      (log.actor_email && log.actor_email.toLowerCase().includes(q)) ||
+      (log.notes && log.notes.toLowerCase().includes(q)) ||
+      bizName.toLowerCase().includes(q) ||
+      log.business_id.toLowerCase().includes(q);
 
     if (actionFilter === "all") return matchesSearch;
     return matchesSearch && log.action === actionFilter;
@@ -45,25 +46,27 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
   };
 
   return (
-    <div className="space-y-6">
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+    <div className="space-y-4">
+      {/* ─────────────────────────────────────────────────────────────
+          1. SEARCH AND FILTERS TOOLBAR
+      ────────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Cari aksi, operator, atau bisnis..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-card border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2">
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 focus:outline-none"
+            className="px-3 py-2 rounded-xl bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary/50"
           >
             <option value="all">Semua Tipe Aksi ({logs.length})</option>
             {uniqueActions.map((act) => (
@@ -75,11 +78,13 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
         </div>
       </div>
 
-      {/* Audit Logs Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      {/* ─────────────────────────────────────────────────────────────
+          2. AUDIT LOGS TABLE FOR DESKTOP (>= 768px)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800 font-medium">
+            <thead className="bg-muted/30 text-muted-foreground border-b border-border font-semibold">
               <tr>
                 <th className="py-3 px-4">Waktu</th>
                 <th className="py-3 px-4">Aksi Administratif</th>
@@ -90,10 +95,10 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
                 <th className="py-3 px-4 text-right">Detail</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+            <tbody className="divide-y divide-border/60 text-foreground">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-zinc-500">
+                  <td colSpan={7} className="py-8 text-center text-xs text-muted-foreground">
                     Tidak ada catatan audit yang sesuai dengan filter.
                   </td>
                 </tr>
@@ -102,37 +107,37 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
                   const bizName = businessMap[log.business_id] || "Bisnis";
 
                   return (
-                    <tr key={log.id} className="hover:bg-zinc-800/30">
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-400 whitespace-nowrap">
+                    <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
                         {formatDate(log.created_at)}
                       </td>
 
-                      <td className="py-3.5 px-4 font-bold font-mono text-zinc-100">{log.action}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-foreground">{log.action}</td>
 
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-zinc-200">{bizName}</div>
-                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{log.business_id}</div>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-foreground">{bizName}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{log.business_id}</div>
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <div className="text-zinc-300 font-medium">{log.actor_email || "System Service"}</div>
+                      <td className="py-3 px-4">
+                        <div className="text-foreground font-medium">{log.actor_email || "System Service"}</div>
                         {log.actor_user_id && (
-                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{log.actor_user_id}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{log.actor_user_id}</div>
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded bg-zinc-800 text-[10px] font-mono font-bold text-zinc-300">
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded bg-muted text-[10px] font-mono font-bold text-foreground border border-border">
                           {log.new_status}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 text-zinc-400 truncate max-w-xs">{log.notes || "-"}</td>
+                      <td className="py-3 px-4 text-muted-foreground truncate max-w-xs">{log.notes || "-"}</td>
 
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="p-1.5 rounded-lg bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                           title="Lihat Metadata Sanitized"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -147,53 +152,112 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
         </div>
       </div>
 
-      {/* Metadata Detail Modal */}
+      {/* ─────────────────────────────────────────────────────────────
+          3. RESPONSIVE STRUCTURED EVENT CARDS FOR MOBILE (< 768px)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="md:hidden space-y-3">
+        {filteredLogs.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-card border border-border text-center text-xs text-muted-foreground">
+            Tidak ada catatan audit yang cocok.
+          </div>
+        ) : (
+          filteredLogs.map((log) => {
+            const bizName = businessMap[log.business_id] || "Bisnis";
+
+            return (
+              <div
+                key={log.id}
+                className="p-4 rounded-2xl bg-card border border-border shadow-2xs space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="font-mono font-bold text-xs text-foreground block">{log.action}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatDate(log.created_at)}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-muted text-[10px] font-mono font-bold text-foreground border border-border shrink-0">
+                    {log.new_status}
+                  </span>
+                </div>
+
+                <div className="text-xs space-y-1 py-1.5 border-y border-border/60">
+                  <div className="flex justify-between">
+                    <span className="text-[11px] text-muted-foreground">Bisnis:</span>
+                    <span className="font-semibold text-foreground">{bizName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[11px] text-muted-foreground">Pelaku:</span>
+                    <span className="text-muted-foreground font-mono text-[11px]">{log.actor_email || "System"}</span>
+                  </div>
+                  {log.notes && (
+                    <div className="pt-1">
+                      <span className="text-[11px] text-muted-foreground block">Catatan:</span>
+                      <p className="text-[11px] text-foreground italic">{log.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setSelectedLog(log)}
+                  className="w-full py-1.5 rounded-xl bg-muted/60 hover:bg-muted text-foreground text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-border"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Lihat Detail Metadata</span>
+                </button>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          4. METADATA DETAIL MODAL
+      ────────────────────────────────────────────────────────────── */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ScrollText className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-zinc-100 font-mono">{selectedLog.action}</h3>
+                <ScrollText className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground font-mono">{selectedLog.action}</h3>
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">ID Log Audit:</span>
-                <span className="font-mono text-zinc-300">{selectedLog.id}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">ID Log Audit:</span>
+                <span className="font-mono text-foreground">{selectedLog.id}</span>
               </div>
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">Waktu Eksekusi:</span>
-                <span className="text-zinc-300">{formatDate(selectedLog.created_at)}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">Waktu Eksekusi:</span>
+                <span className="text-foreground">{formatDate(selectedLog.created_at)}</span>
               </div>
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">Pelaku (Actor):</span>
-                <span className="text-zinc-300">{selectedLog.actor_email || selectedLog.actor_user_id || "System"}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">Pelaku (Actor):</span>
+                <span className="text-foreground">{selectedLog.actor_email || selectedLog.actor_user_id || "System"}</span>
               </div>
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">Status Sebelum:</span>
-                <span className="font-mono text-zinc-400">{selectedLog.previous_status || "N/A"}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">Status Sebelum:</span>
+                <span className="font-mono text-muted-foreground">{selectedLog.previous_status || "N/A"}</span>
               </div>
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">Status Sesudah:</span>
-                <span className="font-mono text-emerald-400">{selectedLog.new_status}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">Status Sesudah:</span>
+                <span className="font-mono text-emerald-500 font-bold">{selectedLog.new_status}</span>
               </div>
-              <div className="flex justify-between border-b border-zinc-800 pb-1.5">
-                <span className="text-zinc-500">Catatan:</span>
-                <span className="text-zinc-300">{selectedLog.notes || "-"}</span>
+              <div className="flex justify-between border-b border-border pb-1.5">
+                <span className="text-muted-foreground">Catatan:</span>
+                <span className="text-foreground">{selectedLog.notes || "-"}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-zinc-300 mb-1.5">Metadata (Sanitized / Zero Secrets):</p>
-              <pre className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300 overflow-x-auto max-h-48">
+              <p className="text-xs font-semibold text-foreground mb-1.5">Metadata (Sanitized / Zero Secrets):</p>
+              <pre className="p-3 rounded-xl bg-muted/40 border border-border text-[11px] font-mono text-foreground overflow-x-auto max-h-48 leading-relaxed">
                 {JSON.stringify(selectedLog.metadata || {}, null, 2)}
               </pre>
             </div>
@@ -201,7 +265,7 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors border border-border"
               >
                 Tutup
               </button>

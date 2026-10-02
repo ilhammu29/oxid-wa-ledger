@@ -18,13 +18,13 @@ export default async function AdminPaymentsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Verifikasi Pembayaran Manual
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Konfirmasi Pembayaran
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Konfirmasi bukti transfer langganan tenant: penambahan masa aktif otomatis dan pencatatan audit log perpanjangan.
+          <p className="text-xs text-muted-foreground mt-1">
+            Verifikasi transfer manual langganan tenant: penambahan masa aktif otomatis dan pencatatan audit log perpanjangan.
           </p>
         </div>
       </div>
