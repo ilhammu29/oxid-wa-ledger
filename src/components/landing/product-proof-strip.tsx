@@ -1,4 +1,5 @@
 import { Bot, Database, FileSpreadsheet, ShieldCheck, Coins } from "lucide-react";
+import { ScrollReveal } from "./scroll-reveal";
 
 export function ProductProofStrip() {
   const proofs = [
@@ -32,6 +33,7 @@ export function ProductProofStrip() {
   return (
     <div className="border-y border-border bg-surface/40 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <ScrollReveal>
         <p className="text-center text-[11px] font-mono uppercase tracking-wider text-muted mb-4">
           Fondasi Arsitektur OXID Ledger
         </p>
@@ -58,6 +60,7 @@ export function ProductProofStrip() {
             );
           })}
         </div>
+        </ScrollReveal>
       </div>
     </div>
   );

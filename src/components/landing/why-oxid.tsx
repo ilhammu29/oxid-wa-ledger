@@ -1,4 +1,5 @@
 import { X, CheckCircle2, Sparkles } from "lucide-react";
+import { ScrollReveal } from "./scroll-reveal";
 
 export function WhyOxid() {
   const comparisons = [
@@ -38,28 +39,30 @@ export function WhyOxid() {
     <section className="py-16 sm:py-24 border-b border-border bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="max-w-2xl mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Prinsip Produk</span>
+        <ScrollReveal>
+          <div className="max-w-2xl mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Prinsip Produk</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+              Kenapa memilih OXID Ledger?
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
+              Menghilangkan gesekan pencatatan bagi staf di toko, sekaligus
+              memberikan kepastian data finansial bagi pemilik usaha.
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-            Kenapa memilih OXID Ledger?
-          </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
-            Menghilangkan gesekan pencatatan bagi staf di toko, sekaligus
-            memberikan kepastian data finansial bagi pemilik usaha.
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* 3-Column Comparison Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {comparisons.map((col, idx) => {
             const isHighlight = col.isPositive;
             return (
-              <div
-                key={idx}
-                className={`rounded-2xl p-6 sm:p-7 flex flex-col justify-between transition-all ${
+              <ScrollReveal key={idx} delayMs={idx * 100} className="h-full">
+                <div
+                  className={`rounded-2xl p-6 sm:p-7 flex flex-col justify-between transition-all h-full ${
                   isHighlight
                     ? "bg-surface border-2 border-primary shadow-md relative"
                     : "bg-surface/50 border border-border"
@@ -103,8 +106,9 @@ export function WhyOxid() {
                     : "Sering menimbulkan kendala operasional"}
                 </div>
               </div>
-            );
-          })}
+            </ScrollReveal>
+          );
+        })}
         </div>
       </div>
     </section>

@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { ScrollReveal } from "./scroll-reveal";
 
 export function ProductTour() {
   const [activeStep, setActiveStep] = useState(0);
@@ -48,6 +49,7 @@ export function ProductTour() {
   return (
     <section id="cara-kerja" className="py-16 sm:py-24 border-b border-border bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <ScrollReveal>
         {/* Section Header */}
         <div className="max-w-2xl mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
@@ -145,7 +147,8 @@ export function ProductTour() {
 
             {/* Visual Interactive Preview (Col 7) */}
             <div className="lg:col-span-7">
-              <div className="rounded-xl border border-border bg-background p-4 sm:p-6 shadow-inner font-sans">
+              <div className="rounded-xl border border-border bg-background p-4 sm:p-6 shadow-inner font-sans overflow-hidden">
+                <div key={activeStep} className="animate-step-in">
                 {activeStep === 0 && (
                   /* Step 1: Telegram Pairing preview */
                   <div className="space-y-4">
@@ -377,10 +380,12 @@ export function ProductTour() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </div>
         </div>
+        </ScrollReveal>
       </div>
     </section>
   );

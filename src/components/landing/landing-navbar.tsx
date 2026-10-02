@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
@@ -11,6 +11,17 @@ interface LandingNavbarProps {
 
 export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 20;
+      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { label: "Fitur", href: "#fitur" },
@@ -21,7 +32,13 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md transition-colors">
+    <header
+      className={`sticky top-0 z-40 w-full transition-all duration-200 ${
+        isScrolled
+          ? "border-b border-border bg-background/85 backdrop-blur-md shadow-xs"
+          : "border-b border-transparent bg-background/30 backdrop-blur-xs"
+      }`}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
         {/* Brand Left */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">

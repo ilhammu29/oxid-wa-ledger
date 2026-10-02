@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   FileSpreadsheet,
 } from "lucide-react";
+import { ScrollReveal } from "./scroll-reveal";
 
 export function SystemShowcase() {
   const pipeline = [
@@ -49,54 +50,56 @@ export function SystemShowcase() {
     <section id="alur" className="py-20 sm:py-28 bg-surface border-b border-border relative overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-20">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
-            <span>Aliran Data Sistem</span>
+        <ScrollReveal>
+          <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-20">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
+              <span>Aliran Data Sistem</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+              Satu alur terintegrasi. Bukan lima aplikasi terpisah.
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
+              Data penjualan mengalir dari pesan chat di lapangan langsung ke
+              database dan spreadsheet usaha tanpa jeda manual.
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-            Satu alur terintegrasi. Bukan lima aplikasi terpisah.
-          </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
-            Data penjualan mengalir dari pesan chat di lapangan langsung ke
-            database dan spreadsheet usaha tanpa jeda manual.
-          </p>
-        </div>
+        </ScrollReveal>
 
-        {/* Pipeline Steps (Horizontal Desktop / Stacked Mobile) */}
+        {/* Pipeline Steps (Progressive Staggered Reveal) */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 lg:gap-4 relative mb-12">
           {pipeline.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <div
-                key={idx}
-                className="relative rounded-xl border border-border bg-background p-4 sm:p-5 flex flex-col justify-between hover:border-primary/50 transition-colors shadow-sm"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono font-bold text-primary">
-                      {item.step}
-                    </span>
-                    <Icon className="h-4 w-4 text-muted" />
+              <ScrollReveal key={idx} delayMs={idx * 100} className="h-full">
+                <div className="relative rounded-xl border border-border bg-background p-4 sm:p-5 flex flex-col justify-between hover:border-primary/50 transition-colors shadow-sm h-full">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-mono font-bold text-primary">
+                        {item.step}
+                      </span>
+                      <Icon className="h-4 w-4 text-muted" />
+                    </div>
+                    <h4 className="text-sm font-bold text-foreground mb-1">
+                      {item.title}
+                    </h4>
+                    <p className="text-xs text-muted leading-relaxed mb-3">
+                      {item.desc}
+                    </p>
                   </div>
-                  <h4 className="text-sm font-bold text-foreground mb-1">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-muted leading-relaxed mb-3">
-                    {item.desc}
-                  </p>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-surface border border-border text-muted">
+                      {item.badge}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-surface border border-border text-muted">
-                    {item.badge}
-                  </span>
-                </div>
-              </div>
+              </ScrollReveal>
             );
           })}
         </div>
 
         {/* Technical Guarantee Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6 rounded-2xl border border-border bg-background/60 backdrop-blur-sm">
+        <ScrollReveal delayMs={300}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6 rounded-2xl border border-border bg-background/60 backdrop-blur-sm">
           <div className="space-y-1">
             <div className="text-xs font-mono text-muted">Latensi End-to-End</div>
             <div className="text-xl sm:text-2xl font-bold text-foreground">
@@ -133,7 +136,8 @@ export function SystemShowcase() {
               Google Sheets tidak menimpa DB
             </div>
           </div>
-        </div>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

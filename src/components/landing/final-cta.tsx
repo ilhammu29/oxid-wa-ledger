@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ScrollReveal } from "./scroll-reveal";
 
 export function FinalCta() {
   return (
     <section className="py-20 sm:py-28 bg-surface border-b border-border relative overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <ScrollReveal>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-4">
           <ShieldCheck className="h-3.5 w-3.5" />
           <span>Uji Coba Tanpa Risiko</span>
@@ -51,6 +53,7 @@ export function FinalCta() {
             <span>Setup cepat &lt; 3 menit</span>
           </div>
         </div>
+        </ScrollReveal>
       </div>
     </section>
   );

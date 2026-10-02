@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { getAllPlans, formatIDR } from "@/modules/subscriptions/plans";
 import { SubscriptionPlan } from "@/modules/subscriptions/types";
+import { ScrollReveal } from "./scroll-reveal";
 
 interface PricingSectionProps {
   plans?: SubscriptionPlan[];
@@ -14,30 +15,32 @@ export function PricingSection({ plans }: PricingSectionProps) {
     <section id="harga" className="py-16 sm:py-24 border-b border-border bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Biaya Transparan</span>
+        <ScrollReveal>
+          <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-primary/10 text-primary border border-primary/20 mb-3">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Biaya Transparan</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+              Pilihan paket sesuai skala usaha Anda.
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
+              Semua pengguna baru mendapatkan masa uji coba 14 hari penuh. Tanpa
+              kartu kredit, tanpa kewajiban kontrak jangka panjang.
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-            Pilihan paket sesuai skala usaha Anda.
-          </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
-            Semua pengguna baru mendapatkan masa uji coba 14 hari penuh. Tanpa
-            kartu kredit, tanpa kewajiban kontrak jangka panjang.
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* 3-Column Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          {planList.map((plan) => {
+          {planList.map((plan, idx) => {
             const isPro = plan.code === "pro";
             const isPilot = plan.code === "pilot";
 
             return (
-              <div
-                key={plan.code}
-                className={`rounded-2xl p-6 sm:p-8 flex flex-col justify-between transition-all ${
+              <ScrollReveal key={plan.code} delayMs={idx * 100} className="h-full">
+                <div
+                  className={`rounded-2xl p-6 sm:p-8 flex flex-col justify-between transition-all h-full ${
                   isPro
                     ? "bg-surface border-2 border-primary shadow-lg relative md:-translate-y-2"
                     : "bg-surface/60 border border-border hover:border-border/90"
@@ -110,8 +113,9 @@ export function PricingSection({ plans }: PricingSectionProps) {
                   </Link>
                 </div>
               </div>
-            );
-          })}
+            </ScrollReveal>
+          );
+        })}
         </div>
 
         {/* Pricing Reassurance note */}

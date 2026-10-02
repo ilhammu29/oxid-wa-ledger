@@ -132,4 +132,132 @@ input:-webkit-autofill:active {
   border-radius: inherit;
 }
 
+/* Hero Motion & Parallax Keyframes */
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeUpBlur {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes heroFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes heroConsoleEnter {
+  from {
+    opacity: 0.5;
+    transform: translateY(32px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes heroCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-eyebrow {
+  animation: heroFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
+}
+
+.animate-hero-headline-1 {
+  animation: heroFadeUpBlur 0.6s cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+.animate-hero-headline-2 {
+  animation: heroFadeUpBlur 0.6s cubic-bezier(0.16, 1, 0.3, 1) 220ms both;
+}
+
+.animate-hero-desc {
+  animation: heroFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) 320ms both;
+}
+
+.animate-hero-cta {
+  animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 420ms both;
+}
+
+.animate-hero-console {
+  animation: heroConsoleEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) 500ms both;
+}
+
+.animate-hero-card-1 {
+  animation: heroCardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 650ms both;
+}
+
+.animate-hero-card-2 {
+  animation: heroCardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 750ms both;
+}
+
+.animate-hero-card-3 {
+  animation: heroCardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 850ms both;
+}
+
+.animate-step-in {
+  animation: stepFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-eyebrow,
+  .animate-hero-headline-1,
+  .animate-hero-headline-2,
+  .animate-hero-desc,
+  .animate-hero-cta,
+  .animate-hero-console,
+  .animate-hero-card-1,
+  .animate-hero-card-2,
+  .animate-hero-card-3,
+  .animate-step-in,
+  [data-scroll-reveal] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+}
+
+
 

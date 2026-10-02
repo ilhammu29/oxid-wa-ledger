@@ -53,7 +53,7 @@ export function EntryLoader() {
 
     const endTimer = setTimeout(() => {
       setVisible(false);
-    }, 1500);
+    }, 1650);
     timeouts.push(endTimer);
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,7 +64,7 @@ export function EntryLoader() {
         } catch {
           // Storage unavailable
         }
-        setTimeout(() => setVisible(false), 150);
+        setTimeout(() => setVisible(false), 200);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -82,7 +82,7 @@ export function EntryLoader() {
     } catch {
       // Storage unavailable
     }
-    setTimeout(() => setVisible(false), 150);
+    setTimeout(() => setVisible(false), 200);
   };
 
   if (!mounted || !visible) {
@@ -93,7 +93,7 @@ export function EntryLoader() {
     <aside
       aria-label="Status Memuat OXID Ledger"
       aria-live="polite"
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md transition-opacity duration-250 select-none ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md transition-opacity duration-400 ease-out select-none ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
