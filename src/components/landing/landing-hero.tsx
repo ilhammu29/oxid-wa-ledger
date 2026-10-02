@@ -166,7 +166,7 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
           </div>
 
           {/* Quiet Trust Indicator */}
-          <div className="mt-4 flex items-center justify-center gap-3 text-xs text-muted">
+          <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-muted">
             <span>Tanpa kartu kredit</span>
             <span className="text-border">·</span>
             <span>Uji coba gratis 14 hari</span>
@@ -179,8 +179,8 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
         <div
           className={`${
             isMobile || reducedMotion
-              ? "relative w-full mt-2 -mb-16 sm:-mb-24 z-0 overflow-visible px-2"
-              : "absolute inset-x-0 mx-auto top-[28%] sm:top-[27%] lg:top-[26%] w-full max-w-[1340px] flex justify-center z-10 will-change-transform pointer-events-none"
+              ? "relative w-full -mt-2 sm:mt-2 -mb-10 sm:-mb-14 z-0 overflow-visible px-2 flex justify-center"
+              : "absolute inset-x-0 mx-auto top-[32%] sm:top-[31%] lg:top-[30%] w-full max-w-[1340px] flex justify-center z-10 will-change-transform pointer-events-none"
           }`}
           style={
             isMobile || reducedMotion
@@ -191,14 +191,14 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
                 }
           }
         >
-          <LedgerOrbitArc rotation={arcRotation} />
+          <LedgerOrbitArc rotation={arcRotation} isMobile={isMobile || reducedMotion} />
         </div>
 
         {/* PRODUCT DASHBOARD PREVIEW STAGE (Layer 3) - Perfectly centered, reveals late */}
         <div
           className={`${
             isMobile || reducedMotion
-              ? "relative z-10 w-full mt-6"
+              ? "relative z-10 w-full mt-2 sm:mt-6"
               : "absolute inset-x-0 mx-auto bottom-0 w-full max-w-5xl px-4 z-20 will-change-transform"
           }`}
           style={

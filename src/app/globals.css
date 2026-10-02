@@ -28,7 +28,7 @@
   --ring-edge-inner-shade: #64748B;
   --ring-glow-near: rgba(109, 40, 217, 0.22);
   --ring-glow-far: rgba(99, 102, 241, 0.10);
-  --ring-separation-gradient: radial-gradient(ellipse at 50% 35%, rgba(221, 214, 254, 0.40) 0%, rgba(241, 245, 249, 0.15) 50%, transparent 75%);
+  --ring-separation-gradient: radial-gradient(ellipse at 50% 30%, rgba(221, 214, 254, 0.45) 0%, rgba(221, 214, 254, 0.38) 18%, rgba(221, 214, 254, 0.25) 36%, rgba(221, 214, 254, 0.12) 55%, rgba(221, 214, 254, 0.04) 75%, transparent 100%);
 }
 
 .dark {
@@ -57,7 +57,7 @@
   --ring-edge-inner-shade: #0F0D24;
   --ring-glow-near: rgba(139, 92, 246, 0.50);
   --ring-glow-far: rgba(99, 102, 241, 0.22);
-  --ring-separation-gradient: radial-gradient(ellipse at 50% 35%, rgba(124, 58, 237, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 75%);
+  --ring-separation-gradient: radial-gradient(ellipse at 50% 30%, rgba(124, 58, 237, 0.28) 0%, rgba(124, 58, 237, 0.22) 18%, rgba(124, 58, 237, 0.14) 36%, rgba(99, 102, 241, 0.08) 55%, rgba(99, 102, 241, 0.02) 75%, transparent 100%);
 }
 
 @theme inline {
