@@ -44,7 +44,7 @@ export function useHeroScroll(stageRef: React.RefObject<HTMLDivElement | null>):
 
     const updateScroll = () => {
       const stage = stageRef.current;
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < 1024;
 
       if (!stage || isMobile || reducedMotion) {
         if (

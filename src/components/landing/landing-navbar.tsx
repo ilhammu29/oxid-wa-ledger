@@ -40,9 +40,9 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
           : "border-b border-border/40 bg-background/60 backdrop-blur-xs"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 sm:gap-6">
         {/* Brand Left */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link href="/" className="flex items-center gap-2 shrink-0 group">
           <BrandLogo size="md" showText priority className="transition-transform group-hover:scale-102" />
         </Link>
 
@@ -63,7 +63,7 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
+        <div className="flex items-center gap-2 sm:gap-3.5">
           <div className="scale-90 opacity-80 hover:opacity-100 transition-opacity">
             <ThemeToggle showLabel={false} />
           </div>
@@ -71,7 +71,7 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
           {isAuthenticated ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
               <span>Dashboard</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -86,7 +86,7 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,58,237,0.3)] transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,58,237,0.3)] transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>Mulai Gratis</span>
                 <ArrowRight className="w-3.5 h-3.5" />

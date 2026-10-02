@@ -34,7 +34,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
         </div>
 
         {/* 3-Column Pricing Grid with Staggered 80ms Reveal */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-8 items-stretch max-w-6xl mx-auto">
           {planList.map((plan, idx) => {
             const isPilot = plan.code === "pilot";
             const isPro = plan.code === "pro";
@@ -42,7 +42,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
             return (
               <Reveal key={plan.code} delay={idx * 80} y={18} duration={500}>
                 <div
-                  className={`rounded-xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-200 bg-surface border h-full hover:-translate-y-1 ${
+                  className={`rounded-xl p-5 sm:p-7 lg:p-8 flex flex-col justify-between transition-all duration-200 bg-surface border h-full hover:-translate-y-1 ${
                     isPro
                       ? "border-primary/60 ring-1 ring-primary/30 relative shadow-sm"
                       : "border-border/80 hover:border-border"
@@ -59,11 +59,11 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     </div>
 
                     <div className="mb-4">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl sm:text-4xl font-bold text-foreground tabular-nums tracking-tight">
+                      <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                        <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tabular-nums tracking-tight">
                           {isPilot ? "Rp0" : formatIDR(plan.priceIdr)}
                         </span>
-                        <span className="text-xs text-muted font-mono">
+                        <span className="text-xs text-muted font-mono shrink-0">
                           {isPilot ? "/ 14 hari" : "/ bulan"}
                         </span>
                       </div>

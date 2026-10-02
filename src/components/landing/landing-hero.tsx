@@ -13,79 +13,82 @@ interface LandingHeroProps {
 
 /**
  * RedSun-inspired Cinematic Hero with Scroll-Driven Parallax Choreography.
- * Features 4 controlled depth layers:
- * - Layer 1: Deep space atmospheric lighting
- * - Layer 2: "Ledger Orbit" celestial arc
- * - Layer 3: Authentic OXID dashboard preview
- * - Layer 4: Foreground specular rim & bottom gradient bridge
+ * Root-Cause Rebuilt Architecture:
+ * - HeroStage controls scroll travel duration (135dvh desktop, normal flow on mobile).
+ * - HeroSticky controls sticky viewport presentation (top: 64px, calc(100dvh - 64px)).
+ * - Container uses overflow-x: clip (no overflow: hidden on sticky parent), ensuring 100% reliable sticky pinning.
+ * - Dashboard & Arc centered via `inset-x-0 mx-auto`, preventing Tailwind translate-x and inline transform-x compounding.
+ * - At final hero state (progress 1.00), dashboard settles cleanly at bottom of viewport.
+ * - Sticky stage unpins directly into next section with ZERO black dead zone.
  */
 export function LandingHero({ isAuthenticated }: LandingHeroProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const { progress, isMobile, reducedMotion } = useHeroScroll(stageRef);
 
   // Parallax Calculation Values (Desktop/Tablet only, bypassed when reducedMotion or isMobile)
-  // Progress 0.00 -> 0.45: Hero text stack active & gently fading upward
-  // Progress 0.10 -> 0.90: Arc rising & expanding as atmospheric background
-  // Progress 0.05 -> 0.95: Dashboard emerging into primary focus (65–75% visible at resting end position)
-  // Progress 1.00: Sticky stage releases naturally into subsequent sections with zero black dead zone
+  // Progress 0.00 -> 0.40: Hero text stack active & gently fading upward (-50px)
+  // Progress 0.15 -> 0.70: Arc rising & expanding as atmospheric background
+  // Progress 0.15 -> 0.85: Dashboard emerging into primary focus (65–75% visible at resting end position)
+  // Progress 0.85 -> 1.00: Dashboard resting in place; sticky stage smoothly meets next section at 1.00
 
   const textTranslateY = isMobile || reducedMotion
     ? 0
-    : Math.min(0, -progress * 80); // 0 -> -80px (restrained, no extreme jumping)
+    : Math.min(0, -progress * 60); // 0 -> -60px (restrained, no extreme jumping)
 
   const textOpacity = isMobile || reducedMotion
     ? 1
-    : Math.max(0, 1 - progress * 2.2); // Fades out smoothly around progress ~0.45
+    : Math.max(0, 1 - progress * 2.5); // Fades out smoothly by progress ~0.40
 
   const arcScale = isMobile || reducedMotion
     ? 1
-    : 0.90 + Math.min(progress, 0.9) * 0.15; // 0.90 -> 1.05
+    : 0.90 + Math.min(progress, 0.85) * 0.15; // 0.90 -> 1.05
 
   const arcTranslateY = isMobile || reducedMotion
     ? 0
-    : 50 - Math.min(progress, 0.9) * 70; // 50px -> -20px
+    : 40 - Math.min(progress, 0.85) * 60; // 40px -> -20px
 
   const arcOpacity = isMobile || reducedMotion
     ? 1
-    : 0.50 + Math.min(progress, 0.8) * 0.45; // 0.50 -> 0.95
+    : 0.40 + Math.min(progress, 0.70) * 0.55; // 0.40 -> 0.95
 
   const dashboardTranslateY = isMobile || reducedMotion
     ? 0
-    : progress < 0.05
+    : progress < 0.15
     ? 220
-    : Math.max(0, 220 - ((progress - 0.05) / 0.90) * 220); // 220px -> 0px between 0.05 and 0.95
+    : Math.max(0, 220 - ((progress - 0.15) / 0.70) * 220); // 220px -> 0px between 0.15 and 0.85
 
   const dashboardOpacity = isMobile || reducedMotion
     ? 1
-    : progress < 0.05
-    ? 0.15
-    : Math.min(1, 0.15 + ((progress - 0.05) / 0.60) * 0.85); // 0.15 -> 1.0 between 0.05 and 0.65
+    : progress < 0.15
+    ? 0.20
+    : Math.min(1, 0.20 + ((progress - 0.15) / 0.50) * 0.80); // 0.20 -> 1.0 between 0.15 and 0.65
 
   const dashboardScale = isMobile || reducedMotion
     ? 1
-    : 0.94 + Math.min(Math.max(0, progress - 0.05) / 0.90, 1) * 0.06; // 0.94 -> 1.0
+    : 0.95 + Math.min(Math.max(0, progress - 0.15) / 0.70, 1) * 0.05; // 0.95 -> 1.0
 
   return (
     <section
       ref={stageRef}
       className={`relative w-full ${
         isMobile || reducedMotion
-          ? "min-h-auto pt-6 pb-12 sm:pb-16"
-          : "min-h-[118vh] lg:min-h-[128svh]"
-      } bg-[#090a0f] text-foreground overflow-hidden`}
+          ? "min-h-auto pt-4 pb-12 sm:pb-16"
+          : "min-h-[135dvh]"
+      } bg-[#090a0f] text-foreground`}
     >
-      {/* 1. Deep Space Atmospheric Lighting (Layer 1) */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] lg:w-[1200px] h-[500px] bg-gradient-to-b from-violet-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-20"
-        aria-hidden="true"
-      />
+      {/* 1. Deep Space Atmospheric Lighting (Layer 1) - Contained in self-contained overflow wrapper */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] lg:w-[1200px] h-[500px] bg-gradient-to-b from-violet-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-20"
+        />
+      </div>
 
       {/* STICKY STAGE CONTAINER (Desktop) or FLUID CONTAINER (Mobile / Reduced Motion) */}
       <div
         className={`${
           isMobile || reducedMotion
             ? "relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center"
-            : "sticky top-16 h-[calc(100svh-4rem)] w-full flex flex-col items-center justify-start overflow-hidden pt-6 sm:pt-10 px-4 sm:px-6 lg:px-8"
+            : "sticky top-16 h-[calc(100dvh-4rem)] w-full flex flex-col items-center justify-start overflow-hidden pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8"
         }`}
       >
         {/* HERO TEXT STACK (Headline, Subhead, CTA row) */}
@@ -101,15 +104,20 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
                 }
           }
         >
-          {/* Editorial Announcement Badge (No green live dot, no telemetry aesthetic, subtle entrance) */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-md text-xs font-medium text-zinc-300 mb-5 shadow-xs transition-colors hover:border-white/20 animate-hero-badge">
+          {/* Editorial Announcement Link (No generic SaaS pill, no live pulse dot) */}
+          <a
+            href="#integrasi"
+            className="group inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors mb-5 border-b border-white/10 hover:border-white/30 pb-0.5"
+          >
             <span>Pencatatan penjualan via Telegram</span>
-            <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-          </div>
+            <span className="text-zinc-500 group-hover:text-zinc-200 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              ↗
+            </span>
+          </a>
 
           {/* Deliberate Editorial Headline with Weight Contrast */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.12] sm:leading-[1.1]">
-            Catat penjualan.{" "}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.12] sm:leading-[1.08] max-w-3xl mx-auto">
+            <span>Catat penjualan.</span>{" "}
             <span className="font-normal text-zinc-400 block sm:inline">
               Usaha tetap terkendali.
             </span>
@@ -150,18 +158,18 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
           </div>
         </div>
 
-        {/* ATMOSPHERIC "LEDGER ORBIT" ARC (Layer 2) */}
+        {/* ATMOSPHERIC "LEDGER ORBIT" ARC (Layer 2) - Perfectly centered via inset-x-0 mx-auto */}
         <div
           className={`${
             isMobile || reducedMotion
-              ? "relative w-full mt-6 -mb-32 sm:-mb-44 z-0"
-              : "absolute left-1/2 -translate-x-1/2 top-[30%] sm:top-[26%] w-full flex justify-center z-10 will-change-transform pointer-events-none"
+              ? "relative w-full mt-6 -mb-32 sm:-mb-44 z-0 overflow-hidden"
+              : "absolute inset-x-0 mx-auto top-[28%] sm:top-[24%] w-full max-w-[1280px] flex justify-center z-10 will-change-transform pointer-events-none"
           }`}
           style={
             isMobile || reducedMotion
               ? undefined
               : {
-                  transform: `translate3d(-50%, ${arcTranslateY}px, 0) scale(${arcScale})`,
+                  transform: `translate3d(0, ${arcTranslateY}px, 0) scale(${arcScale})`,
                   opacity: arcOpacity,
                 }
           }
@@ -169,18 +177,18 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
           <LedgerOrbitArc />
         </div>
 
-        {/* PRODUCT DASHBOARD PREVIEW STAGE (Layer 3) */}
+        {/* PRODUCT DASHBOARD PREVIEW STAGE (Layer 3) - Perfectly centered via inset-x-0 mx-auto */}
         <div
           className={`${
             isMobile || reducedMotion
               ? "relative z-10 w-full mt-8"
-              : "absolute left-1/2 -translate-x-1/2 bottom-0 sm:bottom-2 lg:bottom-4 w-full max-w-5xl px-4 z-20 will-change-transform"
+              : "absolute inset-x-0 mx-auto bottom-0 w-full max-w-5xl px-4 z-20 will-change-transform"
           }`}
           style={
             isMobile || reducedMotion
               ? undefined
               : {
-                  transform: `translate3d(-50%, ${dashboardTranslateY}px, 0) scale(${dashboardScale})`,
+                  transform: `translate3d(0, ${dashboardTranslateY}px, 0) scale(${dashboardScale})`,
                   opacity: dashboardOpacity,
                   pointerEvents: dashboardOpacity > 0.4 ? "auto" : "none",
                 }
@@ -192,7 +200,7 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
 
       {/* Layer 4: Seamless Bottom Edge Transition Gradient */}
       <div
-        className="absolute bottom-0 inset-x-0 h-16 sm:h-24 bg-gradient-to-t from-[#090a0f] via-[#090a0f]/60 to-transparent pointer-events-none z-30"
+        className="absolute bottom-0 inset-x-0 h-16 sm:h-20 bg-gradient-to-t from-[#090a0f] via-[#090a0f]/50 to-transparent pointer-events-none z-30"
         aria-hidden="true"
       />
     </section>
