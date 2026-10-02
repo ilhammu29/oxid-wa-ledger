@@ -1,108 +1,130 @@
-# Landing Page Design System Override — OXID Ledger
+# Landing Page Design System Specification — OXID Ledger (RedSun Reference Reset)
 
-> **Inheritance:** Extends `design-system/oxid-ledger/MASTER.md`.
-> Contains specific design specifications and decisions exclusively for `/` (Landing Page).
-
----
-
-## 1. Landing Pattern & Architectural Structure
-
-- **Chosen Pattern**: `Real-Time Operations + Product Demo Workflow` (resolved from UI UX Pro Max intelligence).
-- **Primary Goal**: Shift from generic AI-SaaS aesthetics to a disciplined, transaction-first operational software platform for Indonesian UMKM.
-- **Section Order & Rhythm**:
-  1. **Topbar**: Minimal hairline border, violet `OX` monogram mark, operational nav anchors, theme toggle, and compact CTA button.
-  2. **Asymmetrical Ledger Hero**:
-     - *Left Column (55%)*: Small operational category stamp (`BUKU BESAR KASIR OPERASIONAL`), high-impact editorial headline with unequal scale, concrete factual description, compact dual action row, and an operational speed metric strip.
-     - *Right Column (45%)*: **The Transaction Transformation Rail** — a live, visual breakdown showing how raw chat input (`Kejual lele 5kg`) resolves into structured accounting items, journal entries, and automated mirror syncs.
-  3. **Operational Metrics Rail**: Ruled horizontal strip displaying real technical facts (e.g. `<1.2s` latency, `100%` double-entry ledger, `PostgreSQL` durable persistence, `Zero POS Hardware`).
-  4. **The 4-Stage Transaction Engine**: A horizontal/vertical ruled workflow explaining the lifecycle of every sale: *Input Chat* → *Deterministic Parser* → *Ledger Journaling* → *Sheets Mirror*.
-  5. **Interactive Console Showcase**: High-clarity tabbed product preview showing the real application interfaces (Ringkasan Kasir, Mutasi Jurnal, Katalog Produk, Integrasi Bot).
-  6. **Ruled Ledger Capabilities (No Card Spam)**: Alternating split ledger rows detailing real operational problems solved (stock tracking, offline cashier resilience, multi-operator controls, real-time daily reports).
-  7. **Transparent Pricing Matrix**: Plan matrix for *Pilot*, *Basic*, and *Pro* directly reflecting existing authoritative subscription plans without fake "most popular" labels.
-  8. **Operational FAQ**: Numbered two-column layout with clean accessible accordions.
-  9. **Compact Closing Action & Ruled Footer**: Minimal, single-row footer with essential links, copyright, and operational status.
+> **REFERENCE-FIRST VISUAL DIRECTION:** Inspired by `https://ovo-redsun.webflow.io/`.
+> **GOAL:** Approachable, polished, confident, modern SaaS for Indonesian UMKM owners.
+> **ANTI-THESIS:** Rejects developer-tool aesthetics, dense transaction engine simulators, debit/credit accounting code dumps, and excessive monospace.
 
 ---
 
-## 2. Hero Composition Decisions
-
-### Prohibited Legacy Pattern:
-- ❌ Centered small pill badge with purple background
-- ❌ Giant centered 64px bold headline
-- ❌ Two giant pill buttons in the center
-- ❌ Giant centered static dashboard screenshot dominating the entire screen
-
-### New Asymmetrical Editorial Composition:
-- **Left Column**:
-  - Eyebrow: Minimal monochrome tag with hairline rule: `OPERASIONAL TELEGRAM-FIRST · BUKU BESAR KASIR`
-  - Headline:
-    ```
-    Catat penjualan di chat.
-    Operasional rapi di buku besar.
-    ```
-    *Unequal typographic scale: First line in lighter weight, second line in bold emphasis.*
-  - Copy: Concrete, jargon-free factual statement:
-    `"Kasir cukup mengetik pesan seperti biasa di Telegram. Bot memvalidasi harga, memotong stok, dan mencatat jurnal keuangan secara realtime tanpa instalasi mesin kasir mahal."`
-  - Actions:
-    - Primary CTA: `Mulai Uji Coba 14 Hari` (`h-[46px] rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-sm px-6`)
-    - Secondary CTA: `Lihat Simulasi Transaksi ↓` (`h-[46px] rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground font-medium text-sm px-5`)
-  - Operational Proof Bar:
-    - `0 Mesin Kasir`: Cukup smartphone kasir
-    - `PostgreSQL`: Double-entry ACID ledger
-    - `Google Sheets`: Salinan cadangan otomatis
-
-- **Right Column (The Transaction Transformation Rail)**:
-  - Header: Ruled transaction journal title: `Jurnal Transaksi Realtime #TX-2904`
-  - Phase 1: **Input Percakapan Kasir** (Chat bubble: `"Kejual lele 5kg @28rb tunai"`)
-  - Phase 2: **Parsing & Validasi Sistem** (Chips: `Produk: Lele` · `Qty: 5 kg` · `Harga: Rp28.000` · `Metode: Kasir Tunai`)
-  - Phase 3: **Posting Buku Kas** (Calculated total: `Rp140.000` recorded with status badge `TERBUKUKAN`)
-  - Phase 4: **Sinkronisasi Saluran** (Icons showing real sync: Telegram Bot Bot sent receipt + Sheets row created + PostgreSQL committed)
+## 1. REFERENCE INSPIRATION: RedSun Webflow
+- **Aesthetic**: Dark, atmospheric, high-polish B2B SaaS with a single signature illuminated visual anchor behind a prominent product showcase.
+- **Rhythm**:
+  - Restrained, quiet topbar with plain text navigation (no numbered `01`, `02`).
+  - Centered hero with strong, clear human value proposition:
+    - Small announcement badge.
+    - Large punchy headline ("Catat penjualan tanpa ribet.").
+    - Short, accessible UMKM description.
+    - Dual CTAs with clean arrow indicators.
+    - Large, elevated product showcase frame with soft atmospheric glow.
+  - Ecosystem / "Works With" strip (Telegram, Google Sheets, Web Dashboard).
+  - 4 Large Alternating Feature Showcases (Text + Realistic Graphic Mockup).
+  - 4-item Product Capability Grid with minimal copy and focused icons.
+  - How It Works ("Mulai dalam beberapa menit") 3-step timeline.
+  - Clean, dedicated Pricing Matrix (Pilot, Basic, Pro from authoritative plans).
+  - Numbered Editorial FAQ with clean hairlines.
+  - Compelling Final CTA Box with atmospheric radial visual.
+  - Minimal, real-link Footer.
 
 ---
 
-## 3. Component Language Vocabulary
-
-| Component Pattern | Visual Characteristics | Purpose on Landing |
-|-------------------|------------------------|--------------------|
-| **Ruled Ledger Row** | Full-width or half-width rows divided by `1px border-border`, subtle hover tint, monospace timestamps on left, primary metrics on right. | Eliminates identical feature cards; presents product features as financial ledger rows. |
-| **Transaction Strip** | Sequential pill / node connectors (`01 Chat` → `02 Parse` → `03 Jurnal` → `04 Laporan`). | Communicates the deterministic pipeline of the product. |
-| **Split Data Panel** | Asymmetric two-column panel: left column contains the operational explanation, right column contains live interactive demonstration. | Interactive product demo and capability showcases. |
-| **Technical Badge** | Minimal rectangular tag (`rounded-md`, `border border-border`, font-mono, text-[11px]). | Status tags (`#TX-LIVE`, `POSTGRESQL`, `TELEGRAM API`). |
-| **Ruled Pricing Table** | Clean tabular card with ruled tier headers, prominent tabular figures (`Rp149.000 / bln`), and checklist points with green checks. | Transparent subscription pricing without cartoonish cards. |
+## 2. VISUAL PRINCIPLES
+1. **Product-First & Approachable**: The software must look intuitive to a store owner, warung keeper, or fish farm manager within 3 seconds of glancing at the screen.
+2. **One Signature Visual Gesture**: A soft, illuminated violet/indigo atmospheric radial glow behind the hero product showcase and final CTA, creating depth without chaotic particles or nebula blobs.
+3. **Generous Spacing & High-Contrast Hierarchy**: Ample vertical breathing room (`py-20 sm:py-28`), large headlines (56–64px desktop), and crisp high-contrast body copy.
+4. **Realistic Simplified UI Showcase**: Product mockups represent the real OXID dashboard (revenue charts, recent order feeds, product catalog, bot status), simplified for marketing clarity without turning into a confusing developer console.
 
 ---
 
-## 4. Typography Decisions & Justifications
-
-- **Headings & Display**: `Plus Jakarta Sans` / `Space Grotesk`
-  - *Why*: Strong geometric posture, exceptional legibility at bold weights, avoids the overused generic Inter headline fatigue, provides an engineered, structured feel suitable for bookkeeping.
-- **Body Text**: `Plus Jakarta Sans` / `Geist`
-  - *Why*: Clear letterforms optimized for reading Indonesian operational sentences and numbers on screens.
-- **Numerals**: `tabular-nums`
-  - *Why*: Financial amounts must align properly across rows without wobbling.
-- **Technical Elements**: `font-mono` (`Geist Mono` / `JetBrains Mono`)
-  - *Why*: Exclusively for commands (`/connect`, `Kejual lele 5kg`), timestamps, and journal codes.
-
----
-
-## 5. Iconography Decisions
-
-- **Single Family**: `Lucide` line icons exclusively.
-- **Styling**: `1.5px` or `1.75px` stroke width, monochrome or tinted with `--muted-foreground` and `--primary`.
-- **Semantic Roles**:
-  - `Receipt`: Sales entries and ledger logs
-  - `Bot`: Telegram cashier interface
-  - `FileSpreadsheet`: Google Sheets export & sync
-  - `Package`: Inventory items and products
-  - `CheckCircle2` / `Check`: Reconciled / verified transaction
-  - `ArrowRight` / `ArrowUpRight`: Progression and links
-- **Forbidden**: Emojis, sparkle AI wands, floating 3D icons, colorful cartoon badges.
+## 3. HERO COMPOSITION
+- **Top**: Small restrained badge: `Pembaruan v2.4 · Catat dari Telegram & WhatsApp`
+- **Headline**:
+  - Primary: `Catat penjualan tanpa ribet.`
+  - Secondary: `Semua transaksi usaha, tetap rapi.`
+- **Description**:
+  `Catat penjualan lewat Telegram, pantau transaksi dari dashboard, dan simpan laporan usaha secara otomatis.`
+- **CTAs**:
+  - Primary: `Mulai Gratis 14 Hari` (`h-12 px-6 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-md`)
+  - Secondary: `Pelajari Fitur ↓` (`h-12 px-5 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground font-medium text-sm`)
+- **Product Visual Showcase**:
+  - Polished browser/app window frame (`rounded-2xl border border-border bg-surface shadow-2xl`)
+  - Backed by the signature violet illuminated atmospheric halo
+  - Displays realistic dashboard modules:
+    - 3 Key Stat Cards: Penjualan Hari Ini (`Rp3.840.000`), Kas Masuk (`Rp2.420.000`), Transaksi Selesai (`30 Pesanan`)
+    - Revenue Trend Chart with calm gradient fill
+    - Live Cashier Activity Feed (real customer orders)
+    - Bot Telegram status indicator (`Online · Terhubung`)
 
 ---
 
-## 6. Motion Philosophy & Accessibility
+## 4. TYPOGRAPHY HIERARCHY
+- **Font Family**: Geist Sans / Plus Jakarta Sans (Clean, friendly neo-grotesk / geometric sans).
+- **Hero Title**: `text-4xl sm:text-5xl lg:text-6xl` (56–64px desktop), `font-bold tracking-tight text-foreground`.
+- **Hero Secondary Line**: `text-muted` or matching display with softer weight.
+- **Section Titles**: `text-3xl sm:text-4xl` (36–44px desktop), `font-bold tracking-tight`.
+- **Body Copy**: `text-sm sm:text-base` (15–16px), line-height 1.6, `text-muted`.
+- **Numbers / Currencies**: `tabular-nums` for alignment without terminal-style slashed zeros.
+- **Monospace Usage**: Monospace (`font-mono`) is strictly restricted to small technical identifiers, Telegram bot commands, or timestamps. Major marketing copy is never monospace.
 
-- **Standard Duration**: `200ms` with `ease-out`.
-- **Interactive Sequence**: Step-by-step transaction demonstration that can be triggered or paused.
-- **Reduced Motion**: Full fallback via `@media (prefers-reduced-motion: reduce)`.
-- **Contrast**: Contrast ratio >= 5:1 for body and badges in both Light and Dark modes.
+---
+
+## 5. ICON SYSTEM
+- **Family**: `lucide-react` (uniform 1.5–1.75px line stroke).
+- **Style**: Monochrome or subtly tinted with `text-primary` or `text-muted`.
+- **Forbidden**: Emojis, AI sparkle wands, glossy 3D cartoon icons, multi-colored rounded square containers.
+
+---
+
+## 6. COLOR SYSTEM
+- **Canvas / Background**: Light `#F8FAFC`, Dark `#09090B`.
+- **Surfaces**: Light `#FFFFFF`, Dark `#121215`.
+- **Borders & Dividers**: Light `#E4E4E7`, Dark `#27272A`.
+- **Primary Brand Accent**: Violet `#7C3AED` / `#8B5CF6`. Used with restraint for buttons, active accents, and the atmospheric radial glow.
+- **Semantic Green**: `#10B981` strictly for positive states (connected, active, money received).
+
+---
+
+## 7. COMPONENT RHYTHM & ORDER
+1. **Restrained Navbar**: Brand + plain text links (Fitur, Cara Kerja, Integrasi, Harga, FAQ) + ThemeToggle + Masuk + Mulai Gratis.
+2. **Hero + Elevated Product Showcase**: Centered headline + short copy + 2 CTAs + large glowing dashboard mockup.
+3. **Ecosystem Strip**: "Terhubung dengan sistem kerja harian Anda" (Telegram, Google Sheets, Web Dashboard, WhatsApp).
+4. **4 Large Alternating Feature Showcases**:
+   - Feature 1 (Text Left / Telegram Chat Mockup Right): *Catat penjualan secepat mengirim pesan chat.*
+   - Feature 2 (Dashboard Analytics Mockup Left / Text Right): *Pantau omzet dan arus kas dari satu dashboard.*
+   - Feature 3 (Text Left / Catalog & Stock Table Right): *Stok barang dan harga jual selalu sinkron.*
+   - Feature 4 (Google Sheets Preview Left / Text Right): *Laporan terekap otomatis ke spreadsheet Anda.*
+5. **4-Box Capability Grid**: Multi-Kasir, Tahan Sinyal Lemah, Rekonsiliasi Otomatis, Keamanan Data Terisolasi.
+6. **How It Works Timeline**: 3 simple steps to get started in 2 minutes.
+7. **Transparent Pricing**: Authoritative plans (Pilot Rp0, Basic Rp49k, Pro Rp149k) with clean tier cards and feature checklists.
+8. **Editorial FAQ**: Clean divided accordions with friendly operational explanations.
+9. **Final Compelling CTA Box**: Styled container with atmospheric visual backing.
+10. **Compact Footer**: Clean real links and copyright notice.
+
+---
+
+## 8. MOTION & INTERACTIONS
+- Subtle fade-in / slide-up for hero elements.
+- Gentle parallax or hover elevation on the product showcase frame.
+- Smooth accordion expand/collapse on FAQ items.
+- Strict `@media (prefers-reduced-motion: reduce)` support with immediate static rendering.
+
+---
+
+## 9. MOBILE EXPERIENCE
+- Tested at 360px, 390px, 430px, and 768px.
+- Product showcase scales down smoothly within viewport without horizontal overflow.
+- Alternating feature blocks stack naturally (Text on top, Visual below).
+- Clean hamburger drawer for navigation.
+- Generous tap targets (>= 44px).
+
+---
+
+## 10. STRICT ANTI-AI-SLOP & ANTI-DEVTOOL CHECKLIST
+- ❌ NO debit/credit accounting journal entries in the marketing hero.
+- ❌ NO SQL, PostgreSQL, ACID, or RLS jargon in hero headlines.
+- ❌ NO developer console or terminal simulator.
+- ❌ NO numbered navigation (`01`, `02`, `03`).
+- ❌ NO generic 6-card bento grid spam.
+- ❌ NO AI sparkle stars or magic wands.
+- ❌ NO fake customer logos or fabricated reviews.
+- ❌ NO purple-pink nebula gradient meshes.
+- ✅ Approachable, confident, visually stunning, UMKM-friendly SaaS product design.

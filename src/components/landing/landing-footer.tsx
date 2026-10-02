@@ -8,73 +8,52 @@ export function LandingFooter() {
           {/* Brand Col */}
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs">
+              <div className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs">
                 OX
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight text-foreground">
-                  OXID Ledger
-                </span>
-                <span className="text-[10px] text-muted font-mono tracking-tight">
-                  Buku Kas Operasional UMKM
-                </span>
-              </div>
+              <span className="font-bold text-base tracking-tight text-foreground">
+                OXID Ledger
+              </span>
             </div>
-            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-sm">
-              Sistem pencatatan penjualan chat-to-ledger untuk UMKM Indonesia. Kasir
-              mencatat lewat Telegram, data tersimpan di basis data ACID PostgreSQL,
-              dan otomatis tercermin ke Google Sheets.
+            <p className="text-sm text-muted leading-relaxed max-w-sm">
+              Sistem pencatatan penjualan cerdas untuk UMKM. Kasir mencatat lewat
+              Telegram, pantau omzet dari dashboard, dan simpan laporan usaha secara otomatis.
             </p>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-surface border border-border text-[11px] font-mono text-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Semua Layanan Berjalan Normal</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border text-xs text-muted">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Sistem Operasional Normal</span>
             </div>
           </div>
 
           {/* Navigation Links */}
           <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6">
             <div className="space-y-3">
-              <div className="text-xs font-mono font-semibold uppercase tracking-wider text-muted">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted">
                 Navigasi
               </div>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-2.5 text-sm">
                 <li>
-                  <a
-                    href="#alur-transaksi"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Alur Transaksi
+                  <a href="#fitur" className="text-muted hover:text-foreground transition-colors">
+                    Fitur Utama
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="#konsol-produk"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Konsol Operasional
+                  <a href="#cara-kerja" className="text-muted hover:text-foreground transition-colors">
+                    Cara Kerja
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="#kemampuan"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Kapabilitas
+                  <a href="#integrasi" className="text-muted hover:text-foreground transition-colors">
+                    Integrasi
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="#harga"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Paket Investasi
+                  <a href="#harga" className="text-muted hover:text-foreground transition-colors">
+                    Pilihan Paket
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="#faq"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
+                  <a href="#faq" className="text-muted hover:text-foreground transition-colors">
                     Pertanyaan Umum
                   </a>
                 </li>
@@ -82,55 +61,42 @@ export function LandingFooter() {
             </div>
 
             <div className="space-y-3">
-              <div className="text-xs font-mono font-semibold uppercase tracking-wider text-muted">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted">
                 Akses
               </div>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-2.5 text-sm">
                 <li>
-                  <Link
-                    href="/login"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
+                  <Link href="/login" className="text-muted hover:text-foreground transition-colors">
                     Masuk Akun
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/signup"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Mulai Uji Coba 14 Hari
+                  <Link href="/signup" className="text-muted hover:text-foreground transition-colors">
+                    Mulai Uji Coba (14 Hari)
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/onboarding"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Setup Bisnis Baru
+                  <Link href="/onboarding" className="text-muted hover:text-foreground transition-colors">
+                    Setup Toko
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/dashboard"
-                    className="text-muted hover:text-foreground transition-colors"
-                  >
-                    Konsol Kasir
+                  <Link href="/dashboard" className="text-muted hover:text-foreground transition-colors">
+                    Buka Dashboard
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div className="space-y-3">
-              <div className="text-xs font-mono font-semibold uppercase tracking-wider text-muted">
-                Integritas Sistem
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted">
+                Keandalan
               </div>
-              <ul className="space-y-2 text-xs font-mono text-[11px] text-muted">
-                <li>PostgreSQL ACID</li>
-                <li>Row-Level Security (RLS)</li>
-                <li>Tabular Currency Format</li>
-                <li>Google Sheets Mirror</li>
-                <li>Telegram Bot Webhook</li>
+              <ul className="space-y-2 text-xs text-muted">
+                <li>Server Cloud Berkecepatan Tinggi</li>
+                <li>Enkripsi Data Terisolasi</li>
+                <li>Koneksi Webhook Telegram</li>
+                <li>Otomasi Google Sheets</li>
               </ul>
             </div>
           </div>
@@ -139,10 +105,9 @@ export function LandingFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
           <div>
-            &copy; {new Date().getFullYear()} OXID Ledger. Seluruh hak cipta
-            dilindungi.
+            &copy; {new Date().getFullYear()} OXID Ledger. Seluruh hak cipta dilindungi.
           </div>
-          <div className="text-[11px] font-mono">
+          <div>
             Dirancang untuk efisiensi operasional pedagang & UMKM Indonesia.
           </div>
         </div>
