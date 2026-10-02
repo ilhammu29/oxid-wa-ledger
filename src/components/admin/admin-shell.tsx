@@ -31,6 +31,9 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_WIDTH_EXPANDED = "224px";
+const SIDEBAR_WIDTH_COLLAPSED = "64px";
+
 export function AdminShell({
   userEmail,
   adminRole,
@@ -42,7 +45,7 @@ export function AdminShell({
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
 
-  // Responsive default: expanded >= 1280px, collapsed 1024–1279px
+  // Responsive default: expanded >= 1280px, collapsed 768–1279px
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -86,7 +89,7 @@ export function AdminShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Handle responsive resize boundaries (1024px, 1280px)
+  // Handle responsive resize boundaries (768px, 1280px)
   useEffect(() => {
     const handleResize = () => {
       const w = window.innerWidth;
@@ -147,24 +150,34 @@ export function AdminShell({
     return "Control Center";
   };
 
+  const currentSidebarWidth = isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED;
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex max-w-full overflow-x-hidden">
+    <div
+      className="min-h-screen bg-background text-foreground flex flex-col relative"
+      style={{
+        ["--admin-sidebar-width" as string]: currentSidebarWidth,
+      }}
+    >
       {/* ─────────────────────────────────────────────────────────────
-          1. DESKTOP / TABLET SIDEBAR (Sticky 100dvh viewport shell)
-          - Hidden on mobile < 768px
-          - Width: 64px (collapsed icon rail) or 224-240px (expanded)
-          - Does NOT grow with document height; footer stays pinned
+          1. DESKTOP / TABLET SIDEBAR (Fixed 100dvh viewport shell)
+          - Hidden on mobile < 768px (display: none)
+          - Width: 64px (collapsed icon rail) or 224px (expanded)
+          - Physically fixed to viewport (position: fixed; top: 0; bottom: 0; left: 0; height: 100dvh)
+          - Does NOT couple with main document scroll
+          - Background and right border span 100dvh at all times
       ────────────────────────────────────────────────────────────── */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-border bg-card transition-all duration-200 z-30 sticky top-0 h-dvh max-h-dvh overflow-hidden ${
-          isCollapsed ? "w-16" : "w-56 lg:w-60"
-        }`}
+        className="hidden md:flex fixed top-0 bottom-0 left-0 h-dvh flex-col border-r border-border bg-card z-30 transition-[width] duration-200 overflow-hidden"
+        style={{
+          width: "var(--admin-sidebar-width)",
+        }}
       >
-        {/* Brand Header */}
+        {/* Brand Header (Pinned at top of sidebar) */}
         <div
           className={`h-14 shrink-0 px-3 flex items-center ${
             isCollapsed ? "justify-center" : "justify-between"
-          } border-b border-border/80`}
+          } border-b border-border/80 bg-card`}
         >
           <Link
             href="/admin"
@@ -188,7 +201,7 @@ export function AdminShell({
           {!isCollapsed && (
             <button
               onClick={toggleSidebar}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
               title="Ciutkan Sidebar"
               aria-label="Ciutkan Sidebar"
             >
@@ -197,22 +210,22 @@ export function AdminShell({
           )}
         </div>
 
-        {/* Scrollable Navigation Area (Independent internal scroll) */}
-        <div className="flex-1 min-h-0 overflow-y-auto py-2">
+        {/* Scrollable Navigation Area (Independent internal flex scroll) */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2">
           <AdminNav
             isCollapsed={isCollapsed}
             pendingPaymentsCount={pendingPaymentsCount}
           />
         </div>
 
-        {/* Fixed Footer / Operator Profile & Navigation Return */}
+        {/* Fixed Footer (Pinned at bottom of sidebar viewport, never scrolls) */}
         <div className="shrink-0 mt-auto p-2 border-t border-border/80 space-y-1.5 bg-card">
           {!isCollapsed ? (
             <>
               <div className="p-2.5 rounded-xl bg-muted/40 border border-border/60">
-                <div className="flex items-center justify-between gap-1 mb-1">
+                <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
                   <span
-                    className="text-[11px] font-mono text-foreground font-medium truncate max-w-[125px]"
+                    className="text-[11px] font-mono text-foreground font-medium truncate min-w-0 flex-1"
                     title={userEmail}
                   >
                     {userEmail}
@@ -260,7 +273,7 @@ export function AdminShell({
               {/* Collapsed Expand Toggle Button */}
               <button
                 onClick={toggleSidebar}
-                className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
                 title="Buka Sidebar"
                 aria-label="Buka Sidebar"
               >
@@ -305,7 +318,7 @@ export function AdminShell({
               </div>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
                 title="Tutup Menu"
                 aria-label="Tutup Menu"
               >
@@ -313,8 +326,8 @@ export function AdminShell({
               </button>
             </div>
 
-            {/* Drawer Navigation */}
-            <div className="flex-1 min-h-0 overflow-y-auto py-2">
+            {/* Drawer Navigation (Independent flex scroll) */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2">
               <AdminNav
                 isCollapsed={false}
                 onItemClick={() => setMobileDrawerOpen(false)}
@@ -322,11 +335,11 @@ export function AdminShell({
               />
             </div>
 
-            {/* Drawer Footer */}
+            {/* Drawer Footer (Pinned at bottom of drawer) */}
             <div className="shrink-0 mt-auto p-3 border-t border-border space-y-2 bg-card">
               <div className="p-2.5 rounded-xl bg-muted/40 border border-border">
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[11px] font-mono text-foreground font-medium truncate max-w-[140px]">
+                <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
+                  <span className="text-[11px] font-mono text-foreground font-medium truncate min-w-0 flex-1">
                     {userEmail}
                   </span>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase shrink-0">
@@ -354,15 +367,17 @@ export function AdminShell({
 
       {/* ─────────────────────────────────────────────────────────────
           3. MAIN CONTENT CONTAINER & TOPBAR
+          - Horizontal offset starts after fixed sidebar via margin-left
+          - Zero offset on mobile (< 768px)
       ────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
-        {/* Unified Topbar */}
+      <div className="flex-1 flex flex-col min-w-0 max-w-full md:ml-[var(--admin-sidebar-width)] transition-[margin-left] duration-200">
+        {/* Unified Topbar - Sticky top: 0, spanning only available main content */}
         <header className="sticky top-0 z-20 h-14 shrink-0 bg-card/90 backdrop-blur-md border-b border-border px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3">
           {/* Left: Mobile Toggle / Breadcrumb */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none shrink-0"
+              className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none shrink-0 cursor-pointer"
               title="Buka Menu Admin"
               aria-label="Buka Menu Admin"
             >
@@ -383,7 +398,7 @@ export function AdminShell({
             {/* Desktop / Tablet Search Bar */}
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border text-xs text-muted-foreground transition-all hover:border-border/80 w-44 lg:w-64 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border text-xs text-muted-foreground transition-all hover:border-border/80 w-44 lg:w-64 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
             >
               <Search className="w-3.5 h-3.5 shrink-0" />
               <span className="flex-1 text-left truncate">Cari menu admin...</span>
@@ -395,7 +410,7 @@ export function AdminShell({
             {/* Mobile Search Icon Trigger Button */}
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="sm:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              className="sm:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
               title="Cari Menu Admin (Ctrl+K)"
               aria-label="Cari Menu Admin"
             >
@@ -437,7 +452,7 @@ export function AdminShell({
             <div className="flex items-center border border-border rounded-xl p-0.5 bg-muted/30">
               <button
                 onClick={() => setTheme("light")}
-                className={`p-1 rounded-lg transition-colors ${
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
                   theme === "light"
                     ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
@@ -449,7 +464,7 @@ export function AdminShell({
               </button>
               <button
                 onClick={() => setTheme("dark")}
-                className={`p-1 rounded-lg transition-colors ${
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
                   theme === "dark"
                     ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
@@ -461,7 +476,7 @@ export function AdminShell({
               </button>
               <button
                 onClick={() => setTheme("system")}
-                className={`p-1 rounded-lg transition-colors ${
+                className={`p-1 rounded-lg transition-colors cursor-pointer ${
                   theme === "system"
                     ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
