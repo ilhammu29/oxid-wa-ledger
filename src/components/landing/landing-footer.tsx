@@ -3,22 +3,27 @@ import Link from "next/link";
 export function LandingFooter() {
   return (
     <footer className="bg-background text-foreground border-t border-border py-12 sm:py-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-border">
           {/* Brand Col */}
           <div className="md:col-span-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs">
                 OX
               </div>
-              <span className="font-bold text-base tracking-tight text-foreground">
-                OXID Ledger
-              </span>
+              <div className="flex flex-col">
+                <span className="font-bold text-base tracking-tight text-foreground">
+                  OXID Ledger
+                </span>
+                <span className="text-[10px] text-muted font-mono tracking-tight">
+                  Buku Kas Operasional UMKM
+                </span>
+              </div>
             </div>
             <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-sm">
-              Sistem pencatatan penjualan chat-to-ledger untuk UMKM. Kasir catat
-              lewat Telegram, data tersimpan permanen di database ACID, dan
-              otomatis dicerminkan ke Google Sheets.
+              Sistem pencatatan penjualan chat-to-ledger untuk UMKM Indonesia. Kasir
+              mencatat lewat Telegram, data tersimpan di basis data ACID PostgreSQL,
+              dan otomatis tercermin ke Google Sheets.
             </p>
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-surface border border-border text-[11px] font-mono text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -35,26 +40,26 @@ export function LandingFooter() {
               <ul className="space-y-2 text-xs">
                 <li>
                   <a
-                    href="#fitur"
+                    href="#alur-transaksi"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Fitur Utama
+                    Alur Transaksi
                   </a>
                 </li>
                 <li>
                   <a
-                    href="#cara-kerja"
+                    href="#konsol-produk"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Cara Kerja
+                    Konsol Operasional
                   </a>
                 </li>
                 <li>
                   <a
-                    href="#alur"
+                    href="#kemampuan"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Alur Sistem
+                    Kapabilitas
                   </a>
                 </li>
                 <li>
@@ -62,7 +67,7 @@ export function LandingFooter() {
                     href="#harga"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Pilihan Paket
+                    Paket Investasi
                   </a>
                 </li>
                 <li>
@@ -91,10 +96,10 @@ export function LandingFooter() {
                 </li>
                 <li>
                   <Link
-                    href="/login"
+                    href="/signup"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Mulai Uji Coba (14 Hari)
+                    Mulai Uji Coba 14 Hari
                   </Link>
                 </li>
                 <li>
@@ -102,7 +107,15 @@ export function LandingFooter() {
                     href="/onboarding"
                     className="text-muted hover:text-foreground transition-colors"
                   >
-                    Setup Bisnis
+                    Setup Bisnis Baru
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/dashboard"
+                    className="text-muted hover:text-foreground transition-colors"
+                  >
+                    Konsol Kasir
                   </Link>
                 </li>
               </ul>
@@ -110,14 +123,14 @@ export function LandingFooter() {
 
             <div className="space-y-3">
               <div className="text-xs font-mono font-semibold uppercase tracking-wider text-muted">
-                Integritas
+                Integritas Sistem
               </div>
               <ul className="space-y-2 text-xs font-mono text-[11px] text-muted">
                 <li>PostgreSQL ACID</li>
-                <li>Row-Level Security</li>
-                <li>Format Rupiah Pasti</li>
-                <li>Google API 1-Arah</li>
-                <li>Telegram Bot API</li>
+                <li>Row-Level Security (RLS)</li>
+                <li>Tabular Currency Format</li>
+                <li>Google Sheets Mirror</li>
+                <li>Telegram Bot Webhook</li>
               </ul>
             </div>
           </div>

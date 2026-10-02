@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     "scripts/**",
     "supabase/**",
     ".vercel/**",
+    ".agents/**",
   ]),
 ]);
 

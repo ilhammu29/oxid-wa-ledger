@@ -52,3 +52,6 @@ gen-lang-client-*.json
 
 # design assets
 ui ux image/
+
+# agent skills
+.agents/
