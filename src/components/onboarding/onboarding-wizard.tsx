@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { completeOnboardingAction } from "@/app/onboarding/actions";
 import { createClient } from "@/lib/supabase/client";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface OnboardingWizardProps {
   inviteToken: string;
@@ -186,9 +187,7 @@ export function OnboardingWizard({
     return (
       <div className="max-w-md mx-auto bg-surface rounded-2xl border border-border shadow-xs p-8">
         <div className="text-center mb-6">
-          <div className="h-10 w-10 rounded-xl bg-primary text-primary-fg font-bold text-sm mx-auto flex items-center justify-center mb-3 shadow-xs">
-            OX
-          </div>
+          <BrandLogo size="lg" className="mx-auto mb-3" />
           <h2 className="text-xl font-bold text-foreground">Aktivasi Akun OXID</h2>
           <p className="text-xs text-muted mt-1">
             Undangan pendaftaran resmi untuk:
@@ -243,9 +242,7 @@ export function OnboardingWizard({
       <div className="bg-surface-hover/70 border-b border-border px-6 py-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs">
-              OX
-            </div>
+            <BrandLogo size="md" />
             <div>
               <h1 className="font-bold text-sm tracking-tight text-foreground">
                 Aktivasi Klien OXID WA Ledger

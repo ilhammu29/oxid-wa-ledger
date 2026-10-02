@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface LandingNavbarProps {
   isAuthenticated: boolean;
@@ -42,12 +43,7 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand Left */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs shadow-xs transition-transform group-hover:scale-105">
-            OX
-          </div>
-          <span className="font-bold text-foreground tracking-tight text-base">
-            OXID Ledger
-          </span>
+          <BrandLogo size="md" showText priority className="transition-transform group-hover:scale-102" />
         </Link>
 
         {/* Center Plain Text Navigation (Desktop) - No numbered tags */}

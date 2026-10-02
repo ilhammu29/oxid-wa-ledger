@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export interface SignInProps {
   email: string;
@@ -84,9 +85,7 @@ export function SignIn({
             className="flex items-center gap-2.5 mb-6 animate-login-in"
             style={{ animationDelay: "50ms" }}
           >
-            <div className="h-9 w-9 rounded-xl bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs">
-              OX
-            </div>
+            <BrandLogo size="md" />
             <div>
               <span className="font-bold text-foreground tracking-tight text-base block leading-tight">
                 OXID Ledger
@@ -387,9 +386,7 @@ export function SignIn({
           {/* Top Brand & Category Tag */}
           <div className="relative z-10 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs">
-                OX
-              </div>
+              <BrandLogo size="sm" container="primary" />
               <span className="font-semibold text-zinc-100 tracking-tight text-sm">
                 OXID Ledger
               </span>

@@ -28,6 +28,7 @@ import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
 import { CommandPalette } from "./command-palette";
 import { useTheme } from "@/components/theme/theme-provider";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface DashboardShellProps {
   business: {
@@ -159,9 +160,7 @@ export function DashboardShell({
       {/* Mobile Topbar */}
       <header className="md:hidden flex items-center justify-between px-4 h-14 bg-surface border-b border-border sticky top-0 z-30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0">
-            OX
-          </div>
+          <BrandLogo size="sm" container="primary" />
           <div className="min-w-0">
             <h1 className="font-semibold text-xs tracking-tight truncate max-w-[150px]">
               {business.name}
@@ -221,9 +220,7 @@ export function DashboardShell({
                 isCollapsed ? "justify-center" : ""
               }`}
             >
-              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0 font-mono shadow-2xs">
-                OX
-              </div>
+              <BrandLogo size="sm" container="primary" />
               {!isCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-xs truncate leading-tight">

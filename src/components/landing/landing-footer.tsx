@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export function LandingFooter() {
   return (
@@ -7,14 +8,9 @@ export function LandingFooter() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-border">
           {/* Brand Col */}
           <div className="md:col-span-5 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs">
-                OX
-              </div>
-              <span className="font-bold text-base tracking-tight text-foreground">
-                OXID Ledger
-              </span>
-            </div>
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <BrandLogo size="md" showText />
+            </Link>
             <p className="text-sm text-muted leading-relaxed max-w-sm">
               Sistem pencatatan penjualan cerdas untuk UMKM. Kasir mencatat lewat
               Telegram, pantau omzet dari dashboard, dan simpan laporan usaha secara otomatis.

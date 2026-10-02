@@ -7,6 +7,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export function FeatureShowcases() {
   return (
@@ -76,8 +77,8 @@ export function FeatureShowcases() {
             <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-xl space-y-4 max-w-xl mx-auto lg:max-w-none">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
-                    OX
+                  <div className="w-9 h-9 rounded-full bg-surface border border-border flex items-center justify-center shrink-0 shadow-2xs">
+                    <BrandLogo size="sm" container="none" />
                   </div>
                   <div>
                     <div className="font-bold text-sm text-foreground">

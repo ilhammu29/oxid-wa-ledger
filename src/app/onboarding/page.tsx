@@ -9,6 +9,7 @@ import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
 import { AlertCircle, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -155,9 +156,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       <header className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="h-9 w-9 rounded-xl bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs transition-transform group-hover:scale-105">
-              OX
-            </div>
+            <BrandLogo size="md" />
             <div>
               <span className="font-bold text-foreground tracking-tight text-sm block leading-tight">
                 OXID Ledger
