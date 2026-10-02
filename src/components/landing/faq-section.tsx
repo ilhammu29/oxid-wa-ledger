@@ -56,13 +56,13 @@ export function FaqSection() {
   };
 
   return (
-    <section id="faq" className="py-20 sm:py-28 border-t border-border bg-background">
+    <section id="faq" className="py-20 sm:py-28 border-t border-border/80 bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-surface text-xs font-medium text-foreground mb-4">
-            <span>PERTANYAAN UMUM</span>
+          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
+            TANYA JAWAB OPERASIONAL
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
             Semua yang sering ditanyakan.
           </h2>
           <p className="mt-3 text-base text-muted leading-relaxed">
@@ -71,7 +71,7 @@ export function FaqSection() {
         </div>
 
         {/* Clean Divided FAQ List */}
-        <div className="border-t border-border divide-y divide-border">
+        <div className="border-t border-border/80 divide-y divide-border/80">
           {FAQS.map((faq) => {
             const isOpen = openId === faq.id;
             return (
@@ -82,12 +82,12 @@ export function FaqSection() {
                   aria-expanded={isOpen}
                   className="w-full flex items-start justify-between gap-4 text-left group cursor-pointer"
                 >
-                  <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                  <span className="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     {faq.question}
                   </span>
                   <span
-                    className={`p-1.5 rounded-lg border border-border bg-surface text-muted transition-transform duration-200 shrink-0 ${
-                      isOpen ? "rotate-180 text-foreground" : ""
+                    className={`p-1.5 rounded-md border border-border bg-surface text-muted transition-transform duration-200 shrink-0 ${
+                      isOpen ? "rotate-180 text-foreground border-primary/40" : ""
                     }`}
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -95,7 +95,7 @@ export function FaqSection() {
                 </button>
 
                 {isOpen && (
-                  <div className="mt-3 pr-8 text-sm text-muted leading-relaxed">
+                  <div className="mt-3 pr-8 text-sm text-muted leading-relaxed animate-in fade-in-50 duration-150">
                     <p>{faq.answer}</p>
                   </div>
                 )}

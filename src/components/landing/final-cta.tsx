@@ -7,24 +7,23 @@ interface FinalCtaProps {
 
 export function FinalCta({ isAuthenticated }: FinalCtaProps) {
   return (
-    <section className="relative py-20 sm:py-28 overflow-hidden bg-background">
-      {/* Signature Atmospheric Background Radial (RedSun-inspired) */}
+    <section className="relative py-24 sm:py-32 overflow-hidden bg-background border-t border-border/80">
+      {/* Signature Atmospheric Background Radial (Ledger Orbit bloom) */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[350px] sm:h-[450px] pointer-events-none -z-10"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[350px] sm:h-[500px] pointer-events-none -z-10"
         aria-hidden="true"
       >
-        <div className="w-full h-full rounded-full bg-gradient-to-b from-primary/20 via-primary/10 to-transparent blur-3xl opacity-70 dark:opacity-60" />
+        <div className="w-full h-full rounded-full bg-gradient-to-b from-primary/20 via-primary/10 to-transparent blur-3xl opacity-75 dark:opacity-65" />
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl border border-border bg-surface/90 backdrop-blur-md p-8 sm:p-14 text-center shadow-xl relative overflow-hidden">
+        <div className="rounded-2xl border border-border/80 bg-surface/90 backdrop-blur-md p-8 sm:p-14 text-center shadow-xl relative overflow-hidden">
           <div className="max-w-2xl mx-auto space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-background text-xs font-medium text-foreground">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Uji Coba Penuh 14 Hari</span>
+            <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary">
+              MULAI SEKARANG
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
               Mulai catat usaha dengan lebih sederhana.
             </h2>
 
@@ -36,16 +35,16 @@ export function FinalCta({ isAuthenticated }: FinalCtaProps) {
             <div className="pt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
               <Link
                 href={isAuthenticated ? "/dashboard" : "/signup"}
-                className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold shadow-md shadow-primary/20 transition-all cursor-pointer hover:scale-[1.02]"
+                className="group inline-flex items-center justify-center gap-2 h-12 px-7 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-semibold shadow-[0_0_24px_rgba(124,58,237,0.35)] transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>{isAuthenticated ? "Buka Dashboard" : "Mulai Gratis 14 Hari"}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>
 
               {!isAuthenticated && (
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center h-12 px-6 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground text-sm font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center h-12 px-6 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground text-xs sm:text-sm font-medium transition-colors cursor-pointer"
                 >
                   Masuk ke Akun
                 </Link>

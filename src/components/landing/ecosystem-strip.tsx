@@ -3,53 +3,51 @@ import { MessageSquare, FileSpreadsheet, LayoutDashboard, Smartphone } from "luc
 export function EcosystemStrip() {
   const integrations = [
     {
-      name: "Telegram Bot",
-      desc: "Catat transaksi via grup kasir",
+      name: "Bot Telegram",
+      desc: "Catat transaksi kasir via grup",
       icon: MessageSquare,
     },
     {
-      name: "Web Dashboard",
+      name: "Dashboard Web",
       desc: "Pantau omzet & kontrol produk",
       icon: LayoutDashboard,
     },
     {
       name: "Google Sheets",
-      desc: "Cermin laporan otomatis realtime",
+      desc: "Laporan otomatis realtime",
       icon: FileSpreadsheet,
     },
     {
       name: "Smartphone Kasir",
-      desc: "Tanpa perlu beli mesin POS baru",
+      desc: "Tanpa mesin kasir mahal",
       icon: Smartphone,
     },
   ];
 
   return (
-    <section id="integrasi" className="py-10 border-y border-border bg-surface/30">
+    <section id="integrasi" className="py-10 border-y border-border/80 bg-surface/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Label */}
           <div className="text-center md:text-left shrink-0">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
-              Ekosistem Operasional
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-primary block">
+              Integrasi Bawaan
             </span>
             <span className="text-sm font-bold text-foreground">
-              Terhubung dengan alat kerja harian Anda
+              Terhubung langsung ke perangkat kerja harian Anda
             </span>
           </div>
 
-          {/* Integration Badges */}
+          {/* Integration Items - Clean Editorial Layout without colored square boxes */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full md:w-auto">
             {integrations.map((item, idx) => {
               const Icon = item.icon;
               return (
                 <div
                   key={idx}
-                  className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-surface hover:border-border/90 transition-colors"
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border border-border/70 bg-surface/80 hover:border-border transition-colors shadow-2xs"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
+                  <Icon className="w-4 h-4 text-zinc-400 shrink-0" />
                   <div className="truncate">
                     <div className="font-semibold text-xs text-foreground truncate">
                       {item.name}

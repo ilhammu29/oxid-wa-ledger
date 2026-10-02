@@ -15,10 +15,10 @@ export function FeatureShowcases() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 sm:space-y-32">
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-surface text-xs font-medium text-foreground mb-4">
-            <span>FITUR UTAMA</span>
+          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
+            01 — 04 · KEMAMPUAN UTAMA
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
             Didesain untuk operasional harian yang cepat.
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted leading-relaxed">

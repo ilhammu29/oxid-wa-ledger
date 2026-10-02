@@ -36,20 +36,20 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
     <header
       className={`sticky top-0 z-40 w-full transition-all duration-200 ${
         isScrolled
-          ? "border-b border-border bg-background/85 backdrop-blur-md shadow-xs"
-          : "border-b border-border/40 bg-background/40 backdrop-blur-xs"
+          ? "border-b border-border/80 bg-background/90 backdrop-blur-md shadow-xs"
+          : "border-b border-border/40 bg-background/60 backdrop-blur-xs"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
         {/* Brand Left */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
           <BrandLogo size="md" showText priority className="transition-transform group-hover:scale-102" />
         </Link>
 
-        {/* Center Plain Text Navigation (Desktop) - No numbered tags */}
+        {/* Center Plain Text Navigation (Desktop) */}
         <nav
           aria-label="Navigasi Utama"
-          className="hidden md:flex items-center gap-8 text-sm font-medium text-muted"
+          className="hidden md:flex items-center gap-8 lg:gap-10 text-sm font-medium text-muted"
         >
           {navLinks.map((item) => (
             <a
@@ -63,8 +63,10 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle showLabel={false} />
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
+          <div className="scale-90 opacity-80 hover:opacity-100 transition-opacity">
+            <ThemeToggle showLabel={false} />
+          </div>
 
           {isAuthenticated ? (
             <Link
@@ -78,13 +80,13 @@ export function LandingNavbar({ isAuthenticated }: LandingNavbarProps) {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center h-9 px-3.5 text-xs font-semibold text-muted hover:text-foreground transition-colors cursor-pointer"
+                className="hidden sm:inline-flex items-center h-9 px-3 text-xs font-semibold text-muted hover:text-foreground transition-colors cursor-pointer"
               >
                 Masuk
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,58,237,0.3)] transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>Mulai Gratis</span>
                 <ArrowRight className="w-3.5 h-3.5" />

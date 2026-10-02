@@ -47,8 +47,8 @@
   --color-border-subtle: var(--border-subtle);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
-  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
 }
 
 body {
