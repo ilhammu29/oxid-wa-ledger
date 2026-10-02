@@ -6,7 +6,8 @@ import { validateInviteToken } from "@/modules/onboarding/invite";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { ClientOnboardingView } from "@/components/onboarding/client-onboarding-view";
 import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
-import { AlertCircle, Mail } from "lucide-react";
+import { ThemeToggle } from "@/components/landing/theme-toggle";
+import { AlertCircle, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -37,19 +38,19 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     !user.confirmed_at
   ) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center p-4 font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
-        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl">
-          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center mb-4">
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-4 font-sans selection:bg-primary/20 selection:text-primary">
+        <div className="max-w-md w-full bg-surface border border-border rounded-2xl p-8 text-center shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center mb-4">
             <Mail className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-zinc-100 mb-2">Verifikasi Email Diperlukan</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+          <h2 className="text-xl font-bold text-foreground mb-2">Verifikasi Email Diperlukan</h2>
+          <p className="text-xs text-muted leading-relaxed mb-6">
             Akun Anda (<strong>{user.email}</strong>) belum diverifikasi. Silakan periksa kotak masuk atau spam email Anda dan klik tautan konfirmasi sebelum memulai onboarding.
           </p>
           <div className="space-y-3">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
+              className="inline-flex items-center justify-center w-full h-[46px] rounded-xl bg-primary hover:bg-primary-hover text-primary-fg text-xs font-semibold transition-colors shadow-xs"
             >
               Kembali ke Halaman Masuk
             </Link>
@@ -79,18 +80,19 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       }
 
       return (
-        <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center p-4">
-          <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl">
-            <div className="h-12 w-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mx-auto flex items-center justify-center mb-4">
+        <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-4 selection:bg-primary/20 selection:text-primary">
+          <div className="max-w-md w-full bg-surface border border-border rounded-2xl p-8 text-center shadow-xs">
+            <div className="h-12 w-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 mx-auto flex items-center justify-center mb-4">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-zinc-100 mb-2">{errorTitle}</h2>
-            <p className="text-xs text-zinc-400 leading-relaxed mb-6">{errorMessage}</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">{errorTitle}</h2>
+            <p className="text-xs text-muted leading-relaxed mb-6">{errorMessage}</p>
             <Link
               href="/onboarding"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
+              className="inline-flex items-center justify-center gap-2 w-full h-[46px] rounded-xl bg-primary hover:bg-primary-hover text-primary-fg text-xs font-semibold transition-colors shadow-xs"
             >
-              Lanjut ke Onboarding Mandiri
+              <span>Lanjut ke Onboarding Mandiri</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -98,7 +100,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     }
 
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-primary/20 selection:text-primary">
         <OnboardingWizard
           inviteToken={token}
           invitedEmail={validation.email!}
@@ -149,28 +151,40 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
-      <header className="border-b border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs shadow-xs">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary transition-colors">
+      <header className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3.5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
+            <div className="h-9 w-9 rounded-xl bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs transition-transform group-hover:scale-105">
               OX
             </div>
-            <span className="font-bold text-zinc-100 tracking-tight text-sm">OXID Ledger</span>
+            <div>
+              <span className="font-bold text-foreground tracking-tight text-sm block leading-tight">
+                OXID Ledger
+              </span>
+              <span className="text-[11px] text-muted block leading-none mt-0.5">
+                Aktivasi Usaha Baru
+              </span>
+            </div>
           </Link>
-          <div className="flex items-center gap-3 text-xs text-zinc-400">
-            <span className="hidden sm:inline">{user.email}</span>
-            <Link
-              href="/dashboard"
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300"
-            >
-              Dashboard
-            </Link>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg bg-surface-hover border border-border text-xs text-muted font-mono">
+              {user.email}
+            </span>
+            {rawBusiness?.onboarding_completed_at && (
+              <Link
+                href="/dashboard"
+                className="text-xs font-semibold text-primary hover:underline px-2 py-1"
+              >
+                Ke Dashboard &rarr;
+              </Link>
+            )}
+            <ThemeToggle showLabel={false} />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col justify-center">
+      <main className="flex-1 flex flex-col justify-start py-6 sm:py-10">
         <ClientOnboardingView
           initialBusiness={
             rawBusiness
@@ -189,8 +203,11 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         />
       </main>
 
-      <footer className="py-6 text-center text-xs text-zinc-600 border-t border-zinc-800/60">
-        OXID Ledger Onboarding • Bantuan & Pertanyaan Hubungi Tim Dukungan
+      <footer className="py-6 text-center text-xs text-muted border-t border-border bg-surface/40">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>© {new Date().getFullYear()} OXID Ledger. Seluruh hak cipta dilindungi.</span>
+          <span className="text-[11px] text-muted-fg">Butuh bantuan pengaturan? Hubungi tim panduan OXID.</span>
+        </div>
       </footer>
     </div>
   );

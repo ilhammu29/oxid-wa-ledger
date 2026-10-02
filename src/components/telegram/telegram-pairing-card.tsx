@@ -42,7 +42,7 @@ export function TelegramPairingCard({
       {/* State: GENERATING */}
       {state === "GENERATING" && (
         <div className="py-10 text-center space-y-3">
-          <RefreshCw className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
+          <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto" />
           <p className={`text-xs font-semibold ${isDark ? "text-zinc-200" : "text-zinc-700"}`}>
             Menyiapkan kode koneksi Telegram...
           </p>
@@ -83,7 +83,7 @@ export function TelegramPairingCard({
             {errorMessage?.includes("Batas operator") ? (
               <a
                 href="/dashboard/subscription"
-                className="flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors text-center"
+                className="flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors text-center"
               >
                 Tingkatkan Paket
               </a>
@@ -91,7 +91,7 @@ export function TelegramPairingCard({
               <button
                 type="button"
                 onClick={generateNewCode}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold min-h-[44px] shadow-sm transition-colors"
               >
                 Coba Lagi
               </button>
@@ -134,7 +134,7 @@ export function TelegramPairingCard({
           <button
             type="button"
             onClick={generateNewCode}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 min-h-[44px] shadow-sm transition-colors"
+            className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center justify-center gap-2 min-h-[44px] shadow-sm transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Buat Kode Baru</span>
@@ -156,7 +156,7 @@ export function TelegramPairingCard({
             <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
               Kode Koneksi Anda
             </p>
-            <div className="font-mono text-3xl font-extrabold text-emerald-400 tracking-wider">
+            <div className="font-mono text-3xl font-extrabold text-primary tracking-wider">
               {pairingCode}
             </div>
             <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 pt-1">
@@ -190,8 +190,8 @@ export function TelegramPairingCard({
                 <div
                   className={`mt-1 font-mono px-2.5 py-1.5 rounded-lg text-xs font-bold inline-block border ${
                     isDark
-                      ? "bg-zinc-900 text-emerald-400 border-zinc-800"
-                      : "bg-white text-zinc-900 border-zinc-200"
+                      ? "bg-zinc-900 text-primary border-zinc-800"
+                      : "bg-white text-primary border-zinc-200"
                   }`}
                 >
                   /connect {pairingCode}
@@ -229,7 +229,7 @@ export function TelegramPairingCard({
               href={deepLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors min-h-[44px] shadow-sm text-center"
+              className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors min-h-[44px] shadow-sm text-center"
             >
               <span>Buka Telegram</span>
               <ExternalLink className="w-4 h-4" />
@@ -240,18 +240,18 @@ export function TelegramPairingCard({
           <div
             className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
               isDark
-                ? "bg-emerald-950/20 border-emerald-900/40 text-emerald-300"
-                : "bg-emerald-50/60 border-emerald-100 text-emerald-800"
+                ? "bg-primary/10 border-primary/20 text-primary"
+                : "bg-primary/5 border-primary/15 text-primary"
             }`}
           >
             <div className="flex items-center gap-2">
-              <RefreshCw className="w-3.5 h-3.5 text-emerald-500 animate-spin shrink-0" />
+              <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
               <span className="text-[11px] font-medium">Menunggu Anda mengirim kode...</span>
             </div>
             <button
               type="button"
               onClick={generateNewCode}
-              className="text-[11px] font-semibold text-emerald-500 hover:underline ml-2"
+              className="text-[11px] font-semibold text-primary hover:underline ml-2"
             >
               Ganti Kode
             </button>

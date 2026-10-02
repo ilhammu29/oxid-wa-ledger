@@ -184,22 +184,22 @@ export function OnboardingWizard({
   // If user is not yet logged in with the invited email
   if (!currentUserEmail) {
     return (
-      <div className="max-w-md mx-auto bg-white rounded-2xl border border-zinc-200/80 shadow-xl p-8">
+      <div className="max-w-md mx-auto bg-surface rounded-2xl border border-border shadow-xs p-8">
         <div className="text-center mb-6">
-          <div className="h-12 w-12 rounded-xl bg-zinc-900 border border-zinc-800 text-emerald-400 font-bold text-lg mx-auto flex items-center justify-center mb-3">
+          <div className="h-10 w-10 rounded-xl bg-primary text-primary-fg font-bold text-sm mx-auto flex items-center justify-center mb-3 shadow-xs">
             OX
           </div>
-          <h2 className="text-xl font-bold text-zinc-900">Aktivasi Akun OXID</h2>
-          <p className="text-xs text-zinc-500 mt-1">
+          <h2 className="text-xl font-bold text-foreground">Aktivasi Akun OXID</h2>
+          <p className="text-xs text-muted mt-1">
             Undangan pendaftaran resmi untuk:
           </p>
-          <span className="inline-block mt-1 px-3 py-1 rounded-full bg-zinc-100 text-zinc-800 font-mono text-xs font-semibold">
+          <span className="inline-block mt-2 px-3 py-1 rounded-lg bg-surface-hover border border-border text-foreground font-mono text-xs font-semibold">
             {invitedEmail}
           </span>
         </div>
 
         {authError && (
-          <div className="p-3 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
+          <div className="p-3.5 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{authError}</span>
           </div>
@@ -207,8 +207,8 @@ export function OnboardingWizard({
 
         <form onSubmit={handleAuthenticate} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">
-              Kata Sandi Akun
+            <label className="block text-xs font-medium text-foreground mb-1.5">
+              Kata sandi akun
             </label>
             <input
               type="password"
@@ -217,9 +217,9 @@ export function OnboardingWizard({
               value={authPassword}
               onChange={(e) => setAuthPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
             />
-            <p className="text-[11px] text-zinc-400 mt-1">
+            <p className="text-[11px] text-muted mt-1">
               Masukkan kata sandi akun Anda (atau buat baru jika baru pertama kali).
             </p>
           </div>
@@ -227,10 +227,10 @@ export function OnboardingWizard({
           <button
             type="submit"
             disabled={authLoading || !authPassword}
-            className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full h-[46px] rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <Lock className="w-4 h-4" />
-            {authLoading ? "Memverifikasi..." : "Lanjutkan ke Pengaturan Bisnis"}
+            <span>{authLoading ? "Memverifikasi..." : "Lanjutkan ke Pengaturan Bisnis"}</span>
           </button>
         </form>
       </div>
@@ -238,28 +238,28 @@ export function OnboardingWizard({
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-zinc-200/80 shadow-xl overflow-hidden">
+    <div className="max-w-2xl mx-auto bg-surface rounded-2xl border border-border shadow-xs overflow-hidden">
       {/* Progress Header */}
-      <div className="bg-zinc-950 px-6 py-5 text-white">
+      <div className="bg-surface-hover/70 border-b border-border px-6 py-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs">
+            <div className="h-8 w-8 rounded-xl bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shadow-xs">
               OX
             </div>
             <div>
-              <h1 className="font-bold text-sm tracking-tight text-zinc-100">
+              <h1 className="font-bold text-sm tracking-tight text-foreground">
                 Aktivasi Klien OXID WA Ledger
               </h1>
-              <p className="text-[11px] text-zinc-400 font-mono">{currentUserEmail}</p>
+              <p className="text-[11px] text-muted font-mono">{currentUserEmail}</p>
             </div>
           </div>
-          <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300">
+          <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-surface border border-border text-foreground">
             Langkah {currentStep} dari {STEPS.length}
           </span>
         </div>
 
         {/* Step Tabs Indicator */}
-        <div className="grid grid-cols-6 gap-1.5 pt-2 border-t border-zinc-800/80">
+        <div className="grid grid-cols-6 gap-1.5 pt-2 border-t border-border">
           {STEPS.map((s) => {
             const Icon = s.icon;
             const isCompleted = currentStep > s.id;
@@ -269,19 +269,19 @@ export function OnboardingWizard({
                 key={s.id}
                 className={`flex flex-col items-center gap-1 text-center py-1 transition-all ${
                   isCurrent
-                    ? "text-emerald-400 font-semibold"
+                    ? "text-primary font-semibold"
                     : isCompleted
-                    ? "text-zinc-300"
-                    : "text-zinc-600"
+                    ? "text-foreground/80 font-medium"
+                    : "text-muted"
                 }`}
               >
                 <div
                   className={`h-6 w-6 rounded-full flex items-center justify-center text-xs transition-all ${
                     isCurrent
-                      ? "bg-emerald-400 text-zinc-950 font-bold"
+                      ? "bg-primary text-primary-fg font-bold shadow-xs shadow-primary/25 ring-2 ring-primary/20"
                       : isCompleted
-                      ? "bg-emerald-950 border border-emerald-500/40 text-emerald-400"
-                      : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+                      ? "bg-primary/10 border border-primary/20 text-primary"
+                      : "bg-surface border border-border text-muted"
                   }`}
                 >
                   {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Icon className="w-3 h-3" />}
@@ -298,8 +298,8 @@ export function OnboardingWizard({
       {/* Form Body */}
       <div className="p-6 sm:p-8 space-y-6">
         {submitError && (
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
             <span>{submitError}</span>
           </div>
         )}
@@ -308,16 +308,16 @@ export function OnboardingWizard({
         {currentStep === 1 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Profil Bisnis</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Profil Bisnis</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Masukkan informasi identitas unit usaha atau tambak Anda.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Nama Bisnis / Tambak <span className="text-rose-500">*</span>
+                <label className="block text-xs font-medium text-foreground mb-1.5">
+                  Nama bisnis / tambak <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -325,24 +325,24 @@ export function OnboardingWizard({
                   placeholder="Contoh: Berkah Ternak Lele"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Zona Waktu Operasional
+                <label className="block text-xs font-medium text-foreground mb-1.5">
+                  Zona waktu operasional
                 </label>
                 <select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs cursor-pointer"
                 >
                   <option value="Asia/Jakarta">WIB — Asia/Jakarta (Jakarta, Sumatera, Jawa)</option>
                   <option value="Asia/Makassar">WITA — Asia/Makassar (Bali, NTB, NTT, Kalimantan)</option>
                   <option value="Asia/Jayapura">WIT — Asia/Jayapura (Maluku, Papua)</option>
                 </select>
-                <p className="text-[11px] text-zinc-400 mt-1">
+                <p className="text-[11px] text-muted mt-1.5">
                   Digunakan untuk perhitungan status harian dan batas waktu pengingat buku kas.
                 </p>
               </div>
@@ -354,16 +354,16 @@ export function OnboardingWizard({
         {currentStep === 2 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Produk Pertama</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Produk Pertama</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Tentukan produk komoditas utama yang pertama kali dicatat dalam ledger.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                  Nama Produk <span className="text-rose-500">*</span>
+                <label className="block text-xs font-medium text-foreground mb-1.5">
+                  Nama produk <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -371,14 +371,14 @@ export function OnboardingWizard({
                   placeholder="Contoh: Lele"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                    Satuan Ukur <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">
+                    Satuan ukur <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -386,12 +386,12 @@ export function OnboardingWizard({
                     placeholder="Contoh: kg"
                     value={productUnit}
                     onChange={(e) => setProductUnit(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                    Harga Default (IDR) <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">
+                    Harga default (IDR) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -399,7 +399,7 @@ export function OnboardingWizard({
                     required
                     value={productPrice}
                     onChange={(e) => setProductPrice(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs tabular-nums"
                   />
                 </div>
               </div>
@@ -411,8 +411,8 @@ export function OnboardingWizard({
         {currentStep === 3 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Kanal Komunikasi Pilihan</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Kanal Komunikasi Pilihan</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Pilih kanal awal yang digunakan oleh tim operasional Anda.
               </p>
             </div>
@@ -422,8 +422,8 @@ export function OnboardingWizard({
                 onClick={() => setChannel("telegram")}
                 className={`flex items-start gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${
                   channel === "telegram"
-                    ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500"
-                    : "border-zinc-200 hover:border-zinc-300 bg-white"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-border/80 bg-background"
                 }`}
               >
                 <input
@@ -431,19 +431,19 @@ export function OnboardingWizard({
                   name="channelOption"
                   checked={channel === "telegram"}
                   onChange={() => setChannel("telegram")}
-                  className="mt-1 text-emerald-600 focus:ring-emerald-500"
+                  className="mt-1 text-primary focus:ring-primary cursor-pointer"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Send className="w-4 h-4 text-sky-600" />
-                    <span className="font-semibold text-xs text-zinc-900">
-                      Telegram Bot (Direkomendasikan untuk Pilot)
+                    <Send className="w-4 h-4 text-sky-500" />
+                    <span className="font-semibold text-xs text-foreground">
+                      Telegram Bot (Direkomendasikan)
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-semibold">
                       Langsung Aktif
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
                     Siap pakai langsung tanpa antrean verifikasi Meta. Mendukung pencatatan penjualan cepat dan pengingat harian otomatis.
                   </p>
                 </div>
@@ -453,8 +453,8 @@ export function OnboardingWizard({
                 onClick={() => setChannel("whatsapp")}
                 className={`flex items-start gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${
                   channel === "whatsapp"
-                    ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500"
-                    : "border-zinc-200 hover:border-zinc-300 bg-white"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-border/80 bg-background"
                 }`}
               >
                 <input
@@ -462,16 +462,16 @@ export function OnboardingWizard({
                   name="channelOption"
                   checked={channel === "whatsapp"}
                   onChange={() => setChannel("whatsapp")}
-                  className="mt-1 text-emerald-600 focus:ring-emerald-500"
+                  className="mt-1 text-primary focus:ring-primary cursor-pointer"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-emerald-600" />
-                    <span className="font-semibold text-xs text-zinc-900">
+                    <Smartphone className="w-4 h-4 text-emerald-500" />
+                    <span className="font-semibold text-xs text-foreground">
                       WhatsApp Cloud API
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
                     Memerlukan akun Meta Business terhubung dan nomor terverifikasi. Pengaturan detail dapat dihubungkan di dashboard setelah onboarding.
                   </p>
                 </div>
@@ -484,15 +484,15 @@ export function OnboardingWizard({
         {currentStep === 4 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Operator Pertama</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Operator Pertama</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Daftarkan akun Telegram operator atau kasir utama yang berhak mengirim pesan.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1.5">
                   Telegram User ID (Opsional)
                 </label>
                 <input
@@ -500,9 +500,9 @@ export function OnboardingWizard({
                   placeholder="Contoh: 123456789 (dapat diperoleh dari @userinfobot di Telegram)"
                   value={telegramUserId}
                   onChange={(e) => setTelegramUserId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
                 />
-                <p className="text-[11px] text-zinc-400 mt-1">
+                <p className="text-[11px] text-muted mt-1.5">
                   Jika belum memiliki Telegram ID saat ini, Anda dapat menambahkannya nanti kapan saja lewat dashboard.
                 </p>
               </div>
@@ -514,17 +514,17 @@ export function OnboardingWizard({
         {currentStep === 5 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Pengingat Harian Otomatis</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Pengingat Harian Otomatis</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Kirim pengingat otomatis jika belum ada catatan transaksi atau status sebelum tutup buku.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-50 border border-zinc-200">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-surface-hover border border-border">
                 <div>
-                  <p className="text-xs font-semibold text-zinc-800">Aktifkan Pengingat Harian</p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-xs font-semibold text-foreground">Aktifkan Pengingat Harian</p>
+                  <p className="text-[11px] text-muted">
                     Bot akan mengecek mutasi transaksi dan mengirim notifikasi jika belum tutup buku.
                   </p>
                 </div>
@@ -535,29 +535,27 @@ export function OnboardingWizard({
                     onChange={(e) => setEnableReminder(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
               {enableReminder && (
                 <div className="space-y-4 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                      Jam Pengingat
+                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                      Jam pengingat
                     </label>
-                    <div className="relative">
-                      <input
-                        type="time"
-                        value={reminderTime}
-                        onChange={(e) => setReminderTime(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                      />
-                    </div>
+                    <input
+                      type="time"
+                      value={reminderTime}
+                      onChange={(e) => setReminderTime(e.target.value)}
+                      className="w-full h-[46px] px-3.5 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-xs"
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-2">
-                      Hari Pengingat
+                    <label className="block text-xs font-medium text-foreground mb-2">
+                      Hari pengingat
                     </label>
                     <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                       {DAYS.map((day) => {
@@ -567,10 +565,10 @@ export function OnboardingWizard({
                             key={day.id}
                             type="button"
                             onClick={() => toggleDay(day.id)}
-                            className={`py-2 text-xs font-medium rounded-lg border transition-all ${
+                            className={`py-2 text-xs font-medium rounded-lg border transition-all cursor-pointer ${
                               isSelected
-                                ? "bg-zinc-900 border-zinc-900 text-white"
-                                : "bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                                ? "bg-primary border-primary text-primary-fg font-semibold shadow-xs"
+                                : "bg-background border-border text-muted hover:text-foreground"
                             }`}
                           >
                             {day.label}
@@ -589,47 +587,47 @@ export function OnboardingWizard({
         {currentStep === 6 && (
           <div className="space-y-5 animate-in fade-in duration-150">
             <div>
-              <h2 className="text-base font-bold text-zinc-900">Ringkasan & Aktivasi</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h2 className="text-base font-bold text-foreground">Ringkasan & Aktivasi</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Periksa kembali konfigurasi unit usaha Anda sebelum mengaktifkan akun.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-3 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-zinc-200/60">
-                <span className="text-zinc-500">Nama Bisnis:</span>
-                <span className="font-semibold text-zinc-900">{businessName}</span>
+            <div className="p-4 rounded-2xl bg-background border border-border space-y-3 text-xs">
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-muted">Nama Bisnis:</span>
+                <span className="font-semibold text-foreground">{businessName}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-zinc-200/60">
-                <span className="text-zinc-500">Zona Waktu:</span>
-                <span className="font-mono text-zinc-900">{timezone}</span>
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-muted">Zona Waktu:</span>
+                <span className="font-mono text-foreground">{timezone}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-zinc-200/60">
-                <span className="text-zinc-500">Produk Pertama:</span>
-                <span className="font-semibold text-zinc-900">
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-muted">Produk Pertama:</span>
+                <span className="font-semibold text-foreground">
                   {productName} ({productUnit}) — Rp {productPrice.toLocaleString("id-ID")}
                 </span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-zinc-200/60">
-                <span className="text-zinc-500">Kanal Pilihan:</span>
-                <span className="font-semibold text-zinc-900 uppercase">{channel}</span>
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-muted">Kanal Pilihan:</span>
+                <span className="font-semibold text-foreground uppercase">{channel}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-zinc-200/60">
-                <span className="text-zinc-500">Operator Telegram:</span>
-                <span className="font-mono text-zinc-900">
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-muted">Operator Telegram:</span>
+                <span className="font-mono text-foreground">
                   {telegramUserId || "Belum didaftarkan"}
                 </span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-zinc-500">Pengingat Harian:</span>
-                <span className="font-semibold text-zinc-900">
+                <span className="text-muted">Pengingat Harian:</span>
+                <span className="font-semibold text-foreground">
                   {enableReminder ? `Aktif (${reminderTime} WIB)` : "Nonaktif"}
                 </span>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <span>
                 Setelah aktivasi, Anda akan menjadi <strong>Pemilik (Owner)</strong> bisnis ini dan langsung diarahkan ke Dashboard OXID WA Ledger.
               </span>
@@ -638,16 +636,16 @@ export function OnboardingWizard({
         )}
 
         {/* Wizard Controls */}
-        <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={() => setCurrentStep(currentStep - 1)}
               disabled={submitting}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 h-[44px] rounded-xl border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-foreground transition-colors disabled:opacity-50 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
-              Kembali
+              <span>Kembali</span>
             </button>
           ) : (
             <div />
@@ -668,9 +666,9 @@ export function OnboardingWizard({
                 setSubmitError(null);
                 setCurrentStep(currentStep + 1);
               }}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-1.5 px-6 h-[44px] rounded-xl bg-primary hover:bg-primary-hover text-xs font-semibold text-primary-fg shadow-xs transition-colors cursor-pointer"
             >
-              Lanjutkan
+              <span>Lanjutkan</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
@@ -678,10 +676,10 @@ export function OnboardingWizard({
               type="button"
               onClick={handleComplete}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-bold text-zinc-950 transition-colors shadow-md disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 h-[44px] rounded-xl bg-primary hover:bg-primary-hover text-xs font-bold text-primary-fg transition-all shadow-sm disabled:opacity-50 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-              {submitting ? "Mengaktifkan..." : "Aktifkan Bisnis & Buka Dashboard"}
+              <span>{submitting ? "Mengaktifkan..." : "Aktifkan Bisnis & Buka Dashboard"}</span>
             </button>
           )}
         </div>

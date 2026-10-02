@@ -10,9 +10,16 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
   RefreshCw,
   AlertCircle,
   ShieldCheck,
+  Sparkles,
+  Scale,
+  Coins,
+  MessageSquare,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   createBusinessAction,
@@ -25,6 +32,7 @@ import {
 import { BusinessOnboardingProgress } from "@/modules/onboarding/types";
 import { formatIDR } from "@/modules/subscriptions/plans";
 import { TelegramPairingCard } from "@/components/telegram/telegram-pairing-card";
+import { useTheme } from "@/components/theme/theme-provider";
 
 interface ClientOnboardingViewProps {
   initialBusiness: {
@@ -44,6 +52,7 @@ export function ClientOnboardingView({
   initialProgress,
 }: ClientOnboardingViewProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
 
   // Wizard state
   const [business, setBusiness] = useState(initialBusiness);
@@ -85,6 +94,7 @@ export function ClientOnboardingView({
     unit: string;
     totalAmountIdr: number;
   } | null>(null);
+  const [copiedExample, setCopiedExample] = useState(false);
 
   // Calculate percentage
   const getPercentage = () => {
@@ -204,71 +214,139 @@ export function ClientOnboardingView({
     }
   };
 
-  const stepTitles = [
-    "Profil Usaha",
-    "Tambah Produk",
-    "Hubungkan Telegram",
-    "Catat Transaksi",
-    "Google Sheets",
-    "Selesai",
+  const copyExampleCommand = () => {
+    const text = `Kejual ${productName || "Lele"} 1${unit || "kg"}`;
+    navigator.clipboard.writeText(text);
+    setCopiedExample(true);
+    setTimeout(() => setCopiedExample(false), 2000);
+  };
+
+  const stepsMeta = [
+    { id: 1, title: "Profil", fullTitle: "Profil Usaha", icon: Building2 },
+    { id: 2, title: "Produk", fullTitle: "Produk Pertama", icon: Package },
+    { id: 3, title: "Telegram", fullTitle: "Bot Telegram", icon: Bot },
+    { id: 4, title: "Transaksi", fullTitle: "Uji Transaksi", icon: Receipt },
+    { id: 5, title: "Sheets", fullTitle: "Google Sheets", icon: FileSpreadsheet },
+  ];
+
+  const stepDescriptions = [
+    "Lengkapi informasi dasar usaha untuk memulai pencatatan dan laporan operasional.",
+    "Daftarkan produk utama dan harga jual awal agar bot mengenali transaksi kasir.",
+    "Sambungkan akun Telegram kasir ke bot OXID Ledger untuk mulai mencatat transaksi.",
+    "Kirim pesan transaksi pertama ke bot Telegram untuk memverifikasi pencatatan otomatis.",
+    "Hubungkan Google Sheets sebagai salinan cadangan realtime transaksi Anda (opsional).",
+    "Konfigurasi usaha Anda telah siap. Buka dashboard untuk memulai operasional.",
   ];
 
   return (
-    <div className="max-w-2xl mx-auto w-full py-8 px-4 sm:px-6 space-y-8">
-      {/* Top Header & Step Progress */}
-      <div className="space-y-4 text-center sm:text-left">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-              Langkah {currentStep} dari 5
-            </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">
-              {stepTitles[currentStep - 1] || "Aktivasi Klien"}
+    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+      {/* ========================================================================= */}
+      {/* STEP PROGRESS & HEADER SYSTEM                                             */}
+      {/* ========================================================================= */}
+      <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        {/* Step Info Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                Langkah {Math.min(currentStep, 5)} dari 5
+              </span>
+              <span className="text-xs text-muted">· Onboarding Klien</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              {currentStep <= 5 ? stepsMeta[currentStep - 1]?.fullTitle : "Aktivasi Selesai"}
             </h1>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed max-w-2xl">
+              {stepDescriptions[currentStep - 1] || "Pengaturan awal usaha Anda."}
+            </p>
           </div>
-          <div className="flex items-center gap-2 self-center sm:self-auto">
-            <span className="text-xs font-mono font-bold text-emerald-400">
-              {getPercentage()}% Selesai
-            </span>
+
+          <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+            <div className="px-3 py-1.5 rounded-xl bg-surface-hover border border-border text-xs font-semibold tabular-nums text-foreground flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span>{getPercentage()}% Selesai</span>
+            </div>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="w-full bg-zinc-800/80 h-2 rounded-full overflow-hidden">
+        {/* Linear Progress Bar */}
+        <div className="w-full bg-border/60 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out"
+            className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
             style={{ width: `${getPercentage()}%` }}
           />
         </div>
 
-        {/* Step Indicator Badges (Horizontal scroll on mobile) */}
-        <div className="flex items-center justify-between overflow-x-auto py-1 gap-2 text-[11px] font-medium text-zinc-400 no-scrollbar">
-          <span className={currentStep >= 1 ? "text-emerald-400 font-semibold" : ""}>
-            1. Profil
-          </span>
-          <span>&rarr;</span>
-          <span className={currentStep >= 2 ? "text-emerald-400 font-semibold" : ""}>
-            2. Produk
-          </span>
-          <span>&rarr;</span>
-          <span className={currentStep >= 3 ? "text-emerald-400 font-semibold" : ""}>
-            3. Telegram
-          </span>
-          <span>&rarr;</span>
-          <span className={currentStep >= 4 ? "text-emerald-400 font-semibold" : ""}>
-            4. Transaksi
-          </span>
-          <span>&rarr;</span>
-          <span className={currentStep >= 5 ? "text-emerald-400 font-semibold" : ""}>
-            5. Sheets
-          </span>
+        {/* Desktop Stepper Nodes */}
+        <div className="hidden sm:grid grid-cols-5 gap-2 pt-1 border-t border-border/70">
+          {stepsMeta.map((s) => {
+            const Icon = s.icon;
+            const isCompleted = currentStep > s.id;
+            const isCurrent = currentStep === s.id;
+            return (
+              <div
+                key={s.id}
+                className="flex items-center gap-2.5 py-1 text-xs"
+              >
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                    isCurrent
+                      ? "bg-primary text-primary-fg font-bold shadow-xs shadow-primary/20 ring-2 ring-primary/20"
+                      : isCompleted
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-surface-hover border border-border text-muted"
+                  }`}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : (
+                    <Icon className="w-3.5 h-3.5" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span
+                    className={`block truncate text-xs ${
+                      isCurrent
+                        ? "font-semibold text-foreground"
+                        : isCompleted
+                        ? "text-foreground/80 font-medium"
+                        : "text-muted"
+                    }`}
+                  >
+                    {s.title}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mobile Stepper Chips (360px-430px safe, zero overflow) */}
+        <div className="sm:hidden flex items-center justify-between gap-1.5 pt-2 border-t border-border/70">
+          {stepsMeta.map((s) => {
+            const isCompleted = currentStep > s.id;
+            const isCurrent = currentStep === s.id;
+            return (
+              <div
+                key={s.id}
+                className={`flex-1 h-1.5 rounded-full transition-all ${
+                  isCurrent
+                    ? "bg-primary ring-2 ring-primary/20"
+                    : isCompleted
+                    ? "bg-primary"
+                    : "bg-border"
+                }`}
+                title={s.title}
+              />
+            );
+          })}
         </div>
       </div>
 
       {/* Error Alert */}
       {errorMsg && (
-        <div className="rounded-2xl bg-rose-950/40 border border-rose-800/50 p-4 text-xs text-rose-300 flex items-start gap-3">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className="rounded-2xl bg-rose-500/10 border border-rose-500/30 p-4 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-3 animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="font-semibold">Perhatian</p>
             <p>{errorMsg}</p>
@@ -276,313 +354,500 @@ export function ClientOnboardingView({
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 1: Profil Bisnis                                              */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 1: Profil Bisnis                                                     */}
+      {/* ========================================================================= */}
       {currentStep === 1 && (
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl backdrop-blur-sm">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-emerald-400" />
-              <span>Lengkapi Informasi Bisnis Anda</span>
-            </h2>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Nama dan zona waktu ini akan digunakan untuk laporan harian dan pencatatan transaksi Anda.
-            </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main Form (8 Cols) */}
+          <div className="lg:col-span-8 bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-border">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  Identitas & Pengaturan Operasional
+                </h2>
+                <p className="text-xs text-muted">
+                  Informasi ini digunakan untuk laporan harian dan pencatatan transaksi Anda.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateBusiness} className="space-y-5">
+              {/* Nama Usaha */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                  Nama usaha / toko <span className="text-rose-500">*</span>
+                </label>
+                <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                  <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Contoh: Tambak Lele Berkah"
+                    className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Jenis Usaha & Nama Pemilik */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Jenis usaha
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full h-[48px] px-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+                  >
+                    <option value="Perikanan">Perikanan / Tambak</option>
+                    <option value="Peternakan">Peternakan</option>
+                    <option value="F&B">Kuliner / F&B</option>
+                    <option value="Toko">Toko Kelontong / Retail</option>
+                    <option value="Reseller">Reseller / Agen</option>
+                    <option value="Distributor">Distributor</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Nama pemilik (opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    placeholder="Nama Pemilik Usaha"
+                    className="w-full h-[48px] px-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Zona Waktu & Satuan Default */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Zona waktu operasional
+                  </label>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full h-[48px] px-3.5 rounded-xl bg-background border border-border text-foreground text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+                  >
+                    <option value="Asia/Pontianak">Asia/Pontianak (WIB Barat/WITA)</option>
+                    <option value="Asia/Jakarta">Asia/Jakarta (WIB)</option>
+                    <option value="Asia/Makassar">Asia/Makassar (WITA)</option>
+                    <option value="Asia/Jayapura">Asia/Jayapura (WIT)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Satuan default transaksi
+                  </label>
+                  <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                    <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                      <Scale className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      value={defaultUnit}
+                      onChange={(e) => setDefaultUnit(e.target.value)}
+                      placeholder="kg, pcs, porsi, liter"
+                      className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Submit */}
+              <div className="pt-4 border-t border-border flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto h-[48px] px-8 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan Profil...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Simpan Profil & Lanjut</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
 
-          <form onSubmit={handleCreateBusiness} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                Nama Usaha / Toko <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Contoh: Tambak Lele Berkah"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Jenis Usaha
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                >
-                  <option value="Perikanan">Perikanan / Tambak</option>
-                  <option value="Peternakan">Peternakan</option>
-                  <option value="F&B">Kuliner / F&B</option>
-                  <option value="Toko">Toko Kelontong / Retail</option>
-                  <option value="Reseller">Reseller / Agen</option>
-                  <option value="Distributor">Distributor</option>
-                  <option value="Lainnya">Lainnya</option>
-                </select>
+          {/* Right Guidance Panel (4 Cols, Desktop only) */}
+          <div className="hidden lg:block lg:col-span-4 space-y-4">
+            <div className="bg-surface/60 border border-border rounded-2xl p-6 space-y-4 text-xs shadow-xs">
+              <div className="flex items-center gap-2 text-primary font-semibold">
+                <Sparkles className="w-4 h-4" />
+                <span>Mengapa data ini diperlukan?</span>
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Nama Pemilik
-                </label>
-                <input
-                  type="text"
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
-                  placeholder="Nama Pemilik Usaha"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                />
+              <ul className="space-y-3 text-muted leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                  <span>
+                    <strong className="text-foreground">Identitas Usaha:</strong> Tercantum pada tajuk rekap laporan harian dan struk penjualan digital kasir.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                  <span>
+                    <strong className="text-foreground">Zona Waktu:</strong> Menentukan jam cut-off pergantian tanggal laporan operasional agar sesuai waktu setempat.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                  <span>
+                    <strong className="text-foreground">Satuan Default:</strong> Mempercepat kasir mencatat transaksi di chat tanpa perlu menuliskan nama satuan berulang kali.
+                  </span>
+                </li>
+              </ul>
+              <div className="pt-3 border-t border-border flex items-center gap-2 text-[11px] text-muted">
+                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                <span>Data bisnis Anda terisolasi aman dengan enkripsi PostgreSQL.</span>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Zona Waktu
-                </label>
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                >
-                  <option value="Asia/Pontianak">Asia/Pontianak (WIB Barat/WITA)</option>
-                  <option value="Asia/Jakarta">Asia/Jakarta (WIB)</option>
-                  <option value="Asia/Makassar">Asia/Makassar (WITA)</option>
-                  <option value="Asia/Jayapura">Asia/Jayapura (WIT)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Satuan Default
-                </label>
-                <input
-                  type="text"
-                  value={defaultUnit}
-                  onChange={(e) => setDefaultUnit(e.target.value)}
-                  placeholder="kg, pcs, porsi, liter"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-800">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 min-h-[44px] transition-colors"
-              >
-                {loading ? "Menyimpan Profil..." : "Simpan Profil & Lanjut"}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 2: Tambah Produk Pertama                                      */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 2: Tambah Produk Pertama                                             */}
+      {/* ========================================================================= */}
       {currentStep === 2 && (
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl backdrop-blur-sm">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Package className="w-5 h-5 text-emerald-400" />
-              <span>Tambahkan Produk Utama Anda</span>
-            </h2>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Bot mengenali transaksi dari nama produk dan alias yang Anda daftarkan di sini.
-            </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main Form (8 Cols) */}
+          <div className="lg:col-span-8 bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-border">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Package className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  Katalog Produk Utama
+                </h2>
+                <p className="text-xs text-muted">
+                  Bot mengenali transaksi dari nama produk dan alias yang Anda daftarkan di sini.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddFirstProduct} className="space-y-5">
+              {/* Nama Produk */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                  Nama produk <span className="text-rose-500">*</span>
+                </label>
+                <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                  <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    placeholder="Contoh: Lele"
+                    className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Satuan & Harga */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Satuan unit <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                    <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                      <Scale className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="kg, pcs, ekor"
+                      className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                    Harga default (Rp) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                    <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                      <Coins className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="number"
+                      required
+                      value={priceIdr}
+                      onChange={(e) => setPriceIdr(e.target.value)}
+                      placeholder="28000"
+                      className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none tabular-nums"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Alias */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5">
+                  Alias / variasi sebutan di chat
+                </label>
+                <div className="h-[48px] relative flex items-center rounded-xl bg-background border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors shadow-xs">
+                  <div className="pl-3.5 flex items-center pointer-events-none text-muted">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={aliases}
+                    onChange={(e) => setAliases(e.target.value)}
+                    placeholder="lele, ikan lele, lele sangkuriang"
+                    className="w-full bg-transparent px-3 h-full text-sm text-foreground placeholder:text-muted focus:outline-none"
+                  />
+                </div>
+                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">
+                  Pisahkan dengan tanda koma. Membantu sistem mengenali variasi ketikan saat kasir menulis nama produk di chat.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  className="w-full sm:w-auto h-[48px] px-5 rounded-xl border border-border bg-surface hover:bg-surface-hover text-foreground text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Kembali ke Profil</span>
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto h-[48px] px-8 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan Produk...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Simpan Produk & Lanjut</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
 
-          <form onSubmit={handleAddFirstProduct} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                Nama Produk <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="Contoh: Lele"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Satuan Unit <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  placeholder="kg, pcs, ekor"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                />
+          {/* Right Live Preview Panel (4 Cols, Desktop only) */}
+          <div className="hidden lg:block lg:col-span-4 space-y-4">
+            <div className="bg-surface/60 border border-border rounded-2xl p-6 space-y-4 text-xs shadow-xs">
+              <div className="flex items-center gap-2 text-primary font-semibold">
+                <Sparkles className="w-4 h-4" />
+                <span>Pratinjau Pengenalan Bot</span>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                  Harga Default (Rp) <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={priceIdr}
-                  onChange={(e) => setPriceIdr(e.target.value)}
-                  placeholder="28000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-                />
+              <div className="p-3.5 rounded-xl bg-surface-hover border border-border space-y-2">
+                <span className="text-[10px] font-semibold text-muted uppercase tracking-wider block">
+                  Simulasi Pesan Kasir:
+                </span>
+                <p className="font-mono text-xs text-foreground font-semibold">
+                  &ldquo;Kejual {productName || "Lele"} 2{unit || "kg"}&rdquo;
+                </p>
+                <div className="pt-2 border-t border-border/80 space-y-1 text-[11px]">
+                  <div className="flex justify-between text-muted">
+                    <span>Produk:</span>
+                    <span className="font-medium text-foreground">{productName || "Lele"}</span>
+                  </div>
+                  <div className="flex justify-between text-muted">
+                    <span>Total Estimasi:</span>
+                    <span className="font-bold text-primary tabular-nums">
+                      {formatIDR((Number(priceIdr) || 0) * 2)}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-                Alias / Variasi Nama Chat
-              </label>
-              <input
-                type="text"
-                value={aliases}
-                onChange={(e) => setAliases(e.target.value)}
-                placeholder="lele, ikan lele, lele sangkuriang"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700/80 text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-              />
-              <p className="text-[11px] text-zinc-500 mt-1.5 leading-relaxed">
-                Pisahkan dengan tanda koma. Membantu bot mengenali saat Anda mengetik nama produk dengan sebutan santai di chat.
+              <p className="text-[11px] text-muted leading-relaxed">
+                Anda dapat menambahkan lebih banyak produk, kategori, dan harga grosir kapan saja melalui menu Produk di dashboard.
               </p>
             </div>
-
-            <div className="pt-4 border-t border-zinc-800">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 min-h-[44px] transition-colors"
-              >
-                {loading ? "Menyimpan Produk..." : "Simpan Produk & Lanjut"}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 3: Hubungkan Telegram                                         */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 3: Hubungkan Telegram                                                */}
+      {/* ========================================================================= */}
       {currentStep === 3 && (
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl backdrop-blur-sm">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Bot className="w-5 h-5 text-emerald-400" />
-              <span>Hubungkan Akun Telegram</span>
-            </h2>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Hubungkan bot Telegram resmi agar Anda dapat langsung mengirim transaksi melalui chat.
-            </p>
+        <div className="max-w-2xl mx-auto w-full bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-border">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Hubungkan Akun Bot Telegram
+              </h2>
+              <p className="text-xs text-muted">
+                Hubungkan bot Telegram resmi agar Anda atau kasir dapat langsung mengirim transaksi melalui chat.
+              </p>
+            </div>
           </div>
 
           {telegramConnected ? (
-            <div className="p-6 rounded-2xl bg-emerald-950/30 border border-emerald-800/40 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-6 h-6" />
+            <div className="p-6 sm:p-8 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-xs">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-emerald-300">Telegram Berhasil Terhubung!</h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {operatorLabel ? `Terdaftar sebagai: ${operatorLabel}` : "Akun Anda telah aktif sebagai operator resmi."}
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-foreground">
+                  Telegram Berhasil Terhubung!
+                </h3>
+                <p className="text-xs text-muted">
+                  {operatorLabel
+                    ? `Terdaftar sebagai: ${operatorLabel}`
+                    : "Akun Anda telah aktif sebagai operator kasir resmi."}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setCurrentStep(4)}
-                className="py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm inline-flex items-center gap-2 min-h-[44px] transition-colors shadow-md"
+                className="h-[48px] px-8 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-sm inline-flex items-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <span>Lanjut ke Transaksi Pertama</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <TelegramPairingCard
-              theme="dark"
-              generateToken={async () => {
-                if (!business) return { success: false, error: "Profil bisnis belum dibuat." };
-                return await generatePairingTokenAction(business.id);
-              }}
-              checkStatus={async () => {
-                if (!business) return { success: false, paired: false };
-                const res = await checkTelegramStatusAction(business.id);
-                return {
-                  success: true,
-                  paired: res.connected,
-                  operatorLabel: res.operatorLabel,
-                };
-              }}
-              onSuccess={(details) => {
-                setTelegramConnected(true);
-                if (details?.operatorLabel) setOperatorLabel(details.operatorLabel);
-              }}
-            />
+            <div className="space-y-6">
+              <TelegramPairingCard
+                theme={resolvedTheme === "dark" ? "dark" : "light"}
+                generateToken={async () => {
+                  if (!business) return { success: false, error: "Profil bisnis belum dibuat." };
+                  return await generatePairingTokenAction(business.id);
+                }}
+                checkStatus={async () => {
+                  if (!business) return { success: false, paired: false };
+                  const res = await checkTelegramStatusAction(business.id);
+                  return {
+                    success: true,
+                    paired: res.connected,
+                    operatorLabel: res.operatorLabel,
+                  };
+                }}
+                onSuccess={(details) => {
+                  setTelegramConnected(true);
+                  if (details?.operatorLabel) setOperatorLabel(details.operatorLabel);
+                }}
+              />
+
+              <div className="pt-4 border-t border-border flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  className="h-[44px] px-4 rounded-xl border border-border bg-surface hover:bg-surface-hover text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Kembali ke Produk</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(4)}
+                  className="text-xs font-medium text-muted hover:text-foreground transition-colors underline"
+                >
+                  Lewati langkah ini untuk sekarang &rarr;
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 4: Catat Transaksi Pertama                                    */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 4: Catat Transaksi Pertama                                           */}
+      {/* ========================================================================= */}
       {currentStep === 4 && (
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl backdrop-blur-sm">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-emerald-400" />
-              <span>Coba Catat Transaksi Pertama</span>
-            </h2>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Buka obrolan Telegram dengan bot, lalu kirim pesan penjualan seperti Anda mengobrol biasa.
-            </p>
+        <div className="max-w-2xl mx-auto w-full bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-border">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Coba Catat Transaksi Pertama
+              </h2>
+              <p className="text-xs text-muted">
+                Buka obrolan Telegram dengan bot, lalu kirim pesan penjualan seperti Anda mengobrol biasa.
+              </p>
+            </div>
           </div>
 
           {firstTxRecorded ? (
-            <div className="p-6 rounded-2xl bg-emerald-950/30 border border-emerald-800/40 space-y-4">
+            <div className="p-6 sm:p-8 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-emerald-300">
+                  <h3 className="text-sm font-bold text-foreground">
                     Transaksi Pertama Anda Berhasil Dicatat!
                   </h3>
-                  <p className="text-xs text-zinc-400">Tersimpan di buku besar keuangan PostgreSQL.</p>
+                  <p className="text-xs text-muted">
+                    Tersimpan secara realtime di buku besar keuangan PostgreSQL.
+                  </p>
                 </div>
               </div>
 
               {txDetails && (
-                <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs space-y-1.5 font-mono">
-                  <div className="flex justify-between text-zinc-400">
+                <div className="p-4 rounded-xl bg-surface border border-border text-xs space-y-2">
+                  <div className="flex justify-between text-muted">
                     <span>Produk:</span>
-                    <span className="text-zinc-200 font-semibold">{txDetails.productName}</span>
+                    <span className="text-foreground font-semibold">{txDetails.productName}</span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
+                  <div className="flex justify-between text-muted">
                     <span>Kuantitas:</span>
-                    <span className="text-zinc-200">{txDetails.quantity} {txDetails.unit}</span>
+                    <span className="text-foreground">{txDetails.quantity} {txDetails.unit}</span>
                   </div>
-                  <div className="flex justify-between text-zinc-400 pt-1.5 border-t border-zinc-800">
+                  <div className="flex justify-between text-muted pt-2 border-t border-border">
                     <span>Total Pembukuan:</span>
-                    <span className="text-emerald-400 font-bold">{formatIDR(txDetails.totalAmountIdr)}</span>
+                    <span className="text-primary font-bold text-sm tabular-nums">
+                      {formatIDR(txDetails.totalAmountIdr)}
+                    </span>
                   </div>
                 </div>
               )}
 
               <button
+                type="button"
                 onClick={() => setCurrentStep(5)}
-                className="w-full py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 min-h-[44px] transition-colors"
+                className="w-full h-[48px] px-5 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <span>Lanjut ke Langkah Berikutnya</span>
                 <ArrowRight className="w-4 h-4" />
@@ -590,51 +855,93 @@ export function ClientOnboardingView({
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">
+              <div className="p-5 rounded-2xl bg-background border border-border space-y-3">
+                <span className="text-xs font-semibold text-muted uppercase tracking-wider block">
                   Contoh Pesan Chat di Telegram:
                 </span>
-                <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-emerald-300 font-mono text-sm font-bold text-center">
-                  &ldquo;Kejual {productName} 1{unit}&rdquo;
+                <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between gap-3">
+                  <span className="font-mono text-base font-bold text-primary">
+                    &ldquo;Kejual {productName} 1{unit}&rdquo;
+                  </span>
+                  <button
+                    type="button"
+                    onClick={copyExampleCommand}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-hover border border-border text-xs font-medium text-foreground hover:bg-surface transition-colors cursor-pointer"
+                  >
+                    {copiedExample ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-muted" />
+                        <span>Salin</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
-                  Ketik dan kirim kalimat tersebut ke bot Telegram yang baru saja Anda hubungkan.
+                <p className="text-[11px] text-muted leading-relaxed">
+                  Ketik atau tempel kalimat di atas ke bot Telegram yang telah Anda sambungkan.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-zinc-950/40 border border-zinc-800 flex items-center gap-3">
-                <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
-                <span className="text-xs text-zinc-400">
-                  Menunggu Anda mengirim transaksi pertama di Telegram...
+              <div className="p-4 rounded-2xl bg-surface-hover border border-border flex items-center gap-3">
+                <RefreshCw className="w-4 h-4 text-primary animate-spin shrink-0" />
+                <span className="text-xs text-muted">
+                  Menunggu Anda mengirim transaksi pertama di Telegram... (otomatis terdeteksi)
                 </span>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(3)}
+                  className="h-[44px] px-4 rounded-xl border border-border bg-surface hover:bg-surface-hover text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Kembali ke Telegram</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(5)}
+                  className="text-xs font-medium text-muted hover:text-foreground transition-colors underline"
+                >
+                  Lewati uji transaksi &rarr;
+                </button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 5: Google Sheets (Opsional)                                   */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 5: Google Sheets (Opsional)                                          */}
+      {/* ========================================================================= */}
       {currentStep === 5 && (
-        <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl backdrop-blur-sm">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-              <span>Sinkronisasi Google Sheets (Opsional)</span>
-            </h2>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Gunakan Google Sheets jika Anda atau tim Anda masih ingin memantau salinan laporan transaksi dalam format spreadsheet.
-            </p>
+        <div className="max-w-2xl mx-auto w-full bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-border">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Sinkronisasi Google Sheets (Opsional)
+              </h2>
+              <p className="text-xs text-muted">
+                Gunakan Google Sheets jika Anda atau tim Anda ingin memantau salinan data transaksi dalam format spreadsheet.
+              </p>
+            </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800 space-y-3">
+          <div className="p-5 rounded-2xl bg-background border border-border space-y-3">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-zinc-300 space-y-1">
-                <p className="font-semibold text-zinc-100">Bebas Dipilih Kapan Saja</p>
-                <p className="text-zinc-400 leading-relaxed">
-                  Fitur ini tidak wajib untuk menggunakan OXID Ledger. Anda bisa melewatinya sekarang dan menghubungkannya nanti dari menu Pengaturan Dashboard.
+              <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="text-xs text-foreground space-y-1">
+                <p className="font-semibold text-foreground">Bebas Dipilih Kapan Saja</p>
+                <p className="text-muted leading-relaxed">
+                  Fitur ini tidak wajib untuk menggunakan OXID Ledger. Anda bisa melewatinya sekarang dan menghubungkannya nanti kapan saja dari menu Pengaturan Dashboard.
                 </p>
               </div>
             </div>
@@ -642,63 +949,76 @@ export function ClientOnboardingView({
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
+              type="button"
               onClick={handleSkipGoogleSheets}
               disabled={loading}
-              className="flex-1 py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-2 min-h-[44px] transition-colors shadow-md"
+              className="flex-1 h-[48px] px-5 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              <span>Lewati untuk Sekarang & Selesai</span>
-              <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Menyelesaikan...</span>
+                </>
+              ) : (
+                <>
+                  <span>Lewati untuk Sekarang & Selesai</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
             <a
               href="/dashboard/settings/google-sheets"
-              className="py-3 px-5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs flex items-center justify-center gap-2 min-h-[44px] transition-colors border border-zinc-700"
+              className="h-[48px] px-5 rounded-xl bg-surface hover:bg-surface-hover text-foreground font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-border"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-              <span>Hubungkan Spreadsheet Sekarang</span>
+              <FileSpreadsheet className="w-4 h-4 text-primary" />
+              <span>Hubungkan Spreadsheet</span>
             </a>
           </div>
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STEP 6: Selesai / 100% Onboarding Completed                         */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ========================================================================= */}
+      {/* STEP 6: Selesai / 100% Onboarding Completed                                */}
+      {/* ========================================================================= */}
       {currentStep === 6 && (
-        <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl backdrop-blur-md">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+        <div className="max-w-xl mx-auto w-full bg-surface border border-border rounded-3xl p-8 sm:p-12 text-center space-y-6 shadow-xs animate-in zoom-in-95 duration-200">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-xs">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-zinc-50">Selamat! OXID Ledger Siap Digunakan</h2>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Selamat! OXID Ledger Siap Digunakan
+            </h2>
+            <p className="text-xs sm:text-sm text-muted max-w-md mx-auto leading-relaxed">
               Usaha Anda telah terkonfigurasi dengan sukses. Anda dapat langsung memantau transaksi, memeriksa omzet, dan mengelola produk di dashboard.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800 text-left text-xs space-y-2 max-w-sm mx-auto">
-            <div className="flex items-center gap-2 text-zinc-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="p-5 rounded-2xl bg-background border border-border text-left text-xs space-y-2.5 max-w-sm mx-auto">
+            <div className="flex items-center gap-2.5 text-foreground">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>Profil Usaha: <strong>{business?.name}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-foreground">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>Produk Utama: <strong>{productName}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-foreground">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>Bot Telegram: <strong>Terhubung</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-foreground">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>Masa Uji Coba: <strong>14 Hari Gratis Aktif</strong></span>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-3">
             <button
+              type="button"
               onClick={() => router.push("/dashboard")}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-sm shadow-xl shadow-emerald-500/20 min-h-[44px] transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-[50px] px-8 rounded-xl bg-primary hover:bg-primary-hover text-primary-fg font-bold text-sm shadow-md transition-all cursor-pointer"
             >
               <span>Buka Dashboard Bisnis</span>
               <ArrowRight className="w-4 h-4" />
