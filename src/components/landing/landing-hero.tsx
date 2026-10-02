@@ -38,26 +38,30 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
     : Math.max(0, 1 - (progress - 0.18) / 0.22);
 
   // 2. Ring / Arc (The Primary Transition Object):
-  // Rises, expands, and dynamically rotates on scroll!
+  // Clearly visible at initial load (0.75), dominant at 30% (0.95), frames dashboard at 70%+ (0.48)
   const arcRotation = isMobile || reducedMotion
     ? 0
     : progress < 0.15
     ? 0
-    : Math.min(80, ((progress - 0.15) / 0.70) * 80); // 0deg -> 80deg
+    : Math.min(65, ((progress - 0.15) / 0.70) * 65); // 0deg -> 65deg
 
   const arcTranslateY = isMobile || reducedMotion
     ? 0
     : progress < 0.15
-    ? 70
-    : 70 - Math.min(1, (progress - 0.15) / 0.70) * 100; // 70px -> -30px
+    ? 0
+    : -Math.min(1, (progress - 0.15) / 0.70) * 50; // 0px -> -50px
 
   const arcScale = isMobile || reducedMotion
     ? 1
-    : 0.92 + Math.min(progress, 0.85) * 0.18; // 0.92 -> 1.10
+    : 0.95 + Math.min(progress, 0.85) * 0.12; // 0.95 -> 1.07
 
   const arcOpacity = isMobile || reducedMotion
-    ? 1
-    : 0.50 + Math.min(progress, 0.70) * 0.45; // 0.50 -> 0.95
+    ? 0.90
+    : progress < 0.25
+    ? 0.75 + (progress / 0.25) * 0.20 // 0.75 -> 0.95
+    : progress < 0.50
+    ? 0.95
+    : Math.max(0.48, 0.95 - ((progress - 0.50) / 0.35) * 0.47); // 0.95 -> 0.48 behind dashboard
 
   // 3. Product Dashboard Preview:
   // MUST NOT BE VISIBLE AT INITIAL LOAD! (Strictly opacity: 0, pointerEvents: "none")
@@ -175,8 +179,8 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
         <div
           className={`${
             isMobile || reducedMotion
-              ? "relative w-full mt-4 -mb-28 sm:-mb-36 z-0 overflow-hidden"
-              : "absolute inset-x-0 mx-auto top-[28%] sm:top-[22%] w-full max-w-[1280px] flex justify-center z-10 will-change-transform pointer-events-none"
+              ? "relative w-full mt-2 -mb-16 sm:-mb-24 z-0 overflow-visible px-2"
+              : "absolute inset-x-0 mx-auto top-[28%] sm:top-[27%] lg:top-[26%] w-full max-w-[1340px] flex justify-center z-10 will-change-transform pointer-events-none"
           }`}
           style={
             isMobile || reducedMotion

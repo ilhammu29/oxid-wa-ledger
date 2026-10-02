@@ -5,17 +5,19 @@ import React from "react";
 interface LedgerOrbitArcProps {
   className?: string;
   style?: React.CSSProperties;
-  rotation?: number; // Scroll-driven rotation angle in degrees (e.g. 0 to 80)
+  rotation?: number; // Scroll-driven rotation angle in degrees (e.g. 0 to 65)
 }
 
 /**
- * "Ledger Orbit" Atmospheric Arc — Root-Cause Rebuilt
+ * "Ledger Orbit" Atmospheric Arc — Visibility & Material Polish Pass
  * An original OXID celestial visual motif inspired by RedSun's illuminated planetary curvature.
  * Features:
- * - Dynamic scroll-driven 3D orbital plane rotation (rotateZ + perspective tilt, NO autoplay spin).
- * - Full light & dark mode adaptation:
- *   - Dark: deep obsidian body, glowing violet/indigo rim, atmospheric bloom.
- *   - Light: luminous platinum/violet celestial arc, crisp contrast, zero dirty dark smudges.
+ * - Clear physical ring body (~90px thick surface in graphite/charcoal metallic in dark mode, platinum/silver in light mode).
+ * - Dual-edge 3D architecture: bright illuminated outer rim + dark inner bevel shade.
+ * - Localized cinematic highlight: stronger luminance at top crest (slightly biased to 11 o'clock).
+ * - Two-level glow: tight near glow (14px) + wide soft far glow (40px). Zero hero fogging.
+ * - Dynamic scroll-driven 3D orbital plane rotation (rotateZ + 52deg perspective tilt, NO autoplay spin).
+ * - Theme-aware tokens: completely decoupled light and dark mode appearance.
  * - Precision graduation ticks along the perimeter for high-end instrument aesthetic.
  */
 export function LedgerOrbitArc({
@@ -23,123 +25,174 @@ export function LedgerOrbitArc({
   style = {},
   rotation = 0,
 }: LedgerOrbitArcProps) {
-  // Precision ticks along the celestial arc (9 reference coordinates)
+  // Precision ticks along the celestial arc (11 mathematically calculated normal coordinates)
   const ticks = [
-    { x1: 240, y1: 430, x2: 246, y2: 418 },
-    { x1: 320, y1: 350, x2: 328, y2: 338 },
-    { x1: 410, y1: 275, x2: 420, y2: 264 },
-    { x1: 505, y1: 220, x2: 512, y2: 206 },
-    { x1: 600, y1: 198, x2: 600, y2: 184 },
-    { x1: 695, y1: 220, x2: 688, y2: 206 },
-    { x1: 790, y1: 275, x2: 780, y2: 264 },
-    { x1: 880, y1: 350, x2: 872, y2: 338 },
-    { x1: 960, y1: 430, x2: 954, y2: 418 },
+    { x1: 170, y1: 333, x2: 187, y2: 343 },
+    { x1: 246, y1: 228, x2: 261, y2: 241 },
+    { x1: 327, y1: 148, x2: 340, y2: 163 },
+    { x1: 414, y1: 92, x2: 423, y2: 110 },
+    { x1: 505, y1: 59, x2: 510, y2: 78 },
+    { x1: 600, y1: 48, x2: 600, y2: 68 },
+    { x1: 695, y1: 59, x2: 690, y2: 78 },
+    { x1: 786, y1: 92, x2: 777, y2: 110 },
+    { x1: 873, y1: 148, x2: 860, y2: 163 },
+    { x1: 954, y1: 228, x2: 939, y2: 241 },
+    { x1: 1030, y1: 333, x2: 1013, y2: 343 },
   ];
 
   return (
     <div
-      className={`relative w-full max-w-[1280px] h-[340px] sm:h-[480px] lg:h-[620px] pointer-events-none select-none flex items-end justify-center overflow-visible ${className}`}
+      className={`relative w-full max-w-[1340px] h-[340px] sm:h-[460px] lg:h-[560px] pointer-events-none select-none flex items-start justify-center overflow-visible ${className}`}
       style={style}
       aria-hidden="true"
     >
-      {/* 1. Celestial Atmospheric Bloom (Theme-Aware) */}
+      {/* 1. Subtle Localized Background Separation Lift (Directly under ring apex) */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] h-[260px] sm:h-[400px] lg:h-[500px] rounded-full blur-[70px] sm:blur-[100px] opacity-40 dark:opacity-85 pointer-events-none -z-10"
+        className="absolute -top-4 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] h-[300px] sm:h-[400px] pointer-events-none -z-20 transition-opacity duration-300"
         style={{
-          background:
-            "radial-gradient(ellipse at 50% 100%, rgba(124, 58, 237, 0.35) 0%, rgba(99, 102, 241, 0.18) 45%, transparent 75%)",
+          background: "var(--ring-separation-gradient)",
         }}
       />
 
-      {/* 2. Secondary Horizon Glow */}
+      {/* 2. Dual-Level Ambient Glow (Near & Far) */}
+      {/* 2a. Wide Far Glow (Atmospheric Horizon Blur) */}
       <div
-        className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[110%] h-[280px] sm:h-[420px] rounded-full blur-[50px] opacity-25 dark:opacity-45 pointer-events-none -z-10"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[94%] sm:w-[88%] h-[280px] sm:h-[380px] rounded-full blur-[60px] sm:blur-[80px] pointer-events-none -z-10"
         style={{
-          background:
-            "radial-gradient(ellipse at 50% 90%, rgba(139, 92, 246, 0.25) 0%, rgba(79, 70, 229, 0.12) 50%, transparent 80%)",
+          background: "radial-gradient(ellipse at 50% 25%, var(--ring-glow-far) 0%, transparent 75%)",
         }}
       />
 
-      {/* 3. Rotating 3D Orbital Plane Container */}
+      {/* 2b. Tight Near Glow (Illuminated Rim Aura) */}
       <div
-        className="w-full h-full flex items-end justify-center will-change-transform"
+        className="absolute top-4 left-1/2 -translate-x-1/2 w-[74%] sm:w-[68%] h-[160px] sm:h-[220px] rounded-full blur-[18px] sm:blur-[24px] pointer-events-none -z-10"
         style={{
-          transform: `perspective(1000px) rotateX(24deg) rotateZ(${rotation}deg)`,
-          transformOrigin: "50% 88%",
+          background: "radial-gradient(ellipse at 50% 22%, var(--ring-glow-near) 0%, transparent 70%)",
+        }}
+      />
+
+      {/* 3. Rotating 3D Orbital Plane Container (Elliptical Perspective at 52deg) */}
+      <div
+        className="w-full h-full flex items-start justify-center will-change-transform"
+        style={{
+          transform: `perspective(1000px) rotateX(52deg) rotateZ(${rotation}deg)`,
+          transformOrigin: "50% 65%",
         }}
       >
         <svg
           className="w-full h-full overflow-visible"
-          viewBox="0 0 1200 500"
+          viewBox="0 0 1200 560"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="xMidYMax meet"
+          preserveAspectRatio="xMidYMin meet"
         >
           <defs>
-            {/* Dark Mode Rim Gradient */}
+            {/* Dark Mode Outer Rim Gradient: Localized Apex Highlight */}
             <linearGradient id="oxidArcRimDark" x1="0%" y1="100%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#7c3aed" stopOpacity="0" />
-              <stop offset="18%" stopColor="#8b5cf6" stopOpacity="0.4" />
-              <stop offset="40%" stopColor="#c4b5fd" stopOpacity="0.9" />
+              <stop offset="15%" stopColor="#8b5cf6" stopOpacity="0.65" />
+              <stop offset="30%" stopColor="#a78bfa" stopOpacity="0.90" />
+              <stop offset="46%" stopColor="#ddd6fe" stopOpacity="0.98" />
               <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-              <stop offset="60%" stopColor="#c4b5fd" stopOpacity="0.9" />
-              <stop offset="82%" stopColor="#8b5cf6" stopOpacity="0.4" />
+              <stop offset="54%" stopColor="#ddd6fe" stopOpacity="0.98" />
+              <stop offset="70%" stopColor="#a78bfa" stopOpacity="0.90" />
+              <stop offset="85%" stopColor="#8b5cf6" stopOpacity="0.65" />
               <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
             </linearGradient>
 
-            {/* Light Mode Rim Gradient */}
+            {/* Light Mode Outer Rim Gradient: Crisp Royal Indigo/Violet */}
             <linearGradient id="oxidArcRimLight" x1="0%" y1="100%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#7c3aed" stopOpacity="0" />
-              <stop offset="18%" stopColor="#7c3aed" stopOpacity="0.5" />
-              <stop offset="40%" stopColor="#6366f1" stopOpacity="0.9" />
+              <stop offset="0%" stopColor="#4338ca" stopOpacity="0" />
+              <stop offset="15%" stopColor="#6366f1" stopOpacity="0.75" />
+              <stop offset="35%" stopColor="#6d28d9" stopOpacity="0.95" />
               <stop offset="50%" stopColor="#4338ca" stopOpacity="1" />
-              <stop offset="60%" stopColor="#6366f1" stopOpacity="0.9" />
-              <stop offset="82%" stopColor="#7c3aed" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+              <stop offset="65%" stopColor="#6d28d9" stopOpacity="0.95" />
+              <stop offset="85%" stopColor="#6366f1" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#4338ca" stopOpacity="0" />
             </linearGradient>
 
-            {/* Dark Mode Body Gradient: Deep Obsidian */}
-            <radialGradient id="oxidPlanetBodyDark" cx="50%" cy="115%" r="65%">
-              <stop offset="0%" stopColor="#1e1b4b" stopOpacity="0.85" />
-              <stop offset="35%" stopColor="#0f111a" stopOpacity="0.95" />
-              <stop offset="70%" stopColor="#09090b" stopOpacity="0.98" />
-              <stop offset="100%" stopColor="#09090b" stopOpacity="0" />
+            {/* Dark Mode Inner Edge Shade: Darker Violet-Obsidian Bevel */}
+            <linearGradient id="oxidArcInnerDark" x1="0%" y1="100%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e1b4b" stopOpacity="0" />
+              <stop offset="20%" stopColor="#2e1065" stopOpacity="0.80" />
+              <stop offset="50%" stopColor="#150d30" stopOpacity="0.98" />
+              <stop offset="80%" stopColor="#2e1065" stopOpacity="0.80" />
+              <stop offset="100%" stopColor="#1e1b4b" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Light Mode Inner Edge Shade: Soft Slate Gray-Violet */}
+            <linearGradient id="oxidArcInnerLight" x1="0%" y1="100%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#94a3b8" stopOpacity="0" />
+              <stop offset="25%" stopColor="#94a3b8" stopOpacity="0.7" />
+              <stop offset="50%" stopColor="#475569" stopOpacity="0.9" />
+              <stop offset="75%" stopColor="#94a3b8" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Dark Mode Physical Ring Body: Rich Graphite Metallic with Lavender Sheen & Soft Horizon Fade */}
+            <radialGradient id="ringBodyDark" cx="50%" cy="8%" r="75%">
+              <stop offset="0%" stopColor="#433d6b" stopOpacity="0.98" />
+              <stop offset="25%" stopColor="#2e2b48" stopOpacity="0.96" />
+              <stop offset="55%" stopColor="#1e1d2c" stopOpacity="0.90" />
+              <stop offset="80%" stopColor="#14131e" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#14131e" stopOpacity="0" />
             </radialGradient>
 
-            {/* Light Mode Body Gradient: Pearlescent Slate/Lavender */}
-            <radialGradient id="oxidPlanetBodyLight" cx="50%" cy="115%" r="65%">
-              <stop offset="0%" stopColor="#ede9fe" stopOpacity="0.75" />
-              <stop offset="35%" stopColor="#f5f3ff" stopOpacity="0.55" />
-              <stop offset="70%" stopColor="#f8fafc" stopOpacity="0.30" />
-              <stop offset="100%" stopColor="#f8fafc" stopOpacity="0" />
+            {/* Light Mode Physical Ring Body: Pearlescent Platinum & Architectural Silver with Soft Horizon Fade */}
+            <radialGradient id="ringBodyLight" cx="50%" cy="8%" r="75%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.98" />
+              <stop offset="25%" stopColor="#f1f5f9" stopOpacity="0.96" />
+              <stop offset="55%" stopColor="#e2e8f0" stopOpacity="0.90" />
+              <stop offset="80%" stopColor="#cbd5e1" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0" />
             </radialGradient>
 
-            {/* Rim Glow Filter */}
-            <filter id="arcGlow" x="-20%" y="-40%" width="140%" height="180%">
-              <feGaussianBlur stdDeviation="6" result="blur1" />
-              <feGaussianBlur stdDeviation="16" result="blur2" />
+            {/* Dual-Level Rim Glow Filter: Tight Near (14px) + Wide Far (40px) */}
+            <filter id="ringRimGlow" x="-25%" y="-50%" width="150%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="nearBlur" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="farBlur" />
               <feMerge>
-                <feMergeNode in="blur2" />
-                <feMergeNode in="blur1" />
+                <feMergeNode in="farBlur" opacity="0.4" />
+                <feMergeNode in="nearBlur" opacity="0.75" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
 
-          {/* Planet Body Fill — Theme Separated */}
+          {/* 1. PHYSICAL RING BODY — Clearly Distinguishable Dimensional Surface (~90px thick) */}
+          {/* Light Mode Physical Body */}
           <path
             className="dark:hidden"
-            d="M 60 500 Q 600 -40 1140 500 Z"
-            fill="url(#oxidPlanetBodyLight)"
+            d="M 50 560 C 180 200, 380 36, 600 36 C 820 36, 1020 200, 1150 560 L 1100 560 C 980 230, 800 126, 600 126 C 400 126, 220 230, 100 560 Z"
+            fill="url(#ringBodyLight)"
           />
+          {/* Dark Mode Physical Body */}
           <path
             className="hidden dark:block"
-            d="M 60 500 Q 600 -40 1140 500 Z"
-            fill="url(#oxidPlanetBodyDark)"
+            d="M 50 560 C 180 200, 380 36, 600 36 C 820 36, 1020 200, 1150 560 L 1100 560 C 980 230, 800 126, 600 126 C 400 126, 220 230, 100 560 Z"
+            fill="url(#ringBodyDark)"
           />
 
-          {/* Precision Graduation Ticks along Curvature */}
-          <g className="text-primary/40 dark:text-violet-400/50">
+          {/* 2. DUAL-EDGE ARCHITECTURE: INNER SHADE (Dimensional Bevel) */}
+          {/* Light Mode Inner Shade */}
+          <path
+            className="dark:hidden"
+            d="M 100 560 C 220 230, 400 126, 600 126 C 800 126, 980 230, 1100 560"
+            stroke="url(#oxidArcInnerLight)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          {/* Dark Mode Inner Shade */}
+          <path
+            className="hidden dark:block"
+            d="M 100 560 C 220 230, 400 126, 600 126 C 800 126, 980 230, 1100 560"
+            stroke="url(#oxidArcInnerDark)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+
+          {/* 3. PRECISION GRADUATION TICKS — Instrument Aesthetic Etched on Surface */}
+          <g className="text-violet-600/60 dark:text-violet-300/75">
             {ticks.map((t, idx) => (
               <line
                 key={idx}
@@ -148,71 +201,65 @@ export function LedgerOrbitArc({
                 x2={t.x2}
                 y2={t.y2}
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="1.8"
                 strokeLinecap="round"
-                opacity={0.65}
+                opacity={idx === 5 ? 1 : 0.75}
               />
             ))}
           </g>
 
-          {/* Glowing Outer Halo (Wide Soft Rim) */}
+          {/* 4. SUBTLE INNER CHAMFER SPECULAR HIGHLIGHT (Machined Bevel Line) */}
+          <path
+            className="hidden dark:block"
+            d="M 65 560 C 190 206, 385 48, 600 48 C 815 48, 1010 206, 1135 560"
+            stroke="rgba(255, 255, 255, 0.22)"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            opacity="0.85"
+          />
+
+          {/* 5. DUAL-EDGE ARCHITECTURE: OUTER BRIGHT RIM WITH DUAL GLOW */}
+          {/* Light Mode Outer Rim */}
           <path
             className="dark:hidden"
-            d="M 80 500 Q 600 -35 1120 500"
+            d="M 50 560 C 180 200, 380 36, 600 36 C 820 36, 1020 200, 1150 560"
             stroke="url(#oxidArcRimLight)"
-            strokeWidth="5"
+            strokeWidth="4"
             strokeLinecap="round"
+            filter="url(#ringRimGlow)"
+          />
+          {/* Dark Mode Outer Rim */}
+          <path
+            className="hidden dark:block"
+            d="M 50 560 C 180 200, 380 36, 600 36 C 820 36, 1020 200, 1150 560"
+            stroke="url(#oxidArcRimDark)"
+            strokeWidth="4.5"
+            strokeLinecap="round"
+            filter="url(#ringRimGlow)"
+          />
+
+          {/* 6. LOCALIZED CINEMATIC SPECULAR CROWN GLINT (Biased to 11 o'clock) */}
+          {/* Dark Mode Crown Glint */}
+          <ellipse
+            className="hidden dark:block"
+            cx="580"
+            cy="38"
+            rx="140"
+            ry="8"
+            fill="#ede9fe"
             opacity="0.45"
-            filter="url(#arcGlow)"
+            filter="url(#ringRimGlow)"
           />
-          <path
-            className="hidden dark:block"
-            d="M 80 500 Q 600 -35 1120 500"
-            stroke="url(#oxidArcRimDark)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            opacity="0.6"
-            filter="url(#arcGlow)"
-          />
-
-          {/* Glowing Inner Trace (Crisp Specular Edge) */}
-          <path
-            className="dark:hidden"
-            d="M 120 500 Q 600 -30 1080 500"
-            stroke="url(#oxidArcRimLight)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            opacity="0.95"
-          />
-          <path
-            className="hidden dark:block"
-            d="M 120 500 Q 600 -30 1080 500"
-            stroke="url(#oxidArcRimDark)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            opacity="0.95"
-          />
-
-          {/* Center Specular Crown Reflection */}
-          <ellipse
-            className="hidden dark:block"
-            cx="600"
-            cy="-20"
-            rx="140"
-            ry="12"
-            fill="#ffffff"
-            opacity="0.4"
-            filter="url(#arcGlow)"
-          />
+          {/* Light Mode Crown Glint */}
           <ellipse
             className="dark:hidden"
-            cx="600"
-            cy="-20"
+            cx="580"
+            cy="38"
             rx="140"
-            ry="10"
-            fill="#7c3aed"
-            opacity="0.25"
-            filter="url(#arcGlow)"
+            ry="7"
+            fill="#4338ca"
+            opacity="0.30"
+            filter="url(#ringRimGlow)"
           />
         </svg>
       </div>

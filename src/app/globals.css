@@ -17,6 +17,18 @@
   --primary-hover: #6D28D9;
   --primary-subtle: #F5F3FF;
   --primary-fg: #FFFFFF;
+
+  /* Hero Celestial Ring Tokens — Light Mode (Architectural Silver & Royal Violet Edge) */
+  --ring-body-base: #E2E8F0;
+  --ring-body-mid: #F1F5F9;
+  --ring-body-crest: #CBD5E1;
+  --ring-edge-outer: #6D28D9;
+  --ring-edge-crest: #7C3AED;
+  --ring-edge-inner: #94A3B8;
+  --ring-edge-inner-shade: #64748B;
+  --ring-glow-near: rgba(109, 40, 217, 0.22);
+  --ring-glow-far: rgba(99, 102, 241, 0.10);
+  --ring-separation-gradient: radial-gradient(ellipse at 50% 35%, rgba(221, 214, 254, 0.40) 0%, rgba(241, 245, 249, 0.15) 50%, transparent 75%);
 }
 
 .dark {
@@ -34,6 +46,18 @@
   --primary-hover: #7C3AED;
   --primary-subtle: rgba(139, 92, 246, 0.12);
   --primary-fg: #FFFFFF;
+
+  /* Hero Celestial Ring Tokens — Dark Mode (Graphite/Charcoal Metallic & Illuminated Violet/Lavender Rim) */
+  --ring-body-base: #14141D;
+  --ring-body-mid: #1C1C28;
+  --ring-body-crest: #242236;
+  --ring-edge-outer: #8B5CF6;
+  --ring-edge-crest: #DDD6FE;
+  --ring-edge-inner: #1E1B4B;
+  --ring-edge-inner-shade: #0F0D24;
+  --ring-glow-near: rgba(139, 92, 246, 0.50);
+  --ring-glow-far: rgba(99, 102, 241, 0.22);
+  --ring-separation-gradient: radial-gradient(ellipse at 50% 35%, rgba(124, 58, 237, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 75%);
 }
 
 @theme inline {
