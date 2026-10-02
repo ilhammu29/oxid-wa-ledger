@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AdminAuditLogRow } from "@/modules/subscriptions/admin";
 import { ScrollText, Search, Eye, X } from "lucide-react";
+import { formatShortId } from "@/lib/admin-utils";
 
 interface AdminAuditClientViewProps {
   logs: AdminAuditLogRow[];
@@ -114,15 +115,21 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
 
                       <td className="py-3 px-4 font-mono font-bold text-foreground">{log.action}</td>
 
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-foreground">{bizName}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{log.business_id}</div>
+                      <td className="py-3 px-4 max-w-xs min-w-0">
+                        <div className="font-semibold text-foreground truncate" title={bizName}>{bizName}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono mt-0.5" title={log.business_id}>
+                          {formatShortId(log.business_id)}
+                        </div>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <div className="text-foreground font-medium">{log.actor_email || "System Service"}</div>
+                      <td className="py-3 px-4 max-w-xs min-w-0">
+                        <div className="text-foreground font-medium truncate" title={log.actor_email || "System Service"}>
+                          {log.actor_email || "System Service"}
+                        </div>
                         {log.actor_user_id && (
-                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{log.actor_user_id}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5" title={log.actor_user_id}>
+                            {formatShortId(log.actor_user_id)}
+                          </div>
                         )}
                       </td>
 
@@ -167,11 +174,11 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
             return (
               <div
                 key={log.id}
-                className="p-4 rounded-2xl bg-card border border-border shadow-2xs space-y-2.5"
+                className="p-4 rounded-2xl bg-card border border-border shadow-2xs space-y-2.5 min-w-0"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="font-mono font-bold text-xs text-foreground block">{log.action}</span>
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-mono font-bold text-xs text-foreground block truncate">{log.action}</span>
                     <span className="text-[10px] font-mono text-muted-foreground">{formatDate(log.created_at)}</span>
                   </div>
                   <span className="px-2 py-0.5 rounded bg-muted text-[10px] font-mono font-bold text-foreground border border-border shrink-0">
@@ -180,18 +187,20 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
                 </div>
 
                 <div className="text-xs space-y-1 py-1.5 border-y border-border/60">
-                  <div className="flex justify-between">
-                    <span className="text-[11px] text-muted-foreground">Bisnis:</span>
-                    <span className="font-semibold text-foreground">{bizName}</span>
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <span className="text-[11px] text-muted-foreground shrink-0">Bisnis:</span>
+                    <span className="font-semibold text-foreground truncate text-right">{bizName}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[11px] text-muted-foreground">Pelaku:</span>
-                    <span className="text-muted-foreground font-mono text-[11px]">{log.actor_email || "System"}</span>
+                  <div className="flex justify-between gap-2 min-w-0">
+                    <span className="text-[11px] text-muted-foreground shrink-0">Pelaku:</span>
+                    <span className="text-muted-foreground font-mono text-[11px] truncate text-right">
+                      {log.actor_email || "System"}
+                    </span>
                   </div>
                   {log.notes && (
-                    <div className="pt-1">
+                    <div className="pt-1 min-w-0">
                       <span className="text-[11px] text-muted-foreground block">Catatan:</span>
-                      <p className="text-[11px] text-foreground italic">{log.notes}</p>
+                      <p className="text-[11px] text-foreground italic break-words">{log.notes}</p>
                     </div>
                   )}
                 </div>
@@ -214,44 +223,46 @@ export function AdminAuditClientView({ logs, businessMap }: AdminAuditClientView
       ────────────────────────────────────────────────────────────── */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ScrollText className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground font-mono">{selectedLog.action}</h3>
+              <div className="flex items-center gap-2 min-w-0">
+                <ScrollText className="w-4 h-4 text-primary shrink-0" />
+                <h3 className="text-sm font-bold text-foreground font-mono truncate">{selectedLog.action}</h3>
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">ID Log Audit:</span>
-                <span className="font-mono text-foreground">{selectedLog.id}</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">ID Log Audit:</span>
+                <span className="font-mono text-foreground break-all text-right">{selectedLog.id}</span>
               </div>
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">Waktu Eksekusi:</span>
-                <span className="text-foreground">{formatDate(selectedLog.created_at)}</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Waktu Eksekusi:</span>
+                <span className="text-foreground text-right">{formatDate(selectedLog.created_at)}</span>
               </div>
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">Pelaku (Actor):</span>
-                <span className="text-foreground">{selectedLog.actor_email || selectedLog.actor_user_id || "System"}</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Pelaku (Actor):</span>
+                <span className="text-foreground truncate text-right">
+                  {selectedLog.actor_email || selectedLog.actor_user_id || "System"}
+                </span>
               </div>
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">Status Sebelum:</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Status Sebelum:</span>
                 <span className="font-mono text-muted-foreground">{selectedLog.previous_status || "N/A"}</span>
               </div>
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">Status Sesudah:</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Status Sesudah:</span>
                 <span className="font-mono text-emerald-500 font-bold">{selectedLog.new_status}</span>
               </div>
-              <div className="flex justify-between border-b border-border pb-1.5">
-                <span className="text-muted-foreground">Catatan:</span>
-                <span className="text-foreground">{selectedLog.notes || "-"}</span>
+              <div className="flex justify-between gap-2 border-b border-border pb-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Catatan:</span>
+                <span className="text-foreground break-words text-right">{selectedLog.notes || "-"}</span>
               </div>
             </div>
 

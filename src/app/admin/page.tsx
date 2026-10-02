@@ -9,6 +9,7 @@ import {
   getAdminAuditLogs,
 } from "@/modules/subscriptions";
 import { formatIDR } from "@/modules/subscriptions/plans";
+import { formatShortId } from "@/lib/admin-utils";
 import Link from "next/link";
 import {
   Building2,
@@ -43,17 +44,17 @@ export default async function AdminOverviewPage() {
   const totalServices = systemStatus.length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0 w-full">
       {/* ─────────────────────────────────────────────────────────────
           1. HEADER & OPERATIONAL SUMMARY
       ────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border min-w-0">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight truncate">
               Platform Overview
             </h1>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               OPERASIONAL
             </span>
@@ -63,109 +64,112 @@ export default async function AdminOverviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
             href="/admin/system"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-border/80 text-xs font-medium text-foreground transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border hover:border-border/80 text-xs font-medium text-foreground transition-colors shadow-2xs"
           >
-            <Activity className="w-3.5 h-3.5 text-emerald-500" />
+            <Activity className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>Sistem: {healthyServices}/{totalServices} Siap</span>
           </Link>
 
           <Link
             href="/admin/payments"
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-2xs ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-2xs ${
               kpis.pendingPaymentsCount > 0
                 ? "bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Receipt className="w-3.5 h-3.5" />
+            <Receipt className="w-3.5 h-3.5 shrink-0" />
             <span>{kpis.pendingPaymentsCount} Bayar Menunggu</span>
           </Link>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. KPI HIERARCHY: 2 PRIMARY STATS + 2 SECONDARY STATS
+          2. KPI HIERARCHY: RESPONSIVE METRIC CARDS
+          - 1 column on mobile (<640px) or 2 cols on tablet, 4 on desktop
+          - Values responsive: text-xl sm:text-2xl lg:text-3xl
+          - min-w-0 prevents number overflow
       ────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Primary Stat 1: Total Businesses */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-semibold text-foreground/80">Total Bisnis Klien</span>
-              <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-muted-foreground mb-2 sm:mb-3">
+              <span className="text-xs font-semibold text-foreground/80 truncate">Total Bisnis Klien</span>
+              <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Building2 className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight tabular-nums text-foreground truncate">
               {kpis.totalBusinesses}
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50">
+          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50 truncate">
             Tenant terdaftar di database platform
           </p>
         </div>
 
         {/* Primary Stat 2: Active Subscriptions & Trials */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-semibold text-foreground/80">Status Langganan</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-muted-foreground mb-2 sm:mb-3">
+              <span className="text-xs font-semibold text-foreground/80 truncate">Status Langganan</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight tabular-nums text-emerald-500">
+            <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap min-w-0">
+              <span className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight tabular-nums text-emerald-500">
                 {kpis.activeSubscriptions}
               </span>
               <span className="text-xs font-medium text-muted-foreground">Aktif</span>
               <span className="text-muted-foreground/40 font-light">/</span>
-              <span className="text-xl font-semibold tracking-tight tabular-nums text-sky-500">
+              <span className="text-lg sm:text-xl lg:text-2xl font-semibold tracking-tight tabular-nums text-sky-500">
                 {kpis.activeTrials}
               </span>
               <span className="text-xs font-medium text-muted-foreground">Trial</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50">
+          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50 truncate">
             {kpis.gracePeriodSubscriptions} masa tenggang · {kpis.suspendedSubscriptions} ditangguhkan
           </p>
         </div>
 
         {/* Secondary Stat 1: Pending Payments */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-semibold text-foreground/80">Pembayaran Menunggu</span>
-              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-muted-foreground mb-2 sm:mb-3">
+              <span className="text-xs font-semibold text-foreground/80 truncate">Pembayaran Menunggu</span>
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
                 <CreditCard className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-semibold tracking-tight tabular-nums text-amber-500">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight tabular-nums text-amber-500 truncate">
               {kpis.pendingPaymentsCount > 0 ? formatIDR(kpis.pendingPaymentsTotalIdr) : "Rp 0"}
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50">
+          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50 truncate">
             {kpis.pendingPaymentsCount} bukti transfer perlu verifikasi
           </p>
         </div>
 
         {/* Secondary Stat 2: Ledger Transaction Volume */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-muted-foreground mb-3">
-              <span className="text-xs font-semibold text-foreground/80">Volume Ledger Omset</span>
-              <div className="w-7 h-7 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-muted-foreground mb-2 sm:mb-3">
+              <span className="text-xs font-semibold text-foreground/80 truncate">Volume Ledger Omset</span>
+              <div className="w-7 h-7 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight tabular-nums text-foreground truncate">
               {formatIDR(kpis.totalRevenueVolumeIdr)}
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50">
+          <p className="text-[11px] text-muted-foreground mt-3 pt-2 border-t border-border/50 truncate">
             {kpis.totalTransactionsCount} total transaksi tercatat
           </p>
         </div>
@@ -174,14 +178,14 @@ export default async function AdminOverviewPage() {
       {/* ─────────────────────────────────────────────────────────────
           3. CHANNEL HEALTH (Operational Status Row)
       ────────────────────────────────────────────────────────────── */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border space-y-3 min-w-0">
+        <div className="flex items-center justify-between min-w-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
             Status Kanal Integrasi Platform
           </span>
           <Link
             href="/admin/system"
-            className="text-xs text-primary hover:underline font-medium"
+            className="text-xs text-primary hover:underline font-medium shrink-0 ml-2"
           >
             Detail Arsitektur &rarr;
           </Link>
@@ -189,17 +193,17 @@ export default async function AdminOverviewPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Telegram */}
-          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-500 flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-foreground">Telegram Pilot Bot</p>
-                <p className="text-[11px] text-muted-foreground">Kanal pencatatan utama</p>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">Telegram Pilot Bot</p>
+                <p className="text-[11px] text-muted-foreground truncate">Kanal kasir utama</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                 <span className="w-1 h-1 rounded-full bg-emerald-500" />
                 Aktif
@@ -211,17 +215,17 @@ export default async function AdminOverviewPage() {
           </div>
 
           {/* Google Sheets */}
-          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
                 <FileSpreadsheet className="w-4 h-4" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-foreground">Google Sheets Sync</p>
-                <p className="text-[11px] text-muted-foreground">One-way mirror spreadsheet</p>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">Google Sheets Sync</p>
+                <p className="text-[11px] text-muted-foreground truncate">Cermin spreadsheet</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                 <span className="w-1 h-1 rounded-full bg-emerald-500" />
                 Sinkron
@@ -233,17 +237,17 @@ export default async function AdminOverviewPage() {
           </div>
 
           {/* WhatsApp */}
-          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="px-3.5 py-3 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-foreground">WhatsApp Cloud API</p>
-                <p className="text-[11px] text-muted-foreground">Implementasi Step 8</p>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">WhatsApp Cloud API</p>
+                <p className="text-[11px] text-muted-foreground truncate">Implementasi Step 8</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                 Deferred
               </span>
@@ -256,18 +260,18 @@ export default async function AdminOverviewPage() {
       {/* ─────────────────────────────────────────────────────────────
           4. MAIN GRID: RECENT BUSINESSES & PENDING PAYMENTS
       ────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
         {/* Recent Businesses */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-bold text-foreground">Bisnis Klien Terbaru</h2>
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5 flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between pb-3 border-b border-border min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Building2 className="w-4 h-4 text-primary shrink-0" />
+                <h2 className="text-sm font-bold text-foreground truncate">Bisnis Klien Terbaru</h2>
               </div>
               <Link
                 href="/admin/businesses"
-                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 shrink-0 ml-2"
               >
                 <span>Semua Bisnis</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -291,11 +295,12 @@ export default async function AdminOverviewPage() {
                   }
 
                   return (
-                    <div key={biz.id} className="py-2.5 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
+                    <div key={biz.id} className="py-2.5 flex items-center justify-between gap-3 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <Link
                           href={`/admin/businesses/${biz.id}`}
                           className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate block"
+                          title={biz.name}
                         >
                           {biz.name}
                         </Link>
@@ -307,7 +312,7 @@ export default async function AdminOverviewPage() {
 
                       <div className="flex items-center gap-2 shrink-0">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${statusBadge}`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border shrink-0 ${statusBadge}`}
                         >
                           {biz.subscriptionStatus}
                         </span>
@@ -315,6 +320,7 @@ export default async function AdminOverviewPage() {
                           href={`/admin/businesses/${biz.id}`}
                           className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                           title="Lihat Detail"
+                          aria-label={`Detail ${biz.name}`}
                         >
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
@@ -337,16 +343,16 @@ export default async function AdminOverviewPage() {
         </div>
 
         {/* Pending Payments */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-bold text-foreground">Pembayaran Menunggu Konfirmasi</h2>
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5 flex flex-col justify-between min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between pb-3 border-b border-border min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Receipt className="w-4 h-4 text-amber-500 shrink-0" />
+                <h2 className="text-sm font-bold text-foreground truncate">Pembayaran Menunggu Konfirmasi</h2>
               </div>
               <Link
                 href="/admin/payments"
-                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 shrink-0 ml-2"
               >
                 <span>Semua Pembayaran</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -362,9 +368,11 @@ export default async function AdminOverviewPage() {
                 </div>
               ) : (
                 pendingPayments.map((p) => (
-                  <div key={p.id} className="py-2.5 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{p.businessName}</p>
+                  <div key={p.id} className="py-2.5 flex items-center justify-between gap-3 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate" title={p.businessName}>
+                        {p.businessName}
+                      </p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         Ref: <span className="font-mono text-foreground">{p.reference || "-"}</span>
                       </p>
@@ -401,15 +409,15 @@ export default async function AdminOverviewPage() {
       {/* ─────────────────────────────────────────────────────────────
           5. AUDIT LOG STREAM
       ────────────────────────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5">
-        <div className="flex items-center justify-between pb-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-bold text-foreground">Aktivitas Platform & Audit Trail</h2>
+      <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-3.5 min-w-0">
+        <div className="flex items-center justify-between pb-3 border-b border-border min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="w-4 h-4 text-muted-foreground shrink-0" />
+            <h2 className="text-sm font-bold text-foreground truncate">Aktivitas Platform & Audit Trail</h2>
           </div>
           <Link
             href="/admin/audit"
-            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 shrink-0 ml-2"
           >
             <span>Log Lengkap</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -445,7 +453,9 @@ export default async function AdminOverviewPage() {
                       })}
                     </td>
                     <td className="py-2.5 font-mono font-semibold text-foreground">{log.action}</td>
-                    <td className="py-2.5 text-muted-foreground text-xs">{log.actor_email || log.actor_user_id || "System"}</td>
+                    <td className="py-2.5 text-muted-foreground text-xs truncate max-w-[160px]" title={log.actor_email || log.actor_user_id || "System"}>
+                      {log.actor_email || formatShortId(log.actor_user_id) || "System"}
+                    </td>
                     <td className="py-2.5">
                       <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-foreground border border-border">
                         {log.new_status}
@@ -467,21 +477,23 @@ export default async function AdminOverviewPage() {
             </p>
           ) : (
             auditLogs.map((log) => (
-              <div key={log.id} className="pt-2.5 first:pt-0 space-y-1">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-mono font-semibold text-foreground">{log.action}</span>
-                  <span className="font-mono text-muted-foreground">
+              <div key={log.id} className="pt-2.5 first:pt-0 space-y-1 min-w-0">
+                <div className="flex items-center justify-between text-[11px] gap-2 min-w-0">
+                  <span className="font-mono font-semibold text-foreground truncate">{log.action}</span>
+                  <span className="font-mono text-muted-foreground shrink-0">
                     {new Date(log.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="truncate max-w-[200px]">{log.actor_email || "System"}</span>
-                  <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-foreground">
+                <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 min-w-0">
+                  <span className="truncate max-w-[180px] font-mono text-[11px]" title={log.actor_email || log.actor_user_id || "System"}>
+                    {log.actor_email || formatShortId(log.actor_user_id) || "System"}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-foreground shrink-0">
                     {log.new_status}
                   </span>
                 </div>
                 {log.notes && (
-                  <p className="text-[11px] text-muted-foreground/80 italic">{log.notes}</p>
+                  <p className="text-[11px] text-muted-foreground/80 italic break-words">{log.notes}</p>
                 )}
               </div>
             ))

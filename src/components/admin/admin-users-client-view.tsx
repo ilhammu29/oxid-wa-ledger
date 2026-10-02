@@ -421,7 +421,7 @@ export function AdminUsersClientView({
       ────────────────────────────────────────────────────────────── */}
       {deactivateModalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center gap-2.5 text-rose-500">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <h3 className="font-bold text-base text-foreground">Nonaktifkan Akses Admin</h3>

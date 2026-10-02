@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -42,6 +42,7 @@ export function AdminShell({
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
 
+  // Responsive default: expanded >= 1280px, collapsed 1024–1279px
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -59,6 +60,7 @@ export function AdminShell({
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   const toggleSidebar = () => {
     setIsCollapsed((prev) => {
@@ -84,6 +86,48 @@ export function AdminShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Handle responsive resize boundaries (1024px, 1280px)
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 1280 && w >= 768) {
+        setIsCollapsed(true);
+      } else if (w >= 1280) {
+        try {
+          const saved = localStorage.getItem("oxid_admin_sidebar_collapsed");
+          if (saved === null) {
+            setIsCollapsed(false);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Close mobile drawer on ESC and trap body scroll
+  useEffect(() => {
+    if (!mobileDrawerOpen) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileDrawerOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [mobileDrawerOpen]);
+
   const roleLabelMap: Record<string, string> = {
     super_admin: "Super Admin",
     support_admin: "Support Admin",
@@ -104,20 +148,27 @@ export function AdminShell({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex max-w-full overflow-x-hidden">
       {/* ─────────────────────────────────────────────────────────────
-          1. DESKTOP / TABLET SIDEBAR (Hidden on mobile < 768px)
+          1. DESKTOP / TABLET SIDEBAR (Sticky 100dvh viewport shell)
+          - Hidden on mobile < 768px
+          - Width: 64px (collapsed icon rail) or 224-240px (expanded)
+          - Does NOT grow with document height; footer stays pinned
       ────────────────────────────────────────────────────────────── */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-border bg-card transition-all duration-200 z-30 ${
+        className={`hidden md:flex flex-col shrink-0 border-r border-border bg-card transition-all duration-200 z-30 sticky top-0 h-dvh max-h-dvh overflow-hidden ${
           isCollapsed ? "w-16" : "w-56 lg:w-60"
         }`}
       >
         {/* Brand Header */}
-        <div className="h-14 px-3 flex items-center justify-between border-b border-border/80">
+        <div
+          className={`h-14 shrink-0 px-3 flex items-center ${
+            isCollapsed ? "justify-center" : "justify-between"
+          } border-b border-border/80`}
+        >
           <Link
             href="/admin"
-            className="flex items-center gap-2 overflow-hidden select-none"
+            className={`flex items-center ${isCollapsed ? "justify-center" : "gap-2"} overflow-hidden select-none`}
             title="OXID Admin Control Center"
           >
             <BrandLogo size="sm" showText={false} />
@@ -134,67 +185,96 @@ export function AdminShell({
             )}
           </Link>
 
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
-            title={isCollapsed ? "Buka Sidebar" : "Ciutkan Sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-          </button>
+          {!isCollapsed && (
+            <button
+              onClick={toggleSidebar}
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              title="Ciutkan Sidebar"
+              aria-label="Ciutkan Sidebar"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto py-2">
+        {/* Scrollable Navigation Area (Independent internal scroll) */}
+        <div className="flex-1 min-h-0 overflow-y-auto py-2">
           <AdminNav
             isCollapsed={isCollapsed}
             pendingPaymentsCount={pendingPaymentsCount}
           />
         </div>
 
-        {/* Admin User Footer Profile & Merchant Return */}
-        <div className="p-2 border-t border-border/80 space-y-1.5">
+        {/* Fixed Footer / Operator Profile & Navigation Return */}
+        <div className="shrink-0 mt-auto p-2 border-t border-border/80 space-y-1.5 bg-card">
           {!isCollapsed ? (
-            <div className="p-2 rounded-xl bg-muted/40 border border-border/60">
-              <div className="flex items-center justify-between gap-1 mb-1">
-                <span
-                  className="text-[11px] font-mono text-foreground font-medium truncate max-w-[120px]"
-                  title={userEmail}
-                >
-                  {userEmail}
-                </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase">
-                  {roleLabelMap[adminRole] || adminRole}
-                </span>
+            <>
+              <div className="p-2.5 rounded-xl bg-muted/40 border border-border/60">
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span
+                    className="text-[11px] font-mono text-foreground font-medium truncate max-w-[125px]"
+                    title={userEmail}
+                  >
+                    {userEmail}
+                  </span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase shrink-0">
+                    {roleLabelMap[adminRole] || adminRole}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <ShieldCheck className="w-3 h-3 text-primary shrink-0" />
+                  <span className="truncate">Operator Platform</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <ShieldCheck className="w-3 h-3 text-primary" />
-                <span>Operator Platform</span>
-              </div>
-            </div>
+
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                title="Ke Dashboard Usaha"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Ke Dashboard Usaha</span>
+              </Link>
+            </>
           ) : (
-            <div
-              className="flex justify-center p-2 rounded-xl bg-muted/40 text-primary"
-              title={`${userEmail} (${roleLabelMap[adminRole] || adminRole})`}
-            >
-              <ShieldCheck className="w-4 h-4" />
+            <div className="flex flex-col items-center gap-1.5">
+              {/* Collapsed Operator Badge Icon */}
+              <div
+                className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-muted/40 text-primary"
+                title={`${userEmail} (${roleLabelMap[adminRole] || adminRole})`}
+                aria-label={`Operator: ${userEmail}`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+
+              {/* Collapsed Back to Merchant Dashboard */}
+              <Link
+                href="/dashboard"
+                className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                title="Ke Dashboard Usaha"
+                aria-label="Ke Dashboard Usaha"
+              >
+                <ArrowLeft className="w-4 h-4 shrink-0" />
+              </Link>
+
+              {/* Collapsed Expand Toggle Button */}
+              <button
+                onClick={toggleSidebar}
+                className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                title="Buka Sidebar"
+                aria-label="Buka Sidebar"
+              >
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              </button>
             </div>
           )}
-
-          <Link
-            href="/dashboard"
-            className={`flex items-center ${
-              isCollapsed ? "justify-center p-2" : "gap-2 px-2.5 py-1.5"
-            } rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors`}
-            title="Ke Dashboard Merchant"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-            {!isCollapsed && <span className="truncate">Ke Dashboard Usaha</span>}
-          </Link>
         </div>
       </aside>
 
       {/* ─────────────────────────────────────────────────────────────
           2. MOBILE DRAWER SHEET (Screen width < 768px)
+          - Full accessible dialog drawer
+          - Closes on Escape, overlay click, or link click
       ────────────────────────────────────────────────────────────── */}
       {mobileDrawerOpen && (
         <div
@@ -202,11 +282,15 @@ export function AdminShell({
           onClick={() => setMobileDrawerOpen(false)}
         >
           <div
-            className="w-72 max-w-[85vw] h-full bg-card border-r border-border flex flex-col shadow-2xl animate-in slide-in-from-left duration-200"
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu Admin"
+            className="w-72 max-w-[85vw] h-dvh max-h-dvh bg-card border-r border-border flex flex-col shadow-2xl animate-in slide-in-from-left duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
-            <div className="h-14 px-4 flex items-center justify-between border-b border-border">
+            <div className="h-14 shrink-0 px-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center gap-2">
                 <BrandLogo size="sm" showText={false} />
                 <div>
@@ -221,14 +305,16 @@ export function AdminShell({
               </div>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                title="Tutup Menu"
+                aria-label="Tutup Menu"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4.5 h-4.5" />
               </button>
             </div>
 
             {/* Drawer Navigation */}
-            <div className="flex-1 overflow-y-auto py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto py-2">
               <AdminNav
                 isCollapsed={false}
                 onItemClick={() => setMobileDrawerOpen(false)}
@@ -237,19 +323,19 @@ export function AdminShell({
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-3 border-t border-border space-y-2">
+            <div className="shrink-0 mt-auto p-3 border-t border-border space-y-2 bg-card">
               <div className="p-2.5 rounded-xl bg-muted/40 border border-border">
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-[11px] font-mono text-foreground font-medium truncate max-w-[140px]">
                     {userEmail}
                   </span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase shrink-0">
                     {roleLabelMap[adminRole] || adminRole}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <UserCheck className="w-3 h-3 text-emerald-500" />
-                  <span>Platform Operator</span>
+                  <UserCheck className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span className="truncate">Platform Operator</span>
                 </div>
               </div>
 
@@ -259,7 +345,7 @@ export function AdminShell({
                 className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/70 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Ke Dashboard Merchant</span>
+                <span>Ke Dashboard Usaha</span>
               </Link>
             </div>
           </div>
@@ -267,23 +353,24 @@ export function AdminShell({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          3. MAIN CONTENT CONTAINER WITH UNIFIED TOPBAR
+          3. MAIN CONTENT CONTAINER & TOPBAR
       ────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky Topbar */}
-        <header className="sticky top-0 z-20 h-14 bg-card/90 backdrop-blur-md border-b border-border px-4 sm:px-6 flex items-center justify-between gap-3">
-          {/* Left: Mobile Toggle + Breadcrumb */}
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+        {/* Unified Topbar */}
+        <header className="sticky top-0 z-20 h-14 shrink-0 bg-card/90 backdrop-blur-md border-b border-border px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3">
+          {/* Left: Mobile Toggle / Breadcrumb */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="md:hidden p-1.5 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none shrink-0"
               title="Buka Menu Admin"
+              aria-label="Buka Menu Admin"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <nav className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
-              <Link href="/admin" className="hover:text-foreground transition-colors font-medium">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+              <Link href="/admin" className="hover:text-foreground transition-colors font-medium shrink-0">
                 Admin
               </Link>
               <span>/</span>
@@ -291,32 +378,45 @@ export function AdminShell({
             </nav>
           </div>
 
-          {/* Center: Command Palette Trigger Button */}
-          <button
-            onClick={() => setCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border text-xs text-muted-foreground transition-all hover:border-border/80 w-52 md:w-64"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span className="flex-1 text-left truncate">Cari menu admin...</span>
-            <kbd className="hidden lg:inline-block px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px]">
-              Ctrl K
-            </kbd>
-          </button>
+          {/* Center: Command Palette Trigger Button (Responsive) */}
+          <div className="flex items-center justify-center">
+            {/* Desktop / Tablet Search Bar */}
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border text-xs text-muted-foreground transition-all hover:border-border/80 w-44 lg:w-64 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            >
+              <Search className="w-3.5 h-3.5 shrink-0" />
+              <span className="flex-1 text-left truncate">Cari menu admin...</span>
+              <kbd className="hidden lg:inline-block px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] shrink-0">
+                Ctrl K
+              </kbd>
+            </button>
 
-          {/* Right: Operational Status + Theme + Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Mobile Search Icon Trigger Button */}
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="sm:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+              title="Cari Menu Admin (Ctrl+K)"
+              aria-label="Cari Menu Admin"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Right: Operational Status + Theme Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Quick System Health Pill */}
             <Link
               href="/admin/system"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 hover:bg-muted border border-border text-[11px] font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-muted/50 hover:bg-muted border border-border text-[11px] font-medium transition-colors"
               title="Kesehatan Layanan Backend"
             >
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="hidden sm:inline text-muted-foreground">Sistem:</span>
-              <span className="font-semibold text-foreground">
+              <span className="font-semibold text-foreground tabular-nums">
                 {healthyServicesCount}/{totalServicesCount}
               </span>
             </Link>
@@ -325,10 +425,10 @@ export function AdminShell({
             {pendingPaymentsCount > 0 && (
               <Link
                 href="/admin/payments"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[11px] font-bold transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 text-[11px] font-bold transition-colors"
                 title={`${pendingPaymentsCount} bukti bayar menunggu verifikasi`}
               >
-                <CreditCard className="w-3 h-3" />
+                <CreditCard className="w-3 h-3 shrink-0" />
                 <span>{pendingPaymentsCount} Bayar</span>
               </Link>
             )}
@@ -339,10 +439,11 @@ export function AdminShell({
                 onClick={() => setTheme("light")}
                 className={`p-1 rounded-lg transition-colors ${
                   theme === "light"
-                    ? "bg-card text-foreground shadow-xs"
+                    ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Mode Terang"
+                aria-label="Mode Terang"
               >
                 <Sun className="w-3.5 h-3.5" />
               </button>
@@ -350,10 +451,11 @@ export function AdminShell({
                 onClick={() => setTheme("dark")}
                 className={`p-1 rounded-lg transition-colors ${
                   theme === "dark"
-                    ? "bg-card text-foreground shadow-xs"
+                    ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Mode Gelap"
+                aria-label="Mode Gelap"
               >
                 <Moon className="w-3.5 h-3.5" />
               </button>
@@ -361,10 +463,11 @@ export function AdminShell({
                 onClick={() => setTheme("system")}
                 className={`p-1 rounded-lg transition-colors ${
                   theme === "system"
-                    ? "bg-card text-foreground shadow-xs"
+                    ? "bg-card text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 title="Ikuti Sistem"
+                aria-label="Ikuti Sistem"
               >
                 <Laptop className="w-3.5 h-3.5" />
               </button>
@@ -372,8 +475,8 @@ export function AdminShell({
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {/* Main Content Area (Safely padded, zero horizontal overflow) */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 max-w-full">
           {children}
         </main>
       </div>

@@ -393,8 +393,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
       ────────────────────────────────────────────────────────────── */}
       {/* 1. Modal Activate */}
       {activeModal === "activate" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-foreground mb-1">Aktivasi Paket Langganan</h3>
             <p className="text-xs text-muted-foreground mb-4">Pilih paket dan durasi hari aktif untuk bisnis ini.</p>
             <form onSubmit={(e) => handleAction(adminActivateSubscriptionAction, e)} className="space-y-4">
@@ -454,8 +454,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 2. Modal Confirm Payment */}
       {activeModal === "confirmPayment" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-foreground mb-1">Konfirmasi Pembayaran</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Konfirmasi pembayaran ini akan memperpanjang masa aktif langganan bisnis.
@@ -503,8 +503,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 3. Modal Reject Payment */}
       {activeModal === "rejectPayment" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-rose-500 mb-1">Tolak Bukti Pembayaran</h3>
             <p className="text-xs text-muted-foreground mb-4">Berikan alasan mengapa bukti transfer ini ditolak.</p>
             <form onSubmit={(e) => handleAction(adminRejectPaymentAction, e)} className="space-y-4">
@@ -541,8 +541,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 4. Modal Extend */}
       {activeModal === "extend" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-foreground mb-1">Perpanjang Masa Aktif</h3>
             <p className="text-xs text-muted-foreground mb-4">Tambahkan hari aktif ke siklus langganan yang berjalan.</p>
             <form onSubmit={(e) => handleAction(adminExtendSubscriptionAction, e)} className="space-y-4">
@@ -588,8 +588,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 5. Modal Suspend */}
       {activeModal === "suspend" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-rose-500 mb-1">Tangguhkan Akun Bisnis</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Penangguhan akan membatasi merchant dari pencatatan mutasi transaksi.
@@ -628,8 +628,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 6. Modal Reactivate */}
       {activeModal === "reactivate" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-sky-500 mb-1">Aktifkan Kembali Bisnis</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Mengembalikan status akun dari ditangguhkan menjadi aktif normal.
@@ -677,8 +677,8 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
 
       {/* 7. Modal Cancel */}
       {activeModal === "cancel" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-foreground mb-1">Batalkan Langganan</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Langganan akan dihentikan dan ditandai sebagai dibatalkan.

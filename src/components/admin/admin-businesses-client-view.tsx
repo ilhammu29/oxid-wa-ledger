@@ -7,6 +7,7 @@ import {
   Search,
   ArrowRight,
 } from "lucide-react";
+import { formatShortId } from "@/lib/admin-utils";
 
 interface AdminBusinessesClientViewProps {
   businesses: AdminBusinessListItem[];
@@ -121,19 +122,22 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
 
                   return (
                     <tr key={b.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 max-w-xs min-w-0">
                         <Link
                           href={`/admin/businesses/${b.id}`}
-                          className="font-semibold text-foreground hover:text-primary transition-colors block"
+                          className="font-semibold text-foreground hover:text-primary transition-colors block truncate"
+                          title={b.name}
                         >
                           {b.name}
                         </Link>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground truncate">
                           {b.category && (
                             <span className="capitalize">{b.category}</span>
                           )}
                           <span>·</span>
-                          <span className="font-mono text-[10px]">{b.id}</span>
+                          <span className="font-mono text-[10px]" title={b.id}>
+                            {formatShortId(b.id)}
+                          </span>
                         </div>
                       </td>
 
@@ -227,18 +231,19 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
               key={b.id}
               className="p-4 rounded-2xl bg-card border border-border shadow-2xs space-y-3"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              <div className="flex items-start justify-between gap-2 min-w-0">
+                <div className="min-w-0 flex-1">
                   <Link
                     href={`/admin/businesses/${b.id}`}
-                    className="font-bold text-sm text-foreground hover:text-primary transition-colors block"
+                    className="font-bold text-sm text-foreground hover:text-primary transition-colors block truncate"
+                    title={b.name}
                   >
                     {b.name}
                   </Link>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 truncate">
                     {b.category && <span className="capitalize">{b.category}</span>}
                     <span>·</span>
-                    <span className="font-mono text-[11px]">{b.id}</span>
+                    <span className="font-mono text-[11px]" title={b.id}>{formatShortId(b.id)}</span>
                   </div>
                 </div>
                 <span

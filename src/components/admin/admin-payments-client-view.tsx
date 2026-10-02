@@ -6,6 +6,7 @@ import { formatIDR } from "@/modules/subscriptions/plans";
 import { adminConfirmPaymentAction, adminRejectPaymentAction } from "@/app/admin/actions";
 import { Search, CheckCircle2, AlertTriangle, X } from "lucide-react";
 import Link from "next/link";
+import { formatShortId } from "@/lib/admin-utils";
 
 interface AdminPaymentsClientViewProps {
   payments: AdminPaymentListItem[];
@@ -211,14 +212,17 @@ export function AdminPaymentsClientView({
               ) : (
                 filteredPayments.map((p) => (
                   <tr key={p.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 max-w-xs min-w-0">
                       <Link
                         href={`/admin/businesses/${p.businessId}`}
-                        className="font-semibold text-foreground hover:text-primary transition-colors block"
+                        className="font-semibold text-foreground hover:text-primary transition-colors block truncate"
+                        title={p.businessName}
                       >
                         {p.businessName}
                       </Link>
-                      <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{p.id}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono mt-0.5" title={p.id}>
+                        {formatShortId(p.id)}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4 font-mono font-semibold tabular-nums text-foreground">
@@ -362,7 +366,7 @@ export function AdminPaymentsClientView({
       ────────────────────────────────────────────────────────────── */}
       {confirmModalPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-foreground">Konfirmasi Pembayaran</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Verifikasi transfer dari <strong className="text-foreground">{confirmModalPayment.businessName}</strong> sebesar{" "}
@@ -425,7 +429,7 @@ export function AdminPaymentsClientView({
       ────────────────────────────────────────────────────────────── */}
       {rejectModalPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
             <h3 className="text-base font-bold text-rose-500">Tolak Bukti Pembayaran</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Tolak bukti pembayaran dari <strong className="text-foreground">{rejectModalPayment.businessName}</strong>.
