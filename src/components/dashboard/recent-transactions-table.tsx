@@ -109,7 +109,7 @@ export function RecentTransactionsTable({
       <div className="hidden sm:block overflow-x-auto rounded-xl border border-border bg-surface shadow-xs">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-border bg-surface-hover/60 text-muted uppercase font-semibold tracking-wider text-[11px]">
+            <tr className="border-b border-border bg-surface-hover/50 text-muted/80 uppercase font-mono font-medium tracking-wider text-[11px]">
               <th className="py-2.5 px-3.5">Waktu</th>
               <th className="py-2.5 px-3.5">Produk</th>
               <th className="py-2.5 px-3.5">Qty</th>
@@ -120,26 +120,26 @@ export function RecentTransactionsTable({
               <th className="py-2.5 px-3.5 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-border/60">
             {transactions.map((tx) => (
               <tr
                 key={tx.id}
                 onClick={() => setSelectedTx(tx)}
-                className="hover:bg-surface-hover transition-colors cursor-pointer group"
+                className="hover:bg-surface-hover/60 transition-colors cursor-pointer group"
               >
-                <td className="py-2.5 px-3.5 text-muted font-mono whitespace-nowrap">
+                <td className="py-2.5 px-3.5 text-muted font-mono tabular-nums whitespace-nowrap">
                   {formatTime(tx.transaction_at)}
                 </td>
                 <td className="py-2.5 px-3.5 font-semibold text-foreground whitespace-nowrap">
                   {tx.product_name || "Produk Default"}
                 </td>
-                <td className="py-2.5 px-3.5 font-mono font-medium text-foreground whitespace-nowrap">
+                <td className="py-2.5 px-3.5 font-mono tabular-nums font-medium text-foreground whitespace-nowrap">
                   {tx.quantity} {tx.unit}
                 </td>
-                <td className="py-2.5 px-3.5 font-mono text-muted whitespace-nowrap">
+                <td className="py-2.5 px-3.5 font-mono tabular-nums text-muted whitespace-nowrap">
                   Rp{new Intl.NumberFormat("id-ID").format(tx.unit_price)}
                 </td>
-                <td className="py-2.5 px-3.5 font-mono font-bold text-foreground whitespace-nowrap">
+                <td className="py-2.5 px-3.5 font-mono tabular-nums font-bold text-foreground whitespace-nowrap">
                   Rp{new Intl.NumberFormat("id-ID").format(tx.total_amount)}
                 </td>
                 <td className="py-2.5 px-3.5 whitespace-nowrap">

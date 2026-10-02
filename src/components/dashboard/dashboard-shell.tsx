@@ -215,7 +215,7 @@ export function DashboardShell({
                 isCollapsed ? "justify-center" : ""
               }`}
             >
-              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0">
+              <div className="h-7 w-7 rounded-lg bg-primary text-primary-fg flex items-center justify-center font-bold text-xs shrink-0 font-mono shadow-2xs">
                 OX
               </div>
               {!isCollapsed && (
@@ -223,9 +223,9 @@ export function DashboardShell({
                   <div className="font-semibold text-xs truncate leading-tight">
                     {business.name}
                   </div>
-                  <div className="text-[10px] text-muted flex items-center gap-1">
+                  <div className="text-[10px] text-muted flex items-center gap-1 font-mono">
                     <span>Ledger UKM</span>
-                    <span>&bull;</span>
+                    <span>·</span>
                     <span className="capitalize">{role}</span>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export function DashboardShell({
               <button
                 type="button"
                 onClick={() => setSaleModalOpen(true)}
-                className="w-full mt-1 mb-3 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-fg text-xs font-medium transition hover:opacity-95 shadow-xs"
+                className="w-full mt-1 mb-3 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-fg text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Catat Penjualan</span>
@@ -247,7 +247,7 @@ export function DashboardShell({
                 <button
                   type="button"
                   onClick={() => setSaleModalOpen(true)}
-                  className="w-8 h-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center transition hover:opacity-95 shadow-xs"
+                  className="w-8 h-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center hover:bg-primary/90 transition-colors shadow-xs"
                   title="Catat Penjualan"
                 >
                   <Plus className="w-4 h-4" />
@@ -260,27 +260,42 @@ export function DashboardShell({
               {/* Primary Group */}
               <div className="space-y-0.5">
                 {!isCollapsed && (
-                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                  <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-muted/70">
                     Utama
                   </div>
                 )}
                 {primaryNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive =
+                    item.href === "/dashboard"
+                      ? pathname === "/dashboard"
+                      : pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
-                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        isCollapsed ? "justify-center" : ""
-                      } ${
-                        isActive
-                          ? "bg-primary text-primary-fg font-semibold"
-                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                        isCollapsed
+                          ? `justify-center px-2 py-2 ${
+                              isActive
+                                ? "bg-primary/10 text-primary shadow-2xs"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                          : `px-2.5 py-1.5 border-l-2 ${
+                              isActive
+                                ? "bg-primary/10 text-foreground font-semibold border-primary"
+                                : "border-transparent text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
                       }`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-muted group-hover:text-foreground"
+                        }`}
+                      />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
                     </Link>
                   );
@@ -290,27 +305,39 @@ export function DashboardShell({
               {/* Operations Group */}
               <div className="space-y-0.5">
                 {!isCollapsed && (
-                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                  <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-muted/70">
                     Operasional
                   </div>
                 )}
                 {operationsNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
-                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        isCollapsed ? "justify-center" : ""
-                      } ${
-                        isActive
-                          ? "bg-primary text-primary-fg font-semibold"
-                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                        isCollapsed
+                          ? `justify-center px-2 py-2 ${
+                              isActive
+                                ? "bg-primary/10 text-primary shadow-2xs"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                          : `px-2.5 py-1.5 border-l-2 ${
+                              isActive
+                                ? "bg-primary/10 text-foreground font-semibold border-primary"
+                                : "border-transparent text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
                       }`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-muted group-hover:text-foreground"
+                        }`}
+                      />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
                     </Link>
                   );
@@ -320,27 +347,39 @@ export function DashboardShell({
               {/* Account Group */}
               <div className="space-y-0.5">
                 {!isCollapsed && (
-                  <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                  <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-muted/70">
                     Akun
                   </div>
                 )}
                 {accountNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
-                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        isCollapsed ? "justify-center" : ""
-                      } ${
-                        isActive
-                          ? "bg-primary text-primary-fg font-semibold"
-                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                        isCollapsed
+                          ? `justify-center px-2 py-2 ${
+                              isActive
+                                ? "bg-primary/10 text-primary shadow-2xs"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                          : `px-2.5 py-1.5 border-l-2 ${
+                              isActive
+                                ? "bg-primary/10 text-foreground font-semibold border-primary"
+                                : "border-transparent text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
                       }`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-muted group-hover:text-foreground"
+                        }`}
+                      />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
                     </Link>
                   );
@@ -352,18 +391,18 @@ export function DashboardShell({
           {/* Bottom Sidebar: Subscription compact row & collapse toggle */}
           <div className="p-3 border-t border-border space-y-2">
             {!isCollapsed && subscriptionState && (
-              <div className="p-2 rounded-lg border border-border bg-surface-hover text-[11px] space-y-1">
-                <div className="flex items-center justify-between text-muted">
-                  <span className="font-medium text-foreground">
-                    {subscriptionState.isTrial ? "Pilot Trial" : "Paket Aktif"}
+              <div className="p-2.5 rounded-lg border border-border/80 bg-surface-hover/40 text-[11px] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-muted uppercase tracking-wider">
+                    {subscriptionState.isTrial ? "Pilot Trial" : "Langganan"}
                   </span>
-                  <span className="text-primary font-semibold">
+                  <span className="font-mono text-[11px] font-medium text-primary tabular-nums">
                     {subscriptionState.daysRemaining} hari
                   </span>
                 </div>
-                <div className="w-full bg-border rounded-full h-1 overflow-hidden">
+                <div className="w-full bg-border/60 rounded-full h-1 overflow-hidden">
                   <div
-                    className="bg-primary h-full rounded-full"
+                    className="bg-primary h-full rounded-full transition-all"
                     style={{
                       width: `${Math.min(100, Math.max(10, (subscriptionState.daysRemaining / 14) * 100))}%`,
                     }}
@@ -411,12 +450,12 @@ export function DashboardShell({
         }`}
       >
         {/* Desktop Topbar */}
-        <header className="hidden md:flex h-14 border-b border-border bg-surface sticky top-0 z-30 px-6 items-center justify-between">
+        <header className="hidden md:flex h-14 border-b border-border bg-surface/90 backdrop-blur-xs sticky top-0 z-30 px-6 items-center justify-between">
           {/* Breadcrumb / Context */}
-          <div className="flex items-center gap-2 text-xs text-muted">
-            <span className="text-foreground font-medium">{business.name}</span>
-            <span>/</span>
-            <span>{getBreadcrumbTitle()}</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted">{business.name}</span>
+            <span className="text-muted/40 font-mono">/</span>
+            <span className="text-foreground font-semibold">{getBreadcrumbTitle()}</span>
           </div>
 
           {/* Center Search / Command Palette Trigger */}
@@ -424,11 +463,11 @@ export function DashboardShell({
             <button
               type="button"
               onClick={() => setCommandPaletteOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-muted bg-surface-hover border border-border rounded-lg hover:border-primary/40 hover:text-foreground transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-muted bg-surface-hover/50 border border-border rounded-lg hover:border-primary/40 hover:text-foreground transition-colors group"
             >
               <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5" />
-                <span>Cari halaman atau aksi...</span>
+                <Search className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
+                <span className="text-muted">Cari halaman atau aksi...</span>
               </div>
               <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border bg-surface rounded text-muted">
                 ⌘K
@@ -462,7 +501,7 @@ export function DashboardShell({
 
             {/* User Profile Chip */}
             <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center font-mono">
                 {userEmail.slice(0, 1).toUpperCase()}
               </div>
               <span className="text-xs text-foreground font-medium max-w-[120px] truncate hidden xl:inline-block">
@@ -479,11 +518,11 @@ export function DashboardShell({
       </div>
 
       {/* Mobile Bottom Navigation (5 items) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface border-t border-border z-30 px-3 py-1.5 flex items-center justify-around pb-safe">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur-md border-t border-border z-30 px-3 py-1 flex items-center justify-around pb-safe">
         <Link
           href="/dashboard"
           className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
-            pathname === "/dashboard" ? "text-primary" : "text-muted"
+            pathname === "/dashboard" ? "text-primary font-semibold" : "text-muted hover:text-foreground"
           }`}
         >
           <LayoutDashboard className="w-4 h-4" />
@@ -494,8 +533,8 @@ export function DashboardShell({
           href="/dashboard/transactions"
           className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
             pathname.startsWith("/dashboard/transactions")
-              ? "text-primary"
-              : "text-muted"
+              ? "text-primary font-semibold"
+              : "text-muted hover:text-foreground"
           }`}
         >
           <Receipt className="w-4 h-4" />
@@ -509,7 +548,7 @@ export function DashboardShell({
           className="flex flex-col items-center gap-0.5 min-w-[56px] min-h-[44px] justify-center"
           aria-label="Catat Penjualan"
         >
-          <div className="w-9 h-9 rounded-lg bg-primary text-primary-fg flex items-center justify-center shadow-xs">
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-fg flex items-center justify-center shadow-xs hover:bg-primary/90 transition-colors">
             <Plus className="w-5 h-5" />
           </div>
         </button>
@@ -518,8 +557,8 @@ export function DashboardShell({
           href="/dashboard/products"
           className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
             pathname.startsWith("/dashboard/products")
-              ? "text-primary"
-              : "text-muted"
+              ? "text-primary font-semibold"
+              : "text-muted hover:text-foreground"
           }`}
         >
           <Package className="w-4 h-4" />
@@ -530,7 +569,7 @@ export function DashboardShell({
           type="button"
           onClick={() => setMobileSheetOpen(true)}
           className={`flex flex-col items-center gap-0.5 p-1 text-[10px] font-medium min-w-[56px] min-h-[44px] justify-center ${
-            mobileSheetOpen ? "text-primary" : "text-muted"
+            mobileSheetOpen ? "text-primary font-semibold" : "text-muted hover:text-foreground"
           }`}
         >
           <MoreHorizontal className="w-4 h-4" />

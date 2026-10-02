@@ -28,14 +28,25 @@ export default async function DashboardOverviewPage() {
     getBusinessOnboardingState(supabase, business.id),
   ]);
 
-  // 2. Fetch products map
+  // 2. Fetch products map and list
   const { data: productsData } = await supabase
     .from("products")
-    .select("id, name")
-    .eq("business_id", business.id);
+    .select("id, name, unit, default_price, is_default, active")
+    .eq("business_id", business.id)
+    .order("is_default", { ascending: false });
 
   const productMap = new Map<string, string>();
-  (productsData || []).forEach((p) => productMap.set(p.id, p.name));
+  const productList = (productsData || []).map((p) => {
+    productMap.set(p.id, p.name);
+    return {
+      id: p.id,
+      name: p.name,
+      unit: p.unit || "kg",
+      default_price: Number(p.default_price || 0),
+      is_default: Boolean(p.is_default),
+      active: Boolean(p.active),
+    };
+  });
 
   // 3. Fetch latest 10 transactions
   const { data: txData } = await supabase
@@ -69,11 +80,10 @@ export default async function DashboardOverviewPage() {
       {/* Page Title & Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <span>Selamat datang kembali</span>
-            <span className="text-lg">👋</span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Selamat datang kembali
           </h1>
-          <p className="text-xs sm:text-sm text-muted mt-0.5">
+          <p className="text-xs sm:text-sm text-muted mt-1">
             Ringkasan performa dan aktivitas transaksi usaha <span className="font-semibold text-foreground">{business.name}</span>.
           </p>
         </div>
@@ -148,52 +158,52 @@ export default async function DashboardOverviewPage() {
 
       {/* KPI Cards Grid (4 Core Metrics, Dense & High-Hierarchy) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* KPI 1: Omzet Hari Ini */}
-        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
+        {/* KPI 1: Omzet Hari Ini (Primary Financial) */}
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Omzet Hari Ini</span>
-            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+            <span className="text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
               Hari ini
             </span>
           </div>
-          <div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground font-mono tabular-nums tracking-tight">
               {formatIDR(kpis.todayRevenue)}
             </p>
-            <p className="text-[11px] text-muted mt-1">
-              Minggu ini: {formatIDR(kpis.weekRevenue)}
+            <p className="text-[11px] text-muted mt-1 font-mono">
+              Minggu ini: <span className="text-foreground/80">{formatIDR(kpis.weekRevenue)}</span>
             </p>
           </div>
         </div>
 
-        {/* KPI 2: Omzet Bulan Ini */}
-        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
+        {/* KPI 2: Omzet Bulan Ini (Primary Financial) */}
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Omzet Bulan Ini</span>
-            <span className="text-[10px] font-medium text-muted bg-surface-hover px-1.5 py-0.5 rounded border border-border">
+            <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
               Bulan berjalan
             </span>
           </div>
-          <div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+          <div className="mt-3">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground font-mono tabular-nums tracking-tight">
               {formatIDR(kpis.monthRevenue)}
             </p>
-            <p className="text-[11px] text-muted mt-1">
-              Akumulasi bulan kalender
+            <p className="text-[11px] text-muted mt-1 font-mono">
+              Akumulasi kalender berjalan
             </p>
           </div>
         </div>
 
-        {/* KPI 3: Total Transaksi */}
-        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
+        {/* KPI 3: Total Transaksi (Secondary Operational) */}
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Transaksi Hari Ini</span>
-            <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+            <span className="text-[10px] font-mono font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
               Sukses
             </span>
           </div>
-          <div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+          <div className="mt-3">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tabular-nums tracking-tight">
               {kpis.todayTransactionCount}
             </p>
             <p className="text-[11px] text-muted mt-1">
@@ -202,18 +212,18 @@ export default async function DashboardOverviewPage() {
           </div>
         </div>
 
-        {/* KPI 4: Total Qty Terjual */}
-        <div className="p-4 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs space-y-2">
+        {/* KPI 4: Total Qty Terjual (Secondary Operational) */}
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Volume Terjual</span>
-            <span className="text-[10px] font-medium text-muted bg-surface-hover px-1.5 py-0.5 rounded border border-border">
+            <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
               Komoditas
             </span>
           </div>
-          <div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tracking-tight">
+          <div className="mt-3">
+            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tabular-nums tracking-tight">
               {kpis.todayQuantity}{" "}
-              <span className="text-xs font-normal text-muted">kg</span>
+              <span className="text-xs font-normal text-muted font-sans">kg</span>
             </p>
             <p className="text-[11px] text-muted mt-1">
               Total kuantitas hari ini
@@ -222,10 +232,10 @@ export default async function DashboardOverviewPage() {
         </div>
       </div>
 
-      {/* Middle Section: Chart & Catalog Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left (2 Cols): 14-Day Sales Chart */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3">
+      {/* Middle Section: Chart (8 cols) & Catalog Overview (4 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left (8 Cols): 14-Day Sales Chart */}
+        <div className="lg:col-span-8 rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
             <div>
               <h3 className="text-sm font-semibold text-foreground tracking-tight">
@@ -236,56 +246,56 @@ export default async function DashboardOverviewPage() {
               </p>
             </div>
             <div className="flex items-center gap-1.5 self-start sm:self-center">
-              <span className="px-2.5 py-1 rounded-md bg-surface-hover border border-border text-foreground text-xs font-medium">
-                Harian
+              <span className="px-2.5 py-1 rounded-md bg-surface-hover border border-border text-foreground text-xs font-medium font-mono">
+                14 Hari
               </span>
             </div>
           </div>
           <SalesChart data={dailySeries} />
         </div>
 
-        {/* Right (1 Col): Penjualan per Produk / Ringkasan Katalog */}
-        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4 flex flex-col justify-between">
+        {/* Right (4 Cols): Ringkasan Katalog Produk */}
+        <div className="lg:col-span-4 rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h3 className="text-sm font-semibold text-foreground tracking-tight">Katalog Produk</h3>
-                <p className="text-[11px] text-muted">Produk aktif terdaftar</p>
+                <h3 className="text-sm font-semibold text-foreground tracking-tight">
+                  Katalog Produk
+                </h3>
+                <p className="text-[11px] text-muted">Produk aktif & harga acuan</p>
               </div>
               <Link
                 href="/dashboard/products"
-                className="text-xs font-medium text-primary hover:underline transition-colors"
+                className="text-xs font-medium text-primary hover:underline transition-colors inline-flex items-center gap-1"
               >
-                Kelola →
+                <span>Kelola</span>
+                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
-            {/* List of Products */}
-            <div className="space-y-2 mt-3">
-              {Array.from(productMap.entries()).slice(0, 5).map(([id, name], idx) => {
-                const colors = [
-                  "bg-violet-500",
-                  "bg-indigo-500",
-                  "bg-emerald-500",
-                  "bg-amber-500",
-                  "bg-sky-500",
-                ];
-                const dotColor = colors[idx % colors.length];
-                return (
-                  <div
-                    key={id}
-                    className="p-2.5 rounded-lg bg-surface-hover/50 border border-border flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-                      <span className="font-medium text-foreground">{name}</span>
-                    </div>
-                    <span className="text-[11px] text-muted font-mono">Aktif</span>
+            {/* Clean List of Products */}
+            <div className="divide-y divide-border/60 mt-1">
+              {productList.filter((p) => p.active).slice(0, 5).map((p) => (
+                <div
+                  key={p.id}
+                  className="py-2.5 flex items-center justify-between text-xs first:pt-2 last:pb-0"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="font-medium text-foreground truncate">{p.name}</span>
+                    {p.is_default && (
+                      <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
+                        Default
+                      </span>
+                    )}
                   </div>
-                );
-              })}
-              {productMap.size === 0 && (
-                <div className="text-center py-6 text-muted text-xs">
+                  <span className="font-mono text-muted text-[11px] tabular-nums shrink-0 ml-2">
+                    Rp{new Intl.NumberFormat("id-ID").format(p.default_price)} / {p.unit}
+                  </span>
+                </div>
+              ))}
+              {productList.length === 0 && (
+                <div className="text-center py-8 text-muted text-xs">
                   Belum ada produk aktif
                 </div>
               )}
@@ -294,8 +304,8 @@ export default async function DashboardOverviewPage() {
 
           <div className="pt-3 border-t border-border">
             <div className="flex items-center justify-between text-xs text-muted">
-              <span>Total Volume Hari Ini:</span>
-              <span className="font-semibold text-foreground font-mono">{kpis.todayQuantity} kg</span>
+              <span>Volume Hari Ini:</span>
+              <span className="font-semibold text-foreground font-mono tabular-nums">{kpis.todayQuantity} kg</span>
             </div>
           </div>
         </div>
@@ -327,40 +337,40 @@ export default async function DashboardOverviewPage() {
         />
       </div>
 
-      {/* Panduan Cepat Chat Telegram */}
-      <div className="rounded-xl border border-border bg-surface p-4 shadow-xs space-y-3">
+      {/* Panduan Cepat Chat Bot */}
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
           <HelpCircle className="w-4 h-4 text-primary" />
-          <span>Panduan Cepat Chat Telegram</span>
+          <span>Panduan Cepat Chat Bot</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
-          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-lg bg-surface-hover/40 border border-border/80 space-y-1.5">
             <span className="font-medium text-muted block text-[11px]">Catat Penjualan:</span>
-            <p className="font-mono text-primary text-[11px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+            <p className="font-mono text-primary text-[11px] bg-primary/10 border border-primary/20 px-2 py-1 rounded inline-block">
               &ldquo;Kejual lele 10kg&rdquo;
             </p>
-            <p className="text-[11px] text-muted">Mencatat kg dan menghitung total rupiah.</p>
+            <p className="text-[11px] text-muted leading-relaxed">Mencatat kuantitas dan menghitung total omzet otomatis.</p>
           </div>
-          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+          <div className="p-3 rounded-lg bg-surface-hover/40 border border-border/80 space-y-1.5">
             <span className="font-medium text-muted block text-[11px]">Laporan Hari Ini:</span>
-            <p className="font-mono text-sky-600 dark:text-sky-400 text-[11px] bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded">
+            <p className="font-mono text-sky-600 dark:text-sky-400 text-[11px] bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded inline-block">
               &ldquo;Laporan hari ini&rdquo;
             </p>
-            <p className="text-[11px] text-muted">Melihat rekap omzet & volume produk.</p>
+            <p className="text-[11px] text-muted leading-relaxed">Melihat ringkasan omzet & volume produk harian.</p>
           </div>
-          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+          <div className="p-3 rounded-lg bg-surface-hover/40 border border-border/80 space-y-1.5">
             <span className="font-medium text-muted block text-[11px]">Tanpa Penjualan:</span>
-            <p className="font-mono text-amber-600 dark:text-amber-400 text-[11px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+            <p className="font-mono text-amber-600 dark:text-amber-400 text-[11px] bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded inline-block">
               &ldquo;Gak ada penjualan&rdquo;
             </p>
-            <p className="text-[11px] text-muted">Konfirmasi kas tetap nol hari ini.</p>
+            <p className="text-[11px] text-muted leading-relaxed">Konfirmasi kas tetap nol hari ini tanpa peringatan.</p>
           </div>
-          <div className="p-3 rounded-lg bg-surface-hover/50 border border-border space-y-1">
+          <div className="p-3 rounded-lg bg-surface-hover/40 border border-border/80 space-y-1.5">
             <span className="font-medium text-muted block text-[11px]">Toko Tutup / Libur:</span>
-            <p className="font-mono text-rose-600 dark:text-rose-400 text-[11px] bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded">
+            <p className="font-mono text-rose-600 dark:text-rose-400 text-[11px] bg-rose-500/10 border border-rose-500/20 px-2 py-1 rounded inline-block">
               &ldquo;Libur hari ini&rdquo;
             </p>
-            <p className="text-[11px] text-muted">Mencatat status libur operasional.</p>
+            <p className="text-[11px] text-muted leading-relaxed">Mencatat status libur operasional pada pembukuan.</p>
           </div>
         </div>
       </div>

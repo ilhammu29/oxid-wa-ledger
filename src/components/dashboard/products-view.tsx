@@ -281,7 +281,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
           <div className="hidden sm:block overflow-x-auto rounded-xl border border-border bg-surface shadow-xs">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-border bg-surface-hover/60 text-muted uppercase font-semibold tracking-wider text-[11px]">
+                <tr className="border-b border-border bg-surface-hover/50 text-muted/80 uppercase font-mono font-medium tracking-wider text-[11px]">
                   <th className="py-2.5 px-3.5">Nama Produk</th>
                   <th className="py-2.5 px-3.5">Satuan</th>
                   <th className="py-2.5 px-3.5">Harga Acuan</th>
@@ -291,14 +291,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   {canManage && <th className="py-2.5 px-3.5 text-right">Aksi</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/60">
                 {filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-surface-hover transition-colors">
+                  <tr key={p.id} className="hover:bg-surface-hover/60 transition-colors">
                     <td className="py-2.5 px-3.5 font-semibold text-foreground whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground">{p.name}</span>
                         {p.is_default && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-mono">
                             <Star className="w-2.5 h-2.5 fill-current" />
                             Default
                           </span>
@@ -310,7 +310,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                         {p.unit}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3.5 font-mono font-bold text-foreground whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 font-mono tabular-nums font-bold text-foreground whitespace-nowrap">
                       Rp{new Intl.NumberFormat("id-ID").format(p.default_price)}
                     </td>
                     <td className="py-2.5 px-3.5 min-w-[200px]">

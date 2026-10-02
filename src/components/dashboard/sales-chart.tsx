@@ -62,11 +62,11 @@ export function SalesChart({ data }: SalesChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={chartData}
-          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: -14, bottom: 0 }}
         >
           <defs>
             <linearGradient id="purpleGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={isDark ? 0.25 : 0.12} />
+              <stop offset="5%" stopColor={strokeColor} stopOpacity={isDark ? 0.18 : 0.08} />
               <stop offset="95%" stopColor={strokeColor} stopOpacity={0.0} />
             </linearGradient>
           </defs>
@@ -77,13 +77,13 @@ export function SalesChart({ data }: SalesChartProps) {
           />
           <XAxis
             dataKey="displayDate"
-            tick={{ fill: axisColor, fontSize: 11 }}
+            tick={{ fill: axisColor, fontSize: 11, fontFamily: "var(--font-geist-mono, monospace)" }}
             axisLine={{ stroke: axisLine }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatIDR}
-            tick={{ fill: axisColor, fontSize: 11 }}
+            tick={{ fill: axisColor, fontSize: 11, fontFamily: "var(--font-geist-mono, monospace)" }}
             axisLine={false}
             tickLine={false}
           />
@@ -92,14 +92,14 @@ export function SalesChart({ data }: SalesChartProps) {
               if (active && payload && payload.length) {
                 const item = payload[0].payload;
                 return (
-                  <div className="rounded-xl bg-surface border border-border p-3 shadow-lg text-xs text-foreground">
+                  <div className="rounded-xl bg-surface/95 backdrop-blur-xs border border-border p-3 shadow-xl text-xs text-foreground">
                     <p className="font-semibold text-muted font-mono mb-1">
                       {item.displayDate} ({item.date})
                     </p>
-                    <p className="text-primary font-bold text-base">
+                    <p className="text-primary font-bold text-base font-mono tabular-nums">
                       Rp{new Intl.NumberFormat("id-ID").format(item.revenue)}
                     </p>
-                    <p className="text-muted text-[11px] mt-1">
+                    <p className="text-muted text-[11px] mt-1 font-mono">
                       {item.quantity} kg • {item.transactionCount} transaksi
                     </p>
                   </div>
@@ -115,7 +115,7 @@ export function SalesChart({ data }: SalesChartProps) {
             strokeWidth={2}
             fillOpacity={1}
             fill="url(#purpleGlow)"
-            activeDot={{ r: 5, fill: strokeColor, stroke: dotStroke, strokeWidth: 2 }}
+            activeDot={{ r: 4.5, fill: strokeColor, stroke: dotStroke, strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
