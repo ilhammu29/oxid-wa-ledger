@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Radio,
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
@@ -327,22 +326,21 @@ export function ChannelsView({
 
   return (
     <div className="space-y-6">
-      {/* Header & Inline Stats */}
+      {/* Top Header & Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Radio className="w-5 h-5 text-primary" />
-            Kanal Perpesanan
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Kanal Pesan
           </h1>
-          <p className="text-xs text-muted mt-0.5">
-            Kelola koneksi bot Telegram, alokasi operator, dan perutean pengingat otomatis.
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
+            Kelola kanal yang digunakan untuk mencatat transaksi.
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-2 text-xs text-muted bg-surface border border-border px-3 py-1.5 rounded-lg self-start sm:self-auto">
+        <div className="inline-flex items-center gap-2 text-xs text-muted bg-surface border border-border px-3 py-1.5 rounded-lg shadow-xs self-start sm:self-auto font-mono">
           <span>Kanal Aktif: <strong className="text-foreground capitalize">{primaryChannel}</strong></span>
           <span className="text-border">·</span>
-          <span>Operator: <strong className="text-foreground font-mono">{telegramOps.length}</strong> / {maxOperators}</span>
+          <span>Operator: <strong className="text-foreground">{telegramOps.length}</strong> / {maxOperators}</span>
         </div>
       </div>
 
@@ -364,7 +362,7 @@ export function ChannelsView({
       {/* Channel Cards (2 Distinct Cards) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Telegram Card (Primary Operational Channel) */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col justify-between space-y-4">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
           <div className="space-y-3.5">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -375,7 +373,7 @@ export function ChannelsView({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-foreground text-sm">Telegram Bot</h3>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 font-mono">
                       Kanal Utama
                     </span>
                   </div>
@@ -384,15 +382,15 @@ export function ChannelsView({
               </div>
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium ${
                     telegramEnabled
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
-                      : "bg-secondary text-muted-foreground border border-border"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                      : "bg-surface-hover text-muted border border-border"
                   }`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      telegramEnabled ? "bg-emerald-500" : "bg-muted-foreground"
+                      telegramEnabled ? "bg-emerald-500" : "bg-muted"
                     }`}
                   />
                   {telegramEnabled ? "Aktif" : "Nonaktif"}
@@ -402,7 +400,7 @@ export function ChannelsView({
                     type="button"
                     onClick={() => setTelegramEnabled(!telegramEnabled)}
                     className={`w-9 h-5 rounded-full p-0.5 transition-colors focus:outline-none shrink-0 ${
-                      telegramEnabled ? "bg-primary" : "bg-secondary border border-border"
+                      telegramEnabled ? "bg-primary" : "bg-surface-hover border border-border"
                     }`}
                     aria-label="Aktifkan Telegram"
                   >
@@ -418,7 +416,7 @@ export function ChannelsView({
 
             {/* Quick Status Bar */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-md bg-secondary/50 border border-border">
+              <div className="p-2.5 rounded-lg bg-surface-hover/50 border border-border">
                 <span className="text-[10px] text-muted uppercase font-medium block">
                   Webhook Bot
                 </span>
@@ -427,7 +425,7 @@ export function ChannelsView({
                   Operasional
                 </span>
               </div>
-              <div className="p-2.5 rounded-md bg-secondary/50 border border-border">
+              <div className="p-2.5 rounded-lg bg-surface-hover/50 border border-border">
                 <span className="text-[10px] text-muted uppercase font-medium block">
                   Status Layanan
                 </span>
@@ -454,7 +452,7 @@ export function ChannelsView({
                 className={`px-2 py-0.5 rounded text-xs font-mono font-medium ${
                   isLimitReached
                     ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
-                    : "bg-secondary text-foreground border border-border"
+                    : "bg-surface-hover text-foreground border border-border"
                 }`}
               >
                 {telegramOps.length} / {maxOperators}
@@ -512,7 +510,7 @@ export function ChannelsView({
                 {telegramOps.map((op) => (
                   <div
                     key={op.id}
-                    className="p-3 rounded-lg border border-border bg-secondary/30 text-xs space-y-1.5 hover:bg-surface-hover transition-colors"
+                    className="p-3 rounded-lg border border-border bg-surface-hover/30 text-xs space-y-1.5 hover:bg-surface-hover transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -569,12 +567,12 @@ export function ChannelsView({
         </div>
 
         {/* WhatsApp Card (Clean Deferred State) */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col justify-between space-y-4">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4">
           <div className="space-y-3.5">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-surface-hover text-muted border border-border flex items-center justify-center shrink-0">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
@@ -583,8 +581,9 @@ export function ChannelsView({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
-                  {whatsappEnabled ? "Aktif" : "Segera Hadir"}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface-hover text-muted border border-border">
+                  <span className={`w-1.5 h-1.5 rounded-full ${whatsappEnabled ? "bg-emerald-500" : "bg-muted"}`} />
+                  {whatsappEnabled ? "Aktif" : "Belum diaktifkan"}
                 </span>
                 {canEdit && (
                   <button
@@ -600,7 +599,7 @@ export function ChannelsView({
                     }}
                     disabled={!readiness.ready && !whatsappEnabled}
                     className={`w-9 h-5 rounded-full p-0.5 transition-colors focus:outline-none shrink-0 ${
-                      whatsappEnabled ? "bg-primary" : "bg-secondary border border-border"
+                      whatsappEnabled ? "bg-primary" : "bg-surface-hover border border-border"
                     } disabled:opacity-50`}
                     aria-label="Aktifkan WhatsApp"
                   >
@@ -615,7 +614,7 @@ export function ChannelsView({
             </div>
 
             {/* Explanation Box */}
-            <div className="p-3.5 rounded-lg bg-secondary/50 border border-border space-y-2 text-xs">
+            <div className="p-3.5 rounded-lg bg-surface-hover/60 border border-border space-y-2 text-xs">
               <div className="flex items-center gap-2 text-foreground font-medium">
                 <Info className="w-4 h-4 text-primary shrink-0" />
                 <span>Status Peluncuran WhatsApp Cloud</span>
@@ -672,7 +671,7 @@ export function ChannelsView({
       </div>
 
       {/* Channel Routing & Preferences Card */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 space-y-4">
         <div>
           <h3 className="font-semibold text-foreground text-sm">
             Perutean Kanal (Routing)
@@ -754,7 +753,7 @@ export function ChannelsView({
       </div>
 
       {/* Advanced / Developer Integration: WhatsApp Senders & Templates (Subtle Collapsible Section) */}
-      <details className="card-base bg-surface border-border p-4 rounded-lg group">
+      <details className="rounded-xl bg-surface border border-border shadow-xs p-4 group">
         <summary className="text-xs font-medium text-muted cursor-pointer hover:text-foreground flex items-center justify-between select-none">
           <span>Konfigurasi Lanjutan WhatsApp Cloud API & Template</span>
           <span className="text-[11px] font-mono group-open:rotate-90 transition-transform">▸</span>
@@ -776,21 +775,21 @@ export function ChannelsView({
             )}
 
             {canEdit && (
-              <form onSubmit={handleAddOperator} className="p-3 rounded-lg bg-secondary/40 border border-border space-y-3">
+              <form onSubmit={handleAddOperator} className="p-3 rounded-lg bg-surface-hover/40 border border-border space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input
                     type="text"
                     placeholder="Nomor WA (contoh: 08123...)"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-surface text-foreground"
                   />
                   <input
                     type="text"
                     placeholder="Label / Nama Operator"
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-background text-foreground"
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs bg-surface text-foreground"
                   />
                   <div className="flex items-center gap-2">
                     <input
@@ -809,7 +808,7 @@ export function ChannelsView({
                   <button
                     type="submit"
                     disabled={addingOperator || !newPhone.trim()}
-                    className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-surface-hover border border-border text-foreground text-xs font-medium transition disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg bg-surface-hover hover:bg-surface border border-border text-foreground text-xs font-medium transition disabled:opacity-50 shadow-xs"
                   >
                     {addingOperator ? "Mendaftarkan..." : "Daftarkan Operator"}
                   </button>
@@ -820,7 +819,7 @@ export function ChannelsView({
             {senders.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-secondary/50 text-muted uppercase text-[10px]">
+                  <thead className="bg-surface-hover/50 text-muted uppercase text-[10px]">
                     <tr>
                       <th className="px-3 py-2">Nomor</th>
                       <th className="px-3 py-2">Label</th>
@@ -936,7 +935,7 @@ export function ChannelsView({
                   <button
                     type="submit"
                     disabled={savingTemplate}
-                    className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-surface-hover border border-border text-foreground text-xs font-medium transition disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg bg-surface-hover hover:bg-surface border border-border text-foreground text-xs font-medium transition disabled:opacity-50 shadow-xs"
                   >
                     {savingTemplate ? "Menyimpan..." : "Simpan Template"}
                   </button>
@@ -950,9 +949,9 @@ export function ChannelsView({
       {/* Cutover Confirmation Modal */}
       {showCutoverModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
+          <div className="rounded-xl bg-surface border border-border max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-secondary text-primary flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-surface-hover text-primary flex items-center justify-center shrink-0">
                 <ArrowRightLeft className="w-4 h-4" />
               </div>
               <div>
@@ -963,7 +962,7 @@ export function ChannelsView({
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-secondary/50 border border-border text-xs text-muted space-y-1">
+            <div className="p-3 rounded-lg bg-surface-hover/50 border border-border text-xs text-muted space-y-1">
               <p className="font-medium text-foreground">Jaminan Integritas Buku Besar:</p>
               <p className="text-[11px] leading-relaxed">
                 Seluruh transaksi keuangan tetap tersimpan utuh di PostgreSQL Supabase. Pengalihan hanya memindahkan jalur pesan.
@@ -986,7 +985,7 @@ export function ChannelsView({
                 type="button"
                 onClick={() => handleSaveSettings(pendingCutoverPrimary || "whatsapp")}
                 disabled={saving}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary-hover text-primary-foreground transition disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary-hover text-primary-foreground transition disabled:opacity-50 shadow-xs"
               >
                 {saving ? "Mengalihkan..." : "Ya, Alihkan ke WhatsApp"}
               </button>
@@ -998,7 +997,7 @@ export function ChannelsView({
       {/* Telegram Operator Unlink Confirmation Modal */}
       {operatorToUnlink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
+          <div className="rounded-xl bg-surface border border-border max-w-md w-full p-5 space-y-3.5 text-foreground shadow-xl">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/20">
                 <Trash2 className="w-4 h-4" />
@@ -1014,7 +1013,7 @@ export function ChannelsView({
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-secondary/50 border border-border text-xs text-muted">
+            <div className="p-3 rounded-lg bg-surface-hover/50 border border-border text-xs text-muted">
               Operator ini tidak akan bisa lagi mencatat transaksi melalui Telegram untuk bisnis ini sampai dihubungkan kembali.
             </div>
 

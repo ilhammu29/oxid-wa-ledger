@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import {
   Package,
   Plus,
-  Check,
   Star,
   Edit2,
   X,
@@ -168,12 +167,15 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
   return (
     <div className="space-y-5">
-      {/* Header with Title, Stats Line, and Add Product CTA */}
+      {/* Header with Title, Subtitle, Stats Line, and Add Product CTA */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Katalog Produk
+            Produk
           </h1>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
+            Kelola produk, harga acuan, satuan, dan alias pencatatan.
+          </p>
           <div className="flex items-center gap-2 text-xs text-muted mt-1 font-mono">
             <span>{activeCount} produk aktif</span>
             <span>·</span>
@@ -294,37 +296,30 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
               <tbody className="divide-y divide-border/60">
                 {filteredProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-surface-hover/60 transition-colors">
-                    <td className="py-2.5 px-3.5 font-semibold text-foreground whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{p.name}</span>
+                        <span className="font-semibold text-foreground">{p.name}</span>
                         {p.is_default && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-mono">
-                            <Star className="w-2.5 h-2.5 fill-current" />
+                          <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                             Default
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
-                      <span className="font-mono text-foreground bg-surface-hover border border-border px-1.5 py-0.5 rounded text-[11px]">
+                      <span className="font-mono text-muted bg-surface-hover border border-border px-1.5 py-0.5 rounded text-[11px]">
                         {p.unit}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3.5 font-mono tabular-nums font-bold text-foreground whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
                       Rp{new Intl.NumberFormat("id-ID").format(p.default_price)}
                     </td>
                     <td className="py-2.5 px-3.5 min-w-[200px]">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span
-                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20"
-                          title="Nama resmi komoditas"
-                        >
-                          {p.name}
-                        </span>
                         {(p.aliases || []).map((al) => (
                           <span
                             key={al.id}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-surface-hover text-muted border border-border"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-surface-hover text-muted border border-border"
                           >
                             {al.alias}
                             {canManage && (
@@ -342,30 +337,34 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                           <button
                             type="button"
                             onClick={() => setAliasModalProduct(p)}
-                            className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium ml-1"
+                            className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium"
                           >
                             <Plus className="w-2.5 h-2.5" /> Alias
                           </button>
+                        )}
+                        {(!p.aliases || p.aliases.length === 0) && !canManage && (
+                          <span className="text-muted text-[11px]">-</span>
                         )}
                       </div>
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
                       {p.active ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                          <Check className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Aktif
                         </span>
                       ) : (
-                        <span className="inline-flex items-center text-[11px] font-medium text-muted bg-surface-hover px-2 py-0.5 rounded-md border border-border">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted" />
                           Nonaktif
                         </span>
                       )}
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
                       {p.is_default ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                          <Star className="w-3.5 h-3.5 fill-current" />
-                          Utama
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                          <Star className="w-3 h-3 fill-current" />
+                          Master
                         </span>
                       ) : (
                         canManage && p.active && (
@@ -406,22 +405,24 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-foreground font-semibold text-sm">{p.name}</div>
-                    <div className="text-xs text-muted font-mono mt-0.5">
+                    <div className="text-xs text-muted font-mono tabular-nums mt-0.5">
                       Rp{new Intl.NumberFormat("id-ID").format(p.default_price)} / {p.unit}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {p.is_default && (
-                      <span className="p-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400" title="Default Produk">
-                        <Star className="w-3.5 h-3.5 fill-current" />
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20" title="Default Master">
+                        Default
                       </span>
                     )}
                     {p.active ? (
-                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         Aktif
                       </span>
                     ) : (
-                      <span className="text-[10px] font-medium text-muted bg-surface-hover px-2 py-0.5 rounded-md border border-border">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted">
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted" />
                         Nonaktif
                       </span>
                     )}
@@ -430,17 +431,14 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
 
                 {/* Aliases */}
                 <div className="pt-1">
-                  <div className="text-[10px] uppercase font-semibold text-muted tracking-wider mb-1">
-                    Kata Kunci Bot
+                  <div className="text-[10px] uppercase font-mono font-medium text-muted tracking-wider mb-1">
+                    Alias Bot ({p.aliases?.length || 0})
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
-                    <span className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
-                      {p.name}
-                    </span>
                     {(p.aliases || []).map((al) => (
                       <span
                         key={al.id}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-surface-hover text-muted border border-border"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-surface-hover text-muted border border-border"
                       >
                         {al.alias}
                         {canManage && (
@@ -458,10 +456,13 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                       <button
                         type="button"
                         onClick={() => setAliasModalProduct(p)}
-                        className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium ml-1"
+                        className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline font-medium"
                       >
                         <Plus className="w-2.5 h-2.5" /> Alias
                       </button>
+                    )}
+                    {(!p.aliases || p.aliases.length === 0) && !canManage && (
+                      <span className="text-muted text-[11px]">-</span>
                     )}
                   </div>
                 </div>

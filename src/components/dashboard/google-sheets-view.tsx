@@ -180,8 +180,8 @@ export function GoogleSheetsView({
     icon: React.ComponentType<{ className?: string }>;
   } = {
     label: "Belum Dihubungkan",
-    bg: "bg-secondary border-border",
-    text: "text-muted-foreground",
+    bg: "bg-surface-hover border-border",
+    text: "text-muted",
     icon: Info,
   };
 
@@ -202,15 +202,15 @@ export function GoogleSheetsView({
   } else if (!liveConnection?.spreadsheet_id) {
     statusBadge = {
       label: "Belum Terhubung",
-      bg: "bg-secondary border-border",
-      text: "text-muted-foreground",
+      bg: "bg-surface-hover border-border",
+      text: "text-muted",
       icon: Info,
     };
   } else if (!liveConnection.enabled) {
     statusBadge = {
       label: "Nonaktif",
-      bg: "bg-secondary border-border",
-      text: "text-muted-foreground",
+      bg: "bg-surface-hover border-border",
+      text: "text-muted",
       icon: XCircle,
     };
   } else if (liveConnection.last_sync_status === "failed") {
@@ -336,21 +336,20 @@ export function GoogleSheetsView({
   const StatusIcon = statusBadge.icon;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          Google Sheets Mirror
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+          Google Sheets
         </h1>
-        <p className="text-xs text-muted mt-1">
-          Pencadangan satu arah otomatis dari buku besar OXID ke Google Spreadsheet bisnis Anda.
+        <p className="text-xs sm:text-sm text-muted mt-1">
+          Sinkronkan laporan operasional ke spreadsheet.
         </p>
       </div>
 
       {/* Server Configuration Alert */}
       {!isServerConfigured && (
-        <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2.5 text-amber-800 dark:text-amber-300 text-xs">
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-800 dark:text-amber-300 text-xs">
           <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <p className="font-semibold text-foreground">Google Sheets belum dikonfigurasi pada server.</p>
@@ -362,7 +361,7 @@ export function GoogleSheetsView({
       )}
 
       {/* Status & Quick Action Card */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-5 h-5" />
@@ -397,7 +396,7 @@ export function GoogleSheetsView({
           type="button"
           onClick={handleManualSync}
           disabled={!liveConnection?.enabled || !liveConnection?.spreadsheet_id || isSyncingActive || isPending}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-medium transition"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-medium transition shadow-xs"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isSyncingActive ? "animate-spin" : ""}`} />
           <span>{isSyncingActive ? "Menyinkronkan..." : "Sinkronkan Sekarang"}</span>
@@ -406,14 +405,14 @@ export function GoogleSheetsView({
 
       {/* Error Callout Alert Banner */}
       {liveConnection?.last_sync_status === "failed" && (
-        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-start gap-2.5">
+        <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2.5">
           <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
           <div className="text-xs text-rose-700 dark:text-rose-300 space-y-1">
             <p className="font-semibold text-foreground">Kendala Sinkronisasi Terakhir</p>
             <p>{getFriendlyErrorMessage(liveConnection.last_error_code, liveConnection.last_error_message)}</p>
             {liveConnection.last_error_code === "PERMISSION_DENIED" && serviceAccountEmail && (
               <p className="text-[11px] text-muted mt-1">
-                Solusi: Buka spreadsheet Anda, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan <code className="bg-secondary px-1 py-0.5 rounded font-mono text-foreground">{serviceAccountEmail}</code> sebagai <strong>Editor</strong>.
+                Solusi: Buka spreadsheet Anda, klik tombol <strong>Bagikan (Share)</strong>, lalu tambahkan <code className="bg-surface-hover px-1.5 py-0.5 rounded border border-border font-mono text-foreground">{serviceAccountEmail}</code> sebagai <strong>Editor</strong>.
               </p>
             )}
           </div>
@@ -421,7 +420,7 @@ export function GoogleSheetsView({
       )}
 
       {/* Setup Guide Box */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 space-y-3">
         <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
           Panduan Pengaturan (3 Langkah)
         </h3>
@@ -431,13 +430,13 @@ export function GoogleSheetsView({
           </li>
           <li>
             Klik tombol <strong>Bagikan (Share)</strong> di spreadsheet, lalu undang email Service Account berikut sebagai <strong>Editor</strong>:
-            <div className="mt-1.5 flex items-center gap-2 bg-secondary p-2 rounded-lg font-mono text-xs text-foreground">
+            <div className="mt-1.5 flex items-center gap-2 bg-surface-hover/60 border border-border p-2 rounded-lg font-mono text-xs text-foreground">
               <span className="truncate">{serviceAccountEmail || "Belum dikonfigurasi"}</span>
               {serviceAccountEmail && (
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted hover:text-foreground transition px-2 py-0.5 rounded bg-surface border border-border"
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted hover:text-foreground transition px-2 py-0.5 rounded bg-surface border border-border shadow-xs"
                 >
                   <Copy className="w-3 h-3" />
                   <span>{copiedEmail ? "Tersalin!" : "Salin"}</span>
@@ -452,7 +451,7 @@ export function GoogleSheetsView({
       </div>
 
       {/* Main Settings Form */}
-      <form onSubmit={handleSave} className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
+      <form onSubmit={handleSave} className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 space-y-4">
         <h3 className="text-sm font-semibold text-foreground">
           Konfigurasi Spreadsheet
         </h3>
@@ -469,13 +468,13 @@ export function GoogleSheetsView({
               onChange={(e) => setSpreadsheetInput(e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5.../edit"
               disabled={!canEdit || isPending}
-              className="flex-1 px-3 py-2 text-xs border border-border rounded-lg bg-background text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary font-mono disabled:opacity-50 transition"
+              className="flex-1 px-3 py-2 text-xs border border-border rounded-lg bg-surface text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary font-mono disabled:opacity-50 transition"
             />
             <button
               type="button"
               onClick={handleTestConnection}
               disabled={!canEdit || isTesting || !spreadsheetInput.trim()}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium bg-secondary hover:bg-surface-hover border border-border disabled:opacity-50 text-foreground rounded-lg transition shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium bg-surface-hover hover:bg-surface border border-border disabled:opacity-50 text-foreground rounded-lg transition shrink-0"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-primary" />
               <span>{isTesting ? "Memeriksa..." : "Test Connection"}</span>
@@ -526,7 +525,7 @@ export function GoogleSheetsView({
             onClick={() => canEdit && setEnabled(!enabled)}
             disabled={!canEdit || isPending}
             className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-              enabled ? "bg-primary" : "bg-secondary border border-border"
+              enabled ? "bg-primary" : "bg-surface-hover border border-border"
             }`}
           >
             <span
@@ -546,7 +545,7 @@ export function GoogleSheetsView({
             value={syncInterval}
             onChange={(e) => setSyncInterval(e.target.value)}
             disabled={!canEdit || isPending}
-            className="px-3 py-1.5 text-xs border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition"
+            className="px-3 py-1.5 text-xs border border-border rounded-lg bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition"
           >
             <option value="5">Setiap 5 Menit (Direkomendasikan)</option>
             <option value="15">Setiap 15 Menit</option>
@@ -556,7 +555,7 @@ export function GoogleSheetsView({
         </div>
 
         {/* Single Source of Truth Notice */}
-        <div className="p-3 bg-secondary/50 border border-border rounded-lg text-xs text-muted flex items-start gap-2">
+        <div className="p-3.5 bg-surface-hover/40 border border-border rounded-xl text-xs text-muted flex items-start gap-2.5">
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="leading-relaxed text-[11px]">
             OXID hanya mengelola 5 tab: <code className="font-mono text-foreground">Dashboard</code>, <code className="font-mono text-foreground">Transactions</code>, <code className="font-mono text-foreground">Products</code>, <code className="font-mono text-foreground">Daily_Status</code>, dan <code className="font-mono text-foreground">Config</code>. Tab buatan Anda tidak akan dihapus. Perubahan langsung di Google Sheets tidak mengubah data di ledger OXID.
@@ -582,7 +581,7 @@ export function GoogleSheetsView({
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-medium transition"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-medium transition shadow-xs"
             >
               {isPending ? "Menyimpan..." : "Simpan Pengaturan"}
             </button>
@@ -591,7 +590,7 @@ export function GoogleSheetsView({
       </form>
 
       {/* Recent Sync Runs Table */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground">
           Riwayat Sinkronisasi Terkini
         </h3>
@@ -602,36 +601,36 @@ export function GoogleSheetsView({
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-border text-muted bg-secondary/50 uppercase font-medium text-[11px]">
-                  <th className="py-2 px-3">Waktu</th>
-                  <th className="py-2 px-3">Status</th>
-                  <th className="py-2 px-3">Transaksi</th>
-                  <th className="py-2 px-3">Produk</th>
-                  <th className="py-2 px-3">Status Harian</th>
-                  <th className="py-2 px-3">Catatan</th>
+                <tr className="border-b border-border text-muted bg-surface-hover/50 uppercase font-semibold text-[10px] tracking-wider">
+                  <th className="py-2.5 px-3.5">Waktu</th>
+                  <th className="py-2.5 px-3.5">Status</th>
+                  <th className="py-2.5 px-3.5">Transaksi</th>
+                  <th className="py-2.5 px-3.5">Produk</th>
+                  <th className="py-2.5 px-3.5">Status Harian</th>
+                  <th className="py-2.5 px-3.5">Catatan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {liveRecentRuns.map((run) => (
-                  <tr key={run.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="py-2.5 px-3 font-mono text-muted text-[11px] whitespace-nowrap">
+                  <tr key={run.id} className="hover:bg-surface-hover/50 transition-colors">
+                    <td className="py-3 px-3.5 font-mono tabular-nums text-muted text-[11px] whitespace-nowrap">
                       {new Date(run.started_at).toLocaleString("id-ID")}
                     </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="py-3 px-3.5 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
                           run.status === "success"
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
-                            : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20"
                         }`}
                       >
                         {run.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_transactions} baris</td>
-                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_products} baris</td>
-                    <td className="py-2.5 px-3 font-mono text-foreground whitespace-nowrap">{run.rows_daily_status} baris</td>
-                    <td className="py-2.5 px-3 text-muted max-w-xs truncate">
+                    <td className="py-3 px-3.5 font-mono tabular-nums text-foreground whitespace-nowrap">{run.rows_transactions} baris</td>
+                    <td className="py-3 px-3.5 font-mono tabular-nums text-foreground whitespace-nowrap">{run.rows_products} baris</td>
+                    <td className="py-3 px-3.5 font-mono tabular-nums text-foreground whitespace-nowrap">{run.rows_daily_status} baris</td>
+                    <td className="py-3 px-3.5 text-muted max-w-xs truncate">
                       {run.error_code ? (
                         <span className="text-rose-600 dark:text-rose-400 font-mono text-[11px]">
                           [{run.error_code}] {run.error_message}

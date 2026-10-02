@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import {
-  Activity,
-  AlertTriangle,
   CheckCircle2,
   Clock,
   Radio,
   Send,
   ShieldAlert,
-  XCircle,
   Eye,
   Check,
   FileSpreadsheet,
@@ -59,37 +56,37 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
     switch (status) {
       case "ACTIVE":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Aktif
           </span>
         );
       case "DISABLED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
-            <XCircle className="w-3 h-3 text-muted-foreground" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface-hover text-muted border border-border">
+            <span className="w-1.5 h-1.5 rounded-full bg-muted" />
             Nonaktif
           </span>
         );
       case "NOT READY":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-            <AlertTriangle className="w-3 h-3 text-amber-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             Belum Siap
           </span>
         );
       case "WARNING":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-            <AlertTriangle className="w-3 h-3 text-amber-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             Peringatan
           </span>
         );
       case "ERROR":
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
-            <ShieldAlert className="w-3 h-3 text-rose-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
             Gangguan
           </span>
         );
@@ -98,15 +95,16 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
-          Monitoring & Kesehatan Sistem
-        </h1>
-        <p className="text-xs text-muted mt-1">
-          Status kanal perpesanan, worker sinkronisasi, cron scheduler, dan telemetri parser transaksi.
-        </p>
+      {/* Top Header & Page Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Monitoring & Bot
+          </h1>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
+            Pantau koneksi bot dan aktivitas pencatatan.
+          </p>
+        </div>
       </div>
 
       {actionError && (
@@ -119,7 +117,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
       {/* 1. CHANNEL & INTEGRATION STATUS (3 CARDS) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Telegram Card */}
-        <div className="card-base bg-surface border-border p-4 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-md flex items-center justify-center shrink-0">
@@ -132,7 +130,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
             </div>
             {getStatusBadge(data.channels.telegram.status)}
           </div>
-          <p className="text-xs text-muted bg-secondary/50 p-2.5 rounded-md border border-border leading-relaxed">
+          <p className="text-xs text-muted bg-surface-hover/60 p-2.5 rounded-md border border-border leading-relaxed">
             {data.channels.telegram.detail}
           </p>
           <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-border">
@@ -156,10 +154,10 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
         </div>
 
         {/* WhatsApp Card */}
-        <div className="card-base bg-surface border-border p-4 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-secondary text-muted-foreground rounded-md flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 bg-surface-hover text-muted rounded-md flex items-center justify-center shrink-0 border border-border">
                 <Radio className="w-3.5 h-3.5" />
               </div>
               <div>
@@ -169,7 +167,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
             </div>
             {getStatusBadge(data.channels.whatsapp.status)}
           </div>
-          <p className="text-xs text-muted bg-secondary/50 p-2.5 rounded-md border border-border leading-relaxed">
+          <p className="text-xs text-muted bg-surface-hover/60 p-2.5 rounded-md border border-border leading-relaxed">
             {data.channels.whatsapp.detail}
           </p>
           <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-border">
@@ -193,7 +191,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
         </div>
 
         {/* Google Sheets Card */}
-        <div className="card-base bg-surface border-border p-4 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md flex items-center justify-center shrink-0">
@@ -205,27 +203,27 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
               </div>
             </div>
             {data.googleSheets.status === "CONNECTED" && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Terhubung
               </span>
             )}
             {data.googleSheets.status === "DISABLED" && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
-                <XCircle className="w-3 h-3 text-muted-foreground" /> Nonaktif
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface-hover text-muted border border-border">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted" /> Nonaktif
               </span>
             )}
             {data.googleSheets.status === "ERROR" && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
-                <ShieldAlert className="w-3 h-3 text-rose-500" /> Gangguan
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Gangguan
               </span>
             )}
             {data.googleSheets.status === "NOT CONFIGURED" && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface-hover text-muted border border-border">
                 Belum Terhubung
               </span>
             )}
           </div>
-          <p className="text-xs text-muted bg-secondary/50 p-2.5 rounded-md border border-border truncate">
+          <p className="text-xs text-muted bg-surface-hover/60 p-2.5 rounded-md border border-border truncate">
             {data.googleSheets.spreadsheetTitle ||
               (data.googleSheets.status === "NOT CONFIGURED"
                 ? "Belum ada spreadsheet terhubung"
@@ -255,7 +253,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
       {/* 2. ACTIVITY & SCHEDULER (2 CARDS) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Activity Summary Card */}
-        <div className="card-base bg-surface border-border p-4 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-primary" />
             <h3 className="font-semibold text-foreground text-xs">
@@ -285,7 +283,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
         </div>
 
         {/* Scheduler Health Card */}
-        <div className="card-base bg-surface border-border p-4 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
             <h3 className="font-semibold text-foreground text-xs">
@@ -306,27 +304,27 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-              <div className="bg-secondary/60 p-2 rounded-md border border-border">
-                <span className="text-[10px] uppercase text-muted block mb-0.5">
+              <div className="bg-surface-hover/60 p-2 rounded-md border border-border">
+                <span className="text-[10px] uppercase font-medium text-muted block mb-0.5">
                   Dicek
                 </span>
-                <span className="font-semibold text-foreground text-sm font-mono">
+                <span className="font-semibold text-foreground text-sm font-mono tabular-nums">
                   {data.scheduler.businessesChecked}
                 </span>
               </div>
-              <div className="bg-secondary/60 p-2 rounded-md border border-border">
-                <span className="text-[10px] uppercase text-muted block mb-0.5">
+              <div className="bg-surface-hover/60 p-2 rounded-md border border-border">
+                <span className="text-[10px] uppercase font-medium text-muted block mb-0.5">
                   Terkirim
                 </span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm font-mono">
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm font-mono tabular-nums">
                   {data.scheduler.notificationsSent}
                 </span>
               </div>
-              <div className="bg-secondary/60 p-2 rounded-md border border-border">
-                <span className="text-[10px] uppercase text-muted block mb-0.5">
+              <div className="bg-surface-hover/60 p-2 rounded-md border border-border">
+                <span className="text-[10px] uppercase font-medium text-muted block mb-0.5">
                   Gagal
                 </span>
-                <span className="font-semibold text-rose-600 dark:text-rose-400 text-sm font-mono">
+                <span className="font-semibold text-rose-600 dark:text-rose-400 text-sm font-mono tabular-nums">
                   {data.scheduler.notificationsFailed}
                 </span>
               </div>
@@ -336,7 +334,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
       </div>
 
       {/* 3. MESSAGES NEEDING REVIEW (PILOT HARDENING) */}
-      <div className="card-base bg-surface border-border p-4 space-y-3">
+      <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -349,13 +347,13 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
               Pesan dari operator resmi yang tidak dapat diuraikan oleh parser deterministic.
             </p>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 self-start sm:self-auto">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 self-start sm:self-auto font-mono">
             {failures.length} Menunggu Peninjauan
           </span>
         </div>
 
         {failures.length === 0 ? (
-          <div className="py-8 text-center bg-secondary/30 rounded-lg border border-border">
+          <div className="py-8 text-center bg-surface-hover/40 rounded-lg border border-border">
             <CheckCircle2 className="w-6 h-6 text-emerald-500/80 mx-auto mb-1.5" />
             <p className="text-xs font-medium text-foreground">Tidak ada pesan yang perlu ditinjau</p>
             <p className="text-[11px] text-muted mt-0.5">Semua pesan dari operator berhasil diproses dengan aman.</p>
@@ -364,7 +362,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-border text-muted bg-secondary/50 uppercase font-medium text-[11px]">
+                <tr className="border-b border-border text-muted bg-surface-hover/50 uppercase font-mono font-medium text-[11px]">
                   <th className="py-2.5 px-3">Waktu</th>
                   <th className="py-2.5 px-3">Kanal</th>
                   <th className="py-2.5 px-3">Pesan Operator</th>
@@ -372,13 +370,13 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
                   <th className="py-2.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/60">
                 {failures.map((f) => (
-                  <tr key={f.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="py-2.5 px-3 font-mono text-muted whitespace-nowrap">
+                  <tr key={f.id} className="hover:bg-surface-hover/60 transition-colors">
+                    <td className="py-2.5 px-3 font-mono tabular-nums text-muted whitespace-nowrap">
                       {formatDateTime(f.createdAt)}
                     </td>
-                    <td className="py-2.5 px-3 uppercase text-primary font-medium">
+                    <td className="py-2.5 px-3 uppercase text-primary font-mono font-medium">
                       {f.channel}
                     </td>
                     <td className="py-2.5 px-3 font-mono text-foreground max-w-xs truncate">
@@ -394,7 +392,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
                         <button
                           onClick={() => handleMarkReviewed(f.id)}
                           disabled={loadingId === f.id}
-                          className="px-2.5 py-1 bg-secondary hover:bg-emerald-500 hover:text-white text-foreground rounded text-xs font-medium border border-border transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
+                          className="px-2.5 py-1 bg-surface hover:bg-emerald-500 hover:text-white text-foreground rounded text-xs font-medium border border-border transition-colors disabled:opacity-50 inline-flex items-center gap-1.5 shadow-xs"
                         >
                           <Check className="w-3 h-3" />
                           {loadingId === f.id ? "Menyimpan..." : "Tandai Ditinjau"}
@@ -412,7 +410,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
       </div>
 
       {/* 4. RECENT 20 ERRORS (TELEMETRY) */}
-      <div className="card-base bg-surface border-border p-4 space-y-3">
+      <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-rose-500" />
           <h3 className="font-semibold text-foreground text-sm">
@@ -425,7 +423,7 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-border text-muted bg-secondary/50 uppercase font-medium text-[11px]">
+                <tr className="border-b border-border text-muted bg-surface-hover/50 uppercase font-mono font-medium text-[11px]">
                   <th className="py-2 px-3">Waktu</th>
                   <th className="py-2 px-3">Kanal</th>
                   <th className="py-2 px-3">Arah</th>
@@ -433,13 +431,13 @@ export function MonitoringView({ data, role, timezone }: MonitoringViewProps) {
                   <th className="py-2 px-3">Kode Kesalahan</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/60">
                 {data.recentErrors.map((err) => (
-                  <tr key={err.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="py-2 px-3 font-mono text-muted whitespace-nowrap">
+                  <tr key={err.id} className="hover:bg-surface-hover/60 transition-colors">
+                    <td className="py-2 px-3 font-mono tabular-nums text-muted whitespace-nowrap">
                       {formatDateTime(err.createdAt)}
                     </td>
-                    <td className="py-2 px-3 uppercase text-foreground font-medium">{err.channel}</td>
+                    <td className="py-2 px-3 uppercase text-foreground font-mono font-medium">{err.channel}</td>
                     <td className="py-2 px-3 capitalize text-muted">{err.direction}</td>
                     <td className="py-2 px-3 font-mono text-foreground">{err.eventType}</td>
                     <td className="py-2 px-3">

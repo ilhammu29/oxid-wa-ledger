@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  Bell,
   Clock,
   Calendar,
   Send,
@@ -132,28 +131,30 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
 
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Bell className="w-5 h-5 text-primary" />
-          Pengingat Harian Otomatis
-        </h1>
-        <p className="text-xs text-muted mt-1">
-          Kirim notifikasi pengingat via Telegram ke operator jika belum ada transaksi atau konfirmasi status toko hari ini.
-        </p>
+      {/* Top Header & Page Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Pengingat Harian
+          </h1>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
+            Atur waktu pengingat operasional usaha.
+          </p>
+        </div>
       </div>
 
       {/* Inline Status Row */}
-      <div className="card-base bg-surface border-border p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="rounded-xl bg-surface border border-border p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <span className="text-muted">Status:</span>
           {enabled ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Aktif
             </span>
           ) : (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface-hover text-muted border border-border">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted" />
               Nonaktif
             </span>
           )}
@@ -183,7 +184,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
         )}
 
         {/* 1. Toggle Card */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 flex items-center justify-between">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-foreground text-sm">
               Aktifkan Pengingat Otomatis
@@ -198,7 +199,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
             disabled={role === "member"}
             aria-pressed={enabled}
             className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-              enabled ? "bg-primary" : "bg-secondary border border-border"
+              enabled ? "bg-primary" : "bg-surface-hover border border-border"
             }`}
           >
             <div
@@ -210,7 +211,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
         </div>
 
         {/* 2. Schedule & Time */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-4">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
@@ -222,7 +223,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
                 value={reminderTime}
                 onChange={(e) => setReminderTime(e.target.value)}
                 disabled={role === "member"}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
               />
               <span className="text-[11px] text-muted mt-1 block">
                 Zona Waktu: <span className="font-mono">{settings.timezone}</span>
@@ -235,7 +236,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
                 Kanal Pengiriman
               </label>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg border border-border">
+                <div className="flex items-center gap-2 p-2 bg-surface-hover/60 rounded-lg border border-border">
                   <input
                     type="radio"
                     checked
@@ -281,7 +282,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
         </div>
 
         {/* 3. Recipient Operators */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
@@ -295,11 +296,11 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
           </div>
 
           {operators.length === 0 ? (
-            <div className="p-4 bg-secondary/30 rounded-lg border border-border text-center text-xs text-muted">
+            <div className="p-4 bg-surface-hover/40 rounded-lg border border-border text-center text-xs text-muted">
               Belum ada operator Telegram terdaftar. Hubungkan operator di menu Kanal Pesan.
             </div>
           ) : (
-            <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
+            <div className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden">
               {operators.map((op) => {
                 const isChecked = selectedRecipients.includes(op.id);
                 return (
@@ -337,12 +338,12 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
         </div>
 
         {/* 4. Preview Message */}
-        <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-2.5">
+        <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-2.5">
           <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
             <HelpCircle className="w-4 h-4 text-muted" />
             Pratinjau Pesan Pengingat
           </h3>
-          <div className="p-3 bg-secondary/50 rounded-lg border border-border font-mono text-xs text-foreground whitespace-pre-line leading-relaxed">
+          <div className="p-3 bg-surface-hover/60 rounded-lg border border-border font-mono text-xs text-foreground whitespace-pre-line leading-relaxed">
             {REMINDER_MESSAGE_TEXT}
           </div>
           <p className="text-[11px] text-muted leading-relaxed">
@@ -356,16 +357,16 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-lg text-xs transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg text-xs shadow-xs transition-colors disabled:opacity-50"
             >
-              {saving ? "Menyimpan..." : "Simpan Pengaturan"}
+              {saving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
           </div>
         )}
       </form>
 
       {/* 5. Send Test Reminder Section */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+      <div className="rounded-xl bg-surface border border-border p-4 sm:p-5 shadow-xs space-y-3">
         <div>
           <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
             <Send className="w-4 h-4 text-sky-500" />
@@ -395,7 +396,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
             value={testRecipientId}
             onChange={(e) => setTestRecipientId(Number(e.target.value))}
             disabled={testSending || operators.length === 0}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary flex-1"
+            className="px-3 py-2 bg-surface border border-border rounded-lg text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary flex-1"
           >
             {operators.map((op) => (
               <option key={op.id} value={op.telegramUserId}>
@@ -408,7 +409,7 @@ export function RemindersView({ settings, operators, role }: RemindersViewProps)
             type="button"
             onClick={handleSendTest}
             disabled={testSending || operators.length === 0 || role === "member"}
-            className="px-3.5 py-2 bg-secondary hover:bg-surface-hover text-foreground text-xs font-medium rounded-lg border border-border transition-colors disabled:opacity-50 shrink-0"
+            className="px-3.5 py-2 bg-surface hover:bg-surface-hover text-foreground text-xs font-medium rounded-lg border border-border shadow-xs transition-colors disabled:opacity-50 shrink-0"
           >
             {testSending ? "Mengirim..." : "Kirim Test Reminder"}
           </button>

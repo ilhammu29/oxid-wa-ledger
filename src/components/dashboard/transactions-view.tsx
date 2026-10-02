@@ -11,15 +11,22 @@ import {
   XCircle,
   RefreshCw,
   Receipt,
+  Plus,
+  Download,
 } from "lucide-react";
 import {
   TransactionDetailModal,
   TransactionRowData,
 } from "./transaction-detail-modal";
+import { CatatPenjualanModal } from "./catat-penjualan-modal";
 
 interface ProductItem {
   id: string;
   name: string;
+  unit?: string;
+  default_price?: number;
+  is_default?: boolean;
+  active?: boolean;
 }
 
 interface TransactionsViewProps {
@@ -44,6 +51,7 @@ export function TransactionsView({
   const searchParams = useSearchParams();
 
   const [selectedTx, setSelectedTx] = useState<TransactionRowData | null>(null);
+  const [catatModalOpen, setCatatModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -142,17 +150,25 @@ export function TransactionsView({
             Transaksi
           </h1>
           <p className="text-xs sm:text-sm text-muted mt-0.5">
-            Pantau dan telusuri semua riwayat transaksi penjualan bisnis secara real-time.
+            Pantau seluruh pencatatan penjualan usaha Anda.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 self-start sm:self-center">
           <a
             href="/api/export/ledger.xlsx"
             download
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border hover:bg-surface-hover text-foreground text-xs font-medium transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-surface border border-border hover:bg-surface-hover text-foreground text-xs font-medium transition-colors shadow-xs"
           >
+            <Download className="w-3.5 h-3.5 text-muted" />
             <span>Export Excel</span>
           </a>
+          <button
+            onClick={() => setCatatModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs shadow-xs transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Catat Penjualan</span>
+          </button>
         </div>
       </div>
 
@@ -233,14 +249,29 @@ export function TransactionsView({
 
       {/* Content Section: Table for Desktop, Cards for Mobile */}
       {transactions.length === 0 ? (
-        <div className="py-14 text-center text-muted bg-surface rounded-xl border border-border">
-          <Receipt className="w-8 h-8 text-muted mx-auto mb-2" />
-          <p className="text-sm font-semibold text-foreground">
-            Tidak ada transaksi ditemukan
+        <div className="py-12 text-center text-muted bg-surface rounded-xl border border-border space-y-2.5 shadow-xs">
+          <Receipt className="w-8 h-8 text-muted mx-auto" />
+          <h3 className="text-sm font-semibold text-foreground">
+            {searchInput || searchParams.toString()
+              ? "Tidak ada transaksi ditemukan"
+              : "Belum ada transaksi"}
+          </h3>
+          <p className="text-xs text-muted max-w-sm mx-auto">
+            {searchInput || searchParams.toString()
+              ? "Coba ubah kata kunci pencarian atau bersihkan filter yang aktif."
+              : "Transaksi yang dicatat melalui Telegram atau dashboard akan muncul di sini."}
           </p>
-          <p className="text-xs text-muted mt-1">
-            Coba ubah kata kunci pencarian atau bersihkan filter yang aktif.
-          </p>
+          {!searchInput && !searchParams.toString() && (
+            <div className="pt-1">
+              <button
+                onClick={() => setCatatModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs shadow-xs transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Catat Penjualan</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-surface shadow-xs overflow-hidden">
@@ -278,7 +309,7 @@ export function TransactionsView({
                     <td className="py-2.5 px-3.5 font-mono tabular-nums text-muted whitespace-nowrap">
                       Rp{new Intl.NumberFormat("id-ID").format(tx.unit_price)}
                     </td>
-                    <td className="py-2.5 px-3.5 font-mono tabular-nums font-bold text-foreground whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 font-semibold tracking-tight tabular-nums text-foreground whitespace-nowrap">
                       Rp{new Intl.NumberFormat("id-ID").format(tx.total_amount)}
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
@@ -311,7 +342,7 @@ export function TransactionsView({
                   <span className="font-semibold text-foreground text-sm">
                     {tx.product_name || "Produk Default"}
                   </span>
-                  <span className="font-bold text-primary font-mono text-sm">
+                  <span className="font-semibold text-primary tracking-tight tabular-nums text-sm">
                     Rp{new Intl.NumberFormat("id-ID").format(tx.total_amount)}
                   </span>
                 </div>
@@ -377,6 +408,19 @@ export function TransactionsView({
         transaction={selectedTx}
         onClose={() => setSelectedTx(null)}
         timezone={timezone}
+      />
+
+      {/* Catat Penjualan Modal Component */}
+      <CatatPenjualanModal
+        isOpen={catatModalOpen}
+        onClose={() => setCatatModalOpen(false)}
+        products={products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          unit: p.unit || "kg",
+          default_price: p.default_price || 0,
+          is_default: Boolean(p.is_default),
+        }))}
       />
     </div>
   );

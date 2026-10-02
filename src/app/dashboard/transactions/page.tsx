@@ -30,15 +30,25 @@ export default async function TransactionsPage({
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // 1. Fetch products for product filter & names
+  // 1. Fetch products for product filter, names, and manual entry
   const { data: productsData } = await supabase
     .from("products")
-    .select("id, name")
+    .select("id, name, unit, default_price, is_default, active")
     .eq("business_id", business.id)
+    .order("is_default", { ascending: false })
     .order("name", { ascending: true });
 
   const productMap = new Map<string, string>();
   (productsData || []).forEach((p) => productMap.set(p.id, p.name));
+
+  const productOptions = (productsData || []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    unit: p.unit || "kg",
+    default_price: Number(p.default_price || 0),
+    is_default: Boolean(p.is_default),
+    active: Boolean(p.active),
+  }));
 
   // 2. Build filtered transactions query
   let query = supabase
@@ -87,18 +97,9 @@ export default async function TransactionsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          Riwayat Transaksi
-        </h1>
-        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Daftar seluruh transaksi yang tercatat dari WhatsApp, Telegram, dan Dashboard.
-        </p>
-      </div>
-
       <TransactionsView
         transactions={transactions}
-        products={productsData || []}
+        products={productOptions}
         totalCount={count || 0}
         currentPage={currentPage}
         pageSize={PAGE_SIZE}

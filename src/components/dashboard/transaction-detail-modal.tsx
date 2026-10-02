@@ -154,7 +154,7 @@ export function TransactionDetailModal({
                 <p className="text-xs font-medium text-muted">
                   Total Nilai Transaksi
                 </p>
-                <p className="text-2xl font-bold text-primary font-mono mt-0.5">
+                <p className="text-2xl font-semibold text-foreground tracking-tight tabular-nums mt-0.5">
                   Rp{new Intl.NumberFormat("id-ID").format(transaction.total_amount)}
                 </p>
               </div>

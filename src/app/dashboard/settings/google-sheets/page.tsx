@@ -42,24 +42,13 @@ export default async function GoogleSheetsSettingsPage() {
   const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || null;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-          Integrasi Google Sheets
-        </h1>
-        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Sinkronisasi satu arah (one-way mirror) dari buku kas Supabase ke Google Spreadsheet Anda.
-        </p>
-      </div>
-
-      <GoogleSheetsView
-        connection={connection || null}
-        pendingJob={pendingJobs && pendingJobs.length > 0 ? pendingJobs[0] : null}
-        recentRuns={recentRuns || []}
-        isServerConfigured={isServerConfigured}
-        serviceAccountEmail={serviceAccountEmail}
-        role={session.role || "member"}
-      />
-    </div>
+    <GoogleSheetsView
+      connection={connection || null}
+      pendingJob={pendingJobs && pendingJobs.length > 0 ? pendingJobs[0] : null}
+      recentRuns={recentRuns || []}
+      isServerConfigured={isServerConfigured}
+      serviceAccountEmail={serviceAccountEmail}
+      role={session.role || "member"}
+    />
   );
 }

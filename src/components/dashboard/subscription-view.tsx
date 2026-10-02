@@ -20,7 +20,6 @@ import {
   Building2,
   Info,
   Calendar,
-  Zap,
 } from "lucide-react";
 
 interface SubscriptionViewProps {
@@ -84,14 +83,14 @@ export function SubscriptionView({
         );
       case "cancelled":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary border border-border text-muted-foreground">
-            <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-hover border border-border text-muted">
+            <XCircle className="w-3.5 h-3.5 text-muted" />
             Dibatalkan
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-hover text-muted border border-border">
             {status.toUpperCase()}
           </span>
         );
@@ -134,22 +133,21 @@ export function SubscriptionView({
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Zap className="w-5 h-5 text-primary" />
-          Langganan & Penagihan
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+          Langganan
         </h1>
-        <p className="text-xs text-muted mt-1">
-          Informasi paket operasional bisnis, masa berlaku kuota, dan konfirmasi perpanjangan layanan.
+        <p className="text-xs sm:text-sm text-muted mt-1">
+          Kelola paket dan status langganan OXID Ledger.
         </p>
       </div>
 
       {/* Feedback banner */}
       {feedback && (
         <div
-          className={`p-3.5 rounded-lg border text-xs flex items-start gap-2.5 ${
+          className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
             feedback.success
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
               : "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
@@ -167,7 +165,7 @@ export function SubscriptionView({
       {/* Warning / Expiring Soon Banner */}
       {warningMessage && (
         <div
-          className={`p-3.5 rounded-lg border text-xs flex items-start gap-2.5 ${
+          className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
             isSuspended
               ? "bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300"
               : isGracePeriod
@@ -190,7 +188,7 @@ export function SubscriptionView({
       )}
 
       {/* Current Plan Overview Card */}
-      <div className="card-base bg-surface border-border p-5 space-y-4">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -203,7 +201,7 @@ export function SubscriptionView({
           {canManage && (
             <button
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition shadow-xs"
             >
               <CreditCard className="w-3.5 h-3.5" />
               <span>Konfirmasi Pembayaran</span>
@@ -213,10 +211,10 @@ export function SubscriptionView({
 
         {/* Key Metrics Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+          <div className="bg-surface-hover/50 border border-border rounded-xl p-3.5">
             <span className="text-xs text-muted block mb-0.5">Sisa Masa Aktif</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-foreground font-mono">{remainingDays}</span>
+              <span className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">{remainingDays}</span>
               <span className="text-xs text-muted">hari tersisa</span>
             </div>
             <span className="text-[11px] text-muted block mt-1">
@@ -224,7 +222,7 @@ export function SubscriptionView({
             </span>
           </div>
 
-          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+          <div className="bg-surface-hover/50 border border-border rounded-xl p-3.5">
             <span className="text-xs text-muted block mb-0.5">Batas Berlaku</span>
             <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-muted" />
@@ -235,7 +233,7 @@ export function SubscriptionView({
             </span>
           </div>
 
-          <div className="bg-secondary/40 border border-border rounded-lg p-3">
+          <div className="bg-surface-hover/50 border border-border rounded-xl p-3.5">
             <span className="text-xs text-muted block mb-0.5">Status Pencatatan Mutasi</span>
             <div className="flex items-center gap-1.5 text-sm font-semibold">
               {subscriptionState.canCreateMutations ? (
@@ -272,7 +270,7 @@ export function SubscriptionView({
             return (
               <div
                 key={p.code}
-                className={`card-base bg-surface border rounded-xl p-4 flex flex-col justify-between transition-colors ${
+                className={`rounded-xl bg-surface border shadow-xs p-4 flex flex-col justify-between transition-colors ${
                   isCurrent
                     ? "border-primary/50 ring-1 ring-primary/30"
                     : "border-border hover:border-border/80"
@@ -288,7 +286,7 @@ export function SubscriptionView({
                     )}
                   </div>
                   <div className="flex items-baseline gap-1 my-2">
-                    <span className="text-xl font-bold text-foreground font-mono">
+                    <span className="text-xl font-semibold tracking-tight tabular-nums text-foreground">
                       {p.priceIdr === 0 ? "Gratis" : formatIDR(p.priceIdr)}
                     </span>
                     {p.priceIdr > 0 && <span className="text-xs text-muted">/ bulan</span>}
@@ -310,7 +308,7 @@ export function SubscriptionView({
                       setSelectedPlanCode(p.code);
                       setModalOpen(true);
                     }}
-                    className="w-full py-2 rounded-lg text-xs font-medium text-center border border-border hover:bg-surface-hover text-foreground transition-colors mt-2"
+                    className="w-full py-2 rounded-lg text-xs font-medium text-center border border-border bg-surface hover:bg-surface-hover text-foreground transition-colors mt-2 shadow-xs"
                   >
                     Pilih Paket Ini
                   </button>
@@ -322,7 +320,7 @@ export function SubscriptionView({
       </div>
 
       {/* Manual Bank Transfer Instructions */}
-      <div className="card-base bg-surface border-border p-4 sm:p-5 space-y-3">
+      <div className="rounded-xl bg-surface border border-border shadow-xs p-4 sm:p-5 space-y-3">
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground flex items-center gap-1.5">
             <Building2 className="w-4 h-4 text-primary" />
@@ -338,7 +336,7 @@ export function SubscriptionView({
             {paymentSettings.map((setting) => (
               <div
                 key={setting.id}
-                className="p-3.5 rounded-lg bg-secondary/50 border border-border space-y-1"
+                className="p-3.5 rounded-xl bg-surface-hover/50 border border-border space-y-1"
               >
                 <span className="text-muted block text-[11px] uppercase tracking-wider font-medium">{setting.bankName}</span>
                 <span className="font-mono font-bold text-foreground text-sm block">
@@ -356,8 +354,8 @@ export function SubscriptionView({
             ))}
           </div>
         ) : (
-          <div className="p-3 rounded-lg bg-secondary/40 border border-border text-xs text-muted">
-            Detail rekening pembayaran sedang dikonfigurasi. Hubungi admin OXID untuk konfirmasi manual.
+          <div className="p-3.5 rounded-xl bg-surface-hover/40 border border-border text-xs text-muted">
+            Detail pembayaran belum dikonfigurasi. Silakan hubungi admin OXID untuk aktivasi langganan.
           </div>
         )}
 
@@ -370,7 +368,7 @@ export function SubscriptionView({
       </div>
 
       {/* Payment History Table */}
-      <div className="card-base bg-surface border-border overflow-hidden">
+      <div className="rounded-xl bg-surface border border-border shadow-xs overflow-hidden">
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-foreground">Riwayat Pembayaran & Tagihan</h3>
           <p className="text-xs text-muted mt-0.5">Daftar transaksi pembayaran langganan untuk bisnis ini.</p>
@@ -383,7 +381,7 @@ export function SubscriptionView({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
-              <thead className="bg-secondary/50 text-muted border-b border-border uppercase font-medium text-[11px]">
+              <thead className="bg-surface-hover/50 text-muted border-b border-border uppercase font-semibold text-[10px] tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3.5">Tanggal</th>
                   <th className="py-2.5 px-3.5">Nominal</th>
@@ -414,14 +412,14 @@ export function SubscriptionView({
                   }
 
                   return (
-                    <tr key={p.id} className="hover:bg-surface-hover transition-colors">
-                      <td className="py-2.5 px-3.5 text-muted">{formatDate(p.createdAt)}</td>
-                      <td className="py-2.5 px-3.5 font-semibold text-foreground font-mono">{formatIDR(p.amountIdr)}</td>
-                      <td className="py-2.5 px-3.5 capitalize text-muted">{p.paymentMethod.replace("_", " ")}</td>
-                      <td className="py-2.5 px-3.5 font-mono text-[11px] text-muted">
+                    <tr key={p.id} className="hover:bg-surface-hover/50 transition-colors">
+                      <td className="py-3 px-3.5 text-muted">{formatDate(p.createdAt)}</td>
+                      <td className="py-3 px-3.5 font-semibold text-foreground tabular-nums">{formatIDR(p.amountIdr)}</td>
+                      <td className="py-3 px-3.5 capitalize text-muted">{p.paymentMethod.replace("_", " ")}</td>
+                      <td className="py-3 px-3.5 font-mono tabular-nums text-[11px] text-muted">
                         {p.reference || "-"}
                       </td>
-                      <td className="py-2.5 px-3.5">{statusBadge}</td>
+                      <td className="py-3 px-3.5">{statusBadge}</td>
                     </tr>
                   );
                 })}
@@ -434,7 +432,7 @@ export function SubscriptionView({
       {/* Manual Payment Confirmation Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="card-base bg-surface border-border rounded-xl max-w-md w-full p-5 shadow-xl text-foreground space-y-3.5">
+          <div className="rounded-xl bg-surface border border-border max-w-md w-full p-5 shadow-xl text-foreground space-y-3.5">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Konfirmasi Pembayaran Langganan</h3>
               <p className="text-xs text-muted mt-0.5">
@@ -451,7 +449,7 @@ export function SubscriptionView({
                   name="planCode"
                   value={selectedPlanCode}
                   onChange={(e) => setSelectedPlanCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
+                  className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
                 >
                   {plans
                     .filter((p) => p.priceIdr > 0)
@@ -471,7 +469,7 @@ export function SubscriptionView({
                   type="text"
                   readOnly
                   value={activePlanToPay ? formatIDR(activePlanToPay.priceIdr) : "Paket tidak valid"}
-                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground font-semibold text-xs focus:outline-none font-mono cursor-not-allowed"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-hover border border-border text-foreground font-semibold text-xs focus:outline-none tabular-nums cursor-not-allowed"
                 />
                 <input type="hidden" name="amount" value={activePlanToPay?.priceIdr ?? 0} />
               </div>
@@ -483,7 +481,7 @@ export function SubscriptionView({
                 <select
                   name="paymentMethod"
                   defaultValue="manual_transfer"
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
+                  className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition"
                 >
                   <option value="manual_transfer">Transfer Bank Manual</option>
                   <option value="qris_manual">QRIS Pembayaran</option>
@@ -500,7 +498,7 @@ export function SubscriptionView({
                   name="reference"
                   placeholder="Contoh: REF-9821 / a.n. Pengirim"
                   required
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary transition"
+                  className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-foreground text-xs placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary transition"
                 />
               </div>
 
@@ -516,7 +514,7 @@ export function SubscriptionView({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-medium text-xs transition flex items-center gap-1.5 shadow-xs"
                 >
                   {isSubmitting ? (
                     "Mengirim..."
