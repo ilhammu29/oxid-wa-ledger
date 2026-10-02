@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { Reveal } from "./reveal";
 
 export function FeatureShowcases() {
   return (
@@ -15,22 +16,28 @@ export function FeatureShowcases() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 sm:space-y-32">
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto">
-          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
-            01 — 04 · KEMAMPUAN UTAMA
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-            Didesain untuk operasional harian yang cepat.
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-muted leading-relaxed">
-            Semua yang Anda butuhkan untuk mencatat penjualan, menjaga stok,
-            dan melihat keuntungan bersih tanpa membebani kasir.
-          </p>
+          <Reveal delay={0} y={12} duration={500}>
+            <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
+              01 — 04 · KEMAMPUAN UTAMA
+            </div>
+          </Reveal>
+          <Reveal delay={80} y={16} duration={550}>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+              Didesain untuk operasional harian yang cepat.
+            </h2>
+          </Reveal>
+          <Reveal delay={160} y={16} duration={550}>
+            <p className="mt-4 text-base sm:text-lg text-muted leading-relaxed">
+              Semua yang Anda butuhkan untuk mencatat penjualan, menjaga stok,
+              dan melihat keuntungan bersih tanpa membebani kasir.
+            </p>
+          </Reveal>
         </div>
 
         {/* FEATURE 01: Catat lewat chat (Text Left, Visual Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Text Left (5 cols) */}
-          <div className="lg:col-span-5 space-y-5">
+          <Reveal delay={0} y={18} duration={550} className="lg:col-span-5 space-y-5">
             <div className="inline-flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
               <MessageSquare className="w-4 h-4" />
               <span>01 · Telegram Kasir</span>
@@ -70,10 +77,10 @@ export function FeatureShowcases() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
+          </Reveal>
 
           {/* Visual Right (7 cols): Telegram Chat Mockup */}
-          <div className="lg:col-span-7">
+          <Reveal delay={80} y={28} scale={0.985} duration={600} className="lg:col-span-7">
             <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-xl space-y-4 max-w-xl mx-auto lg:max-w-none">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-3">
@@ -94,69 +101,73 @@ export function FeatureShowcases() {
                 </span>
               </div>
 
-              {/* Chat Thread */}
+              {/* Chat Thread with Staged Entry */}
               <div className="space-y-3.5 py-2">
-                {/* Kasir Message */}
-                <div className="flex items-start gap-2.5 max-w-[85%]">
-                  <div className="w-7 h-7 rounded-full bg-border flex items-center justify-center text-[11px] font-bold text-muted shrink-0">
-                    B
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-medium text-muted">Budi (Kasir 01) · 08:42</span>
-                    <div className="p-3 rounded-2xl rounded-tl-xs bg-surface-hover border border-border text-sm text-foreground font-medium">
-                      Kejual lele 5kg @28rb tunai
+                {/* 1. Kasir Message */}
+                <Reveal delay={140} y={10} duration={450}>
+                  <div className="flex items-start gap-2.5 max-w-[85%]">
+                    <div className="w-7 h-7 rounded-full bg-border flex items-center justify-center text-[11px] font-bold text-muted shrink-0">
+                      B
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-muted">Budi (Kasir 01) · 08:42</span>
+                      <div className="p-3 rounded-2xl rounded-tl-xs bg-surface-hover border border-border text-sm text-foreground font-medium">
+                        Kejual lele 5kg @28rb tunai
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Reveal>
 
-                {/* Bot Response Message */}
-                <div className="flex items-start gap-2.5 max-w-[90%] ml-auto flex-row-reverse">
-                  <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                    BOT
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <span className="text-[11px] font-medium text-muted">OXID Assistant · 08:42</span>
-                    <div className="p-4 rounded-2xl rounded-tr-xs bg-primary/10 border border-primary/20 text-sm text-foreground text-left space-y-2">
-                      <div className="flex items-center justify-between gap-4 font-bold text-foreground pb-2 border-b border-primary/20">
-                        <span>Nota Penjualan #2904</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold tabular-nums">
-                          Rp140.000
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted space-y-1">
-                        <div className="flex justify-between">
-                          <span>Produk:</span>
-                          <span className="text-foreground font-medium">Ikan Lele Segar</span>
+                {/* 2. Bot Response Message */}
+                <Reveal delay={300} y={12} duration={480}>
+                  <div className="flex items-start gap-2.5 max-w-[90%] ml-auto flex-row-reverse">
+                    <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                      BOT
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <span className="text-[11px] font-medium text-muted">OXID Assistant · 08:42</span>
+                      <div className="p-4 rounded-2xl rounded-tr-xs bg-primary/10 border border-primary/20 text-sm text-foreground text-left space-y-2">
+                        <div className="flex items-center justify-between gap-4 font-bold text-foreground pb-2 border-b border-primary/20">
+                          <span>Nota Penjualan #2904</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-extrabold tabular-nums">
+                            Rp140.000
+                          </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Kuantitas:</span>
-                          <span className="text-foreground font-medium">5 kg x Rp28.000</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Metode:</span>
-                          <span className="text-foreground font-medium">Tunai</span>
-                        </div>
-                        <div className="flex justify-between pt-1 border-t border-primary/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                          <span>Sisa Stok:</span>
-                          <span>140 kg (Berkurang 5 kg)</span>
+                        <div className="text-xs text-muted space-y-1">
+                          <div className="flex justify-between">
+                            <span>Produk:</span>
+                            <span className="text-foreground font-medium">Ikan Lele Segar</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Kuantitas:</span>
+                            <span className="text-foreground font-medium">5 kg x Rp28.000</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Metode:</span>
+                            <span className="text-foreground font-medium">Tunai</span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-primary/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span>Sisa Stok:</span>
+                            <span>140 kg (Berkurang 5 kg)</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Reveal>
               </div>
 
               <div className="pt-2 text-center text-xs text-muted">
                 Kasir cukup kirim pesan · Pembukuan langsung beres
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* FEATURE 02: Pantau dari satu dashboard (Visual Left, Text Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Visual Left (7 cols): Analytics & Cash Breakdown Mockup */}
-          <div className="lg:col-span-7 order-2 lg:order-1">
+          <Reveal delay={80} y={28} scale={0.985} duration={600} className="lg:col-span-7 order-2 lg:order-1">
             <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-xl space-y-5 max-w-xl mx-auto lg:max-w-none">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div>
@@ -170,48 +181,54 @@ export function FeatureShowcases() {
 
               {/* 2 Big Split Cards: Tunai vs Transfer */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                  <div className="text-xs text-muted flex items-center justify-between">
-                    <span>Kas Tunai di Toko</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 font-semibold">
-                      Uang Fisik
-                    </span>
+                <Reveal delay={140} y={12} duration={450}>
+                  <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                    <div className="text-xs text-muted flex items-center justify-between">
+                      <span>Kas Tunai di Toko</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 font-semibold">
+                        Uang Fisik
+                      </span>
+                    </div>
+                    <div className="text-2xl font-extrabold text-foreground tabular-nums">
+                      Rp2.420.000
+                    </div>
+                    <div className="text-xs text-muted">24 nota kasir tunai</div>
                   </div>
-                  <div className="text-2xl font-extrabold text-foreground tabular-nums">
-                    Rp2.420.000
-                  </div>
-                  <div className="text-xs text-muted">24 nota kasir tunai</div>
-                </div>
+                </Reveal>
 
-                <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
-                  <div className="text-xs text-muted flex items-center justify-between">
-                    <span>Transfer Rekening Bank</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-semibold">
-                      BCA / Mandiri
-                    </span>
+                <Reveal delay={220} y={12} duration={450}>
+                  <div className="p-4 rounded-xl border border-border bg-background/60 space-y-1.5">
+                    <div className="text-xs text-muted flex items-center justify-between">
+                      <span>Transfer Rekening Bank</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-semibold">
+                        BCA / Mandiri
+                      </span>
+                    </div>
+                    <div className="text-2xl font-extrabold text-foreground tabular-nums">
+                      Rp1.420.000
+                    </div>
+                    <div className="text-xs text-muted">6 nota transfer rekening</div>
                   </div>
-                  <div className="text-2xl font-extrabold text-foreground tabular-nums">
-                    Rp1.420.000
-                  </div>
-                  <div className="text-xs text-muted">6 nota transfer rekening</div>
-                </div>
+                </Reveal>
               </div>
 
               {/* Cash Reconciliation Status */}
-              <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5 text-emerald-700 dark:text-emerald-300 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Uang kas fisik toko cocok dengan total transaksi bot kasir.</span>
+              <Reveal delay={300} y={10} duration={450}>
+                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 text-emerald-700 dark:text-emerald-300 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Uang kas fisik toko cocok dengan total transaksi bot kasir.</span>
+                  </div>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                    0 Selisih
+                  </span>
                 </div>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  0 Selisih
-                </span>
-              </div>
+              </Reveal>
             </div>
-          </div>
+          </Reveal>
 
           {/* Text Right (5 cols) */}
-          <div className="lg:col-span-5 space-y-5 order-1 lg:order-2">
+          <Reveal delay={0} y={18} duration={550} className="lg:col-span-5 space-y-5 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
               <LayoutDashboard className="w-4 h-4" />
               <span>02 · Dashboard Terpadu</span>
@@ -251,13 +268,13 @@ export function FeatureShowcases() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* FEATURE 03: Produk dan harga tetap teratur (Text Left, Visual Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Text Left (5 cols) */}
-          <div className="lg:col-span-5 space-y-5">
+          <Reveal delay={0} y={18} duration={550} className="lg:col-span-5 space-y-5">
             <div className="inline-flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
               <Package className="w-4 h-4" />
               <span>03 · Katalog & Stok</span>
@@ -297,10 +314,10 @@ export function FeatureShowcases() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
+          </Reveal>
 
           {/* Visual Right (7 cols): Catalog & Stock Table Mockup */}
-          <div className="lg:col-span-7">
+          <Reveal delay={80} y={28} scale={0.985} duration={600} className="lg:col-span-7">
             <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-xl space-y-4 max-w-xl mx-auto lg:max-w-none">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div>
@@ -314,6 +331,7 @@ export function FeatureShowcases() {
                 </span>
               </div>
 
+              {/* Sequential Product Rows (Lele, Nila, Pakan, Gurame) */}
               <div className="divide-y divide-border text-xs">
                 {[
                   {
@@ -345,41 +363,43 @@ export function FeatureShowcases() {
                     status: "Menipis",
                   },
                 ].map((item, i) => (
-                  <div key={i} className="py-3 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-semibold text-foreground text-sm">
-                        {item.name}
+                  <Reveal key={i} delay={100 + i * 70} y={8} duration={400}>
+                    <div className="py-3 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-foreground text-sm">
+                          {item.name}
+                        </div>
+                        <div className="text-[11px] text-muted">
+                          SKU: {item.sku} · Stok: {item.stock}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-muted">
-                        SKU: {item.sku} · Stok: {item.stock}
-                      </div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="font-bold text-foreground tabular-nums">
-                        {item.price}
+                      <div className="text-right">
+                        <div className="font-bold text-foreground tabular-nums">
+                          {item.price}
+                        </div>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            item.status === "Menipis"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
                       </div>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          item.status === "Menipis"
-                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
                     </div>
-                  </div>
+                  </Reveal>
                 ))}
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* FEATURE 04: Laporan tersimpan otomatis (Visual Left, Text Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Visual Left (7 cols): Google Sheets Preview Mockup */}
-          <div className="lg:col-span-7 order-2 lg:order-1">
+          <Reveal delay={80} y={28} scale={0.985} duration={600} className="lg:col-span-7 order-2 lg:order-1">
             <div className="rounded-2xl border border-border bg-surface p-5 sm:p-7 shadow-xl space-y-4 max-w-xl mx-auto lg:max-w-none">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2.5">
@@ -398,7 +418,7 @@ export function FeatureShowcases() {
                 </span>
               </div>
 
-              {/* Table Preview */}
+              {/* Table Preview with Sequential Rows */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-sans">
                   <thead>
@@ -417,7 +437,7 @@ export function FeatureShowcases() {
                       { time: "08:12", id: "TX-2902", item: "Nila Segar 12kg", val: "Rp420.000", met: "Transfer" },
                       { time: "07:55", id: "TX-2901", item: "Gurame 3kg", val: "Rp165.000", met: "Tunai" },
                     ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-surface-hover/40 transition-colors">
+                      <Reveal key={idx} as="tr" delay={100 + idx * 60} y={6} duration={400} className="hover:bg-surface-hover/40 transition-colors">
                         <td className="p-2 text-muted">{row.time}</td>
                         <td className="p-2 font-mono font-medium text-foreground">#{row.id}</td>
                         <td className="p-2 text-foreground">{row.item}</td>
@@ -427,7 +447,7 @@ export function FeatureShowcases() {
                             {row.met}
                           </span>
                         </td>
-                      </tr>
+                      </Reveal>
                     ))}
                   </tbody>
                 </table>
@@ -438,10 +458,10 @@ export function FeatureShowcases() {
                 <span className="text-emerald-500 font-medium">Bebas buat rumus sendiri</span>
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* Text Right (5 cols) */}
-          <div className="lg:col-span-5 space-y-5 order-1 lg:order-2">
+          <Reveal delay={0} y={18} duration={550} className="lg:col-span-5 space-y-5 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
               <FileSpreadsheet className="w-4 h-4" />
               <span>04 · Laporan & Cermin Data</span>
@@ -481,7 +501,7 @@ export function FeatureShowcases() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

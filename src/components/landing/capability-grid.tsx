@@ -1,4 +1,5 @@
 import { Users, WifiOff, Scale, ShieldCheck } from "lucide-react";
+import { Reveal } from "./reveal";
 
 export function CapabilityGrid() {
   const capabilities = [
@@ -28,34 +29,39 @@ export function CapabilityGrid() {
     <section className="py-16 sm:py-24 border-t border-border/80 bg-surface/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
-            KEANDALAN OPERASIONAL
-          </div>
-          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Dibuat untuk kebutuhan nyata pedagang di lapangan.
-          </h3>
-          <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
-            Menghilangkan beban teknis sehingga Anda bisa fokus melayani pembeli.
-          </p>
+          <Reveal delay={0} y={12} duration={500}>
+            <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
+              KEANDALAN OPERASIONAL
+            </div>
+          </Reveal>
+          <Reveal delay={80} y={16} duration={550}>
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Dibuat untuk kebutuhan nyata pedagang di lapangan.
+            </h3>
+          </Reveal>
+          <Reveal delay={160} y={16} duration={550}>
+            <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
+              Menghilangkan beban teknis sehingga Anda bisa fokus melayani pembeli.
+            </p>
+          </Reveal>
         </div>
 
-        {/* 4-Column Refined Editorial Grid (No colored icon squares) */}
+        {/* 4-Column Refined Editorial Grid with subtle stagger */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {capabilities.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <div
-                key={idx}
-                className="p-6 rounded-xl border border-border/70 bg-surface/60 hover:bg-surface hover:border-border transition-all space-y-3.5"
-              >
-                <Icon className="w-5 h-5 text-primary shrink-0" />
-                <h4 className="font-semibold text-base text-foreground tracking-tight">
-                  {item.title}
-                </h4>
-                <p className="text-xs sm:text-sm text-muted leading-relaxed">
-                  {item.desc}
-                </p>
-              </div>
+              <Reveal key={idx} delay={idx * 70} y={16} duration={500}>
+                <div className="p-6 rounded-xl border border-border/70 bg-surface/60 hover:bg-surface hover:border-border transition-all space-y-3.5 h-full">
+                  <Icon className="w-5 h-5 text-primary shrink-0" />
+                  <h4 className="font-semibold text-base text-foreground tracking-tight">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </Reveal>
             );
           })}
         </div>

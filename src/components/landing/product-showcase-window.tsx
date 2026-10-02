@@ -46,7 +46,7 @@ export function ProductShowcaseWindow({ className = "" }: ProductShowcaseWindowP
         {/* Integrated Bot Status (Inside UI, not floating) */}
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>Bot Telegram Aktif</span>
           </div>
           <span className="text-[11px] font-mono text-zinc-500 hidden md:inline">

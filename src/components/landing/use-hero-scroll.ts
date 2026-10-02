@@ -8,9 +8,12 @@ export interface HeroScrollState {
   reducedMotion: boolean;
 }
 
+const NAVBAR_HEIGHT = 64; // Height of sticky top navbar in px
+
 /**
  * High-performance, zero-dependency scroll progress hook.
- * Calculates normalized progress (0.00 to 1.00) through a scroll stage.
+ * Calculates normalized progress (0.00 to 1.00) through the hero scroll stage.
+ * Precisely aligns with the sticky pin and release points accounting for navbar height.
  * Uses requestAnimationFrame to prevent layout thrashing and maintain 60/120fps.
  */
 export function useHeroScroll(stageRef: React.RefObject<HTMLDivElement | null>): HeroScrollState {
@@ -64,21 +67,23 @@ export function useHeroScroll(stageRef: React.RefObject<HTMLDivElement | null>):
       const stageHeight = rect.height;
       const viewportHeight = window.innerHeight;
 
-      // When stageTop is 0, progress starts at 0.
-      // When stageTop is -(stageHeight - viewportHeight), progress reaches 1.0.
-      const scrollableDistance = stageHeight - viewportHeight;
+      // Pinning begins when stage top is at navbar bottom (stageTop = NAVBAR_HEIGHT).
+      // Pinning ends when the bottom of stage meets the viewport bottom:
+      // stageTop + stageHeight = viewportHeight => stageTop = -(stageHeight - viewportHeight).
+      // Total scrollable distance while sticky element is active:
+      const scrollableDistance = stageHeight - viewportHeight + NAVBAR_HEIGHT;
       if (scrollableDistance <= 0) {
         lastState.current = { progress: 1, isMobile, reducedMotion };
         setState({ progress: 1, isMobile, reducedMotion });
         return;
       }
 
-      const currentScroll = -stageTop;
+      const currentScroll = NAVBAR_HEIGHT - stageTop;
       const rawProgress = currentScroll / scrollableDistance;
       const clampedProgress = Math.max(0, Math.min(1, rawProgress));
 
-      // Only trigger state update if changed significantly (0.004 threshold)
-      if (Math.abs(clampedProgress - lastState.current.progress) > 0.004) {
+      // Only trigger state update if changed significantly (0.003 threshold)
+      if (Math.abs(clampedProgress - lastState.current.progress) > 0.003) {
         lastState.current = { progress: clampedProgress, isMobile, reducedMotion };
         setState({
           progress: clampedProgress,
@@ -102,6 +107,7 @@ export function useHeroScroll(stageRef: React.RefObject<HTMLDivElement | null>):
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
+    window.addEventListener("orientationchange", onResize, { passive: true });
     updateScroll();
 
     return () => {
@@ -110,6 +116,7 @@ export function useHeroScroll(stageRef: React.RefObject<HTMLDivElement | null>):
       }
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       motionQuery.removeEventListener("change", handleMotionChange);
     };
   }, [stageRef]);

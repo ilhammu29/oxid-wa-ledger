@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { Reveal } from "./reveal";
 
 interface FaqItem {
   id: string;
@@ -59,47 +60,55 @@ export function FaqSection() {
     <section id="faq" className="py-20 sm:py-28 border-t border-border/80 bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
-            TANYA JAWAB OPERASIONAL
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-            Semua yang sering ditanyakan.
-          </h2>
-          <p className="mt-3 text-base text-muted leading-relaxed">
-            Jawaban seputar alur operasional, keamanan data, dan kemudahan pencatatan.
-          </p>
+          <Reveal delay={0} y={12} duration={500}>
+            <div className="text-xs font-mono font-semibold uppercase tracking-wider text-primary mb-3">
+              TANYA JAWAB OPERASIONAL
+            </div>
+          </Reveal>
+          <Reveal delay={80} y={16} duration={550}>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Semua yang sering ditanyakan.
+            </h2>
+          </Reveal>
+          <Reveal delay={160} y={16} duration={550}>
+            <p className="mt-3 text-base text-muted leading-relaxed">
+              Jawaban seputar alur operasional, keamanan data, dan kemudahan pencatatan.
+            </p>
+          </Reveal>
         </div>
 
         {/* Clean Divided FAQ List */}
         <div className="border-t border-border/80 divide-y divide-border/80">
-          {FAQS.map((faq) => {
+          {FAQS.map((faq, idx) => {
             const isOpen = openId === faq.id;
             return (
-              <div key={faq.id} className="py-5 sm:py-6">
-                <button
-                  type="button"
-                  onClick={() => toggle(faq.id)}
-                  aria-expanded={isOpen}
-                  className="w-full flex items-start justify-between gap-4 text-left group cursor-pointer"
-                >
-                  <span className="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {faq.question}
-                  </span>
-                  <span
-                    className={`p-1.5 rounded-md border border-border bg-surface text-muted transition-transform duration-200 shrink-0 ${
-                      isOpen ? "rotate-180 text-foreground border-primary/40" : ""
-                    }`}
+              <Reveal key={faq.id} delay={idx * 50} y={14} duration={480}>
+                <div className="py-5 sm:py-6">
+                  <button
+                    type="button"
+                    onClick={() => toggle(faq.id)}
+                    aria-expanded={isOpen}
+                    className="w-full flex items-start justify-between gap-4 text-left group cursor-pointer select-none"
                   >
-                    <ChevronDown className="w-4 h-4" />
-                  </span>
-                </button>
+                    <span className="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-150">
+                      {faq.question}
+                    </span>
+                    <span
+                      className={`p-1.5 rounded-md border border-border bg-surface text-muted transition-transform duration-200 ease-out shrink-0 ${
+                        isOpen ? "rotate-180 text-foreground border-primary/40" : ""
+                      }`}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </span>
+                  </button>
 
-                {isOpen && (
-                  <div className="mt-3 pr-8 text-sm text-muted leading-relaxed animate-in fade-in-50 duration-150">
-                    <p>{faq.answer}</p>
-                  </div>
-                )}
-              </div>
+                  {isOpen && (
+                    <div className="mt-3 pr-8 text-sm text-muted leading-relaxed transition-opacity duration-200 ease-out">
+                      <p>{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              </Reveal>
             );
           })}
         </div>
