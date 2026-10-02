@@ -43,7 +43,8 @@ export function SalesChart({ data }: SalesChartProps) {
 
   const formatIDR = (val: number) => {
     if (val >= 1000000) {
-      return `Rp${(val / 1000000).toFixed(1)}jt`;
+      const formatted = (val / 1000000).toFixed(1).replace(".", ",");
+      return `Rp${formatted}jt`;
     }
     if (val >= 1000) {
       return `Rp${(val / 1000).toFixed(0)}rb`;
@@ -62,7 +63,7 @@ export function SalesChart({ data }: SalesChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={chartData}
-          margin={{ top: 8, right: 8, left: -14, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
         >
           <defs>
             <linearGradient id="purpleGlow" x1="0" y1="0" x2="0" y2="1">
@@ -82,10 +83,12 @@ export function SalesChart({ data }: SalesChartProps) {
             tickLine={false}
           />
           <YAxis
+            width={58}
             tickFormatter={formatIDR}
             tick={{ fill: axisColor, fontSize: 11, fontFamily: "var(--font-geist-mono, monospace)" }}
             axisLine={false}
             tickLine={false}
+            tickMargin={6}
           />
           <Tooltip
             content={({ active, payload }) => {

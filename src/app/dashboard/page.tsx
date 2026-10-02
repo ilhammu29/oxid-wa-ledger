@@ -159,7 +159,7 @@ export default async function DashboardOverviewPage() {
       {/* KPI Cards Grid (4 Core Metrics, Dense & High-Hierarchy) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Omzet Hari Ini (Primary Financial) */}
-        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-border transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Omzet Hari Ini</span>
             <span className="text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
@@ -167,7 +167,7 @@ export default async function DashboardOverviewPage() {
             </span>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground font-mono tabular-nums tracking-tight">
+            <p className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight tabular-nums">
               {formatIDR(kpis.todayRevenue)}
             </p>
             <p className="text-[11px] text-muted mt-1 font-mono">
@@ -177,7 +177,7 @@ export default async function DashboardOverviewPage() {
         </div>
 
         {/* KPI 2: Omzet Bulan Ini (Primary Financial) */}
-        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-border transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Omzet Bulan Ini</span>
             <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
@@ -185,7 +185,7 @@ export default async function DashboardOverviewPage() {
             </span>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground font-mono tabular-nums tracking-tight">
+            <p className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight tabular-nums">
               {formatIDR(kpis.monthRevenue)}
             </p>
             <p className="text-[11px] text-muted mt-1 font-mono">
@@ -195,15 +195,15 @@ export default async function DashboardOverviewPage() {
         </div>
 
         {/* KPI 3: Total Transaksi (Secondary Operational) */}
-        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-border transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Transaksi Hari Ini</span>
-            <span className="text-[10px] font-mono font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+            <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
               Sukses
             </span>
           </div>
           <div className="mt-3">
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tabular-nums tracking-tight">
+            <p className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight tabular-nums">
               {kpis.todayTransactionCount}
             </p>
             <p className="text-[11px] text-muted mt-1">
@@ -213,7 +213,7 @@ export default async function DashboardOverviewPage() {
         </div>
 
         {/* KPI 4: Total Qty Terjual (Secondary Operational) */}
-        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors shadow-xs flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-xl bg-surface border border-border hover:border-border transition-colors shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted">Volume Terjual</span>
             <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
@@ -221,7 +221,7 @@ export default async function DashboardOverviewPage() {
             </span>
           </div>
           <div className="mt-3">
-            <p className="text-xl sm:text-2xl font-bold text-foreground font-mono tabular-nums tracking-tight">
+            <p className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight tabular-nums">
               {kpis.todayQuantity}{" "}
               <span className="text-xs font-normal text-muted font-sans">kg</span>
             </p>

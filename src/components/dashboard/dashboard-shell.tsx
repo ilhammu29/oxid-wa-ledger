@@ -68,13 +68,19 @@ export function DashboardShell({
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        return localStorage.getItem("oxid_sidebar_collapsed") === "true";
+        const saved = localStorage.getItem("oxid_sidebar_collapsed");
+        if (saved !== null) {
+          return saved === "true";
+        }
+        // Brand-new user: desktop >= 1280px defaults to expanded (false), narrower (< 1280px) defaults to collapsed (true)
+        return window.innerWidth < 1280;
       } catch {
         // Ignore storage errors
       }
     }
     return false;
   });
+
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [saleModalOpen, setSaleModalOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -275,6 +281,7 @@ export function DashboardShell({
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
+                      aria-label={isCollapsed ? item.name : undefined}
                       className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
@@ -317,6 +324,7 @@ export function DashboardShell({
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
+                      aria-label={isCollapsed ? item.name : undefined}
                       className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
@@ -359,6 +367,7 @@ export function DashboardShell({
                       key={item.href}
                       href={item.href}
                       title={isCollapsed ? item.name : undefined}
+                      aria-label={isCollapsed ? item.name : undefined}
                       className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
@@ -411,9 +420,31 @@ export function DashboardShell({
               </div>
             )}
 
-            {/* Collapse / Expand Toggle Button */}
-            <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-              {!isCollapsed && (
+            {/* Collapse / Expand Toggle Button & Logout */}
+            {isCollapsed ? (
+              <div className="flex flex-col items-center gap-1.5 pt-1">
+                <form action={logoutAction}>
+                  <button
+                    type="submit"
+                    className="p-1.5 rounded-md text-muted hover:text-rose-500 hover:bg-surface-hover transition"
+                    title="Keluar"
+                    aria-label="Keluar"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </form>
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition"
+                  title="Perluas Sidebar"
+                  aria-label="Perluas Sidebar"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
                 <form action={logoutAction}>
                   <button
                     type="submit"
@@ -423,22 +454,18 @@ export function DashboardShell({
                     <span>Keluar</span>
                   </button>
                 </form>
-              )}
 
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition"
-                title={isCollapsed ? "Perluas Sidebar" : "Perkecil Sidebar"}
-                aria-label={isCollapsed ? "Perluas Sidebar" : "Perkecil Sidebar"}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="w-4 h-4" />
-                ) : (
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition"
+                  title="Perkecil Sidebar"
+                  aria-label="Perkecil Sidebar"
+                >
                   <ChevronLeft className="w-4 h-4" />
-                )}
-              </button>
-            </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -450,33 +477,33 @@ export function DashboardShell({
         }`}
       >
         {/* Desktop Topbar */}
-        <header className="hidden md:flex h-14 border-b border-border bg-surface/90 backdrop-blur-xs sticky top-0 z-30 px-6 items-center justify-between">
+        <header className="hidden md:flex h-14 border-b border-border bg-surface/90 backdrop-blur-xs sticky top-0 z-30 px-6 items-center justify-between gap-4">
           {/* Breadcrumb / Context */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted">{business.name}</span>
+          <div className="flex items-center gap-2 text-xs shrink-0 min-w-0">
+            <span className="text-muted truncate max-w-[120px]">{business.name}</span>
             <span className="text-muted/40 font-mono">/</span>
-            <span className="text-foreground font-semibold">{getBreadcrumbTitle()}</span>
+            <span className="text-foreground font-semibold truncate max-w-[140px]">{getBreadcrumbTitle()}</span>
           </div>
 
           {/* Center Search / Command Palette Trigger */}
-          <div className="w-full max-w-sm px-4">
+          <div className="w-full max-w-sm px-2">
             <button
               type="button"
               onClick={() => setCommandPaletteOpen(true)}
               className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-muted bg-surface-hover/50 border border-border rounded-lg hover:border-primary/40 hover:text-foreground transition-colors group"
             >
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors" />
-                <span className="text-muted">Cari halaman atau aksi...</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Search className="w-3.5 h-3.5 text-muted group-hover:text-primary transition-colors shrink-0" />
+                <span className="text-muted truncate">Cari halaman atau aksi...</span>
               </div>
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border bg-surface rounded text-muted">
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border bg-surface rounded text-muted shrink-0 ml-2">
                 ⌘K
               </kbd>
             </button>
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Operational Date */}
             <span className="text-xs text-muted font-mono hidden lg:inline-block">
               {currentDateFormatted}
@@ -501,7 +528,7 @@ export function DashboardShell({
 
             {/* User Profile Chip */}
             <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center font-mono">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center font-mono shrink-0">
                 {userEmail.slice(0, 1).toUpperCase()}
               </div>
               <span className="text-xs text-foreground font-medium max-w-[120px] truncate hidden xl:inline-block">
