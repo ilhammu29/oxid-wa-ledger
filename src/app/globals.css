@@ -46,7 +46,11 @@
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
   --color-muted: var(--muted);
+  --color-muted-fg: var(--muted-fg);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-fg: var(--primary-fg);
   --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-mono), monospace;
 }

@@ -25,7 +25,7 @@ export default async function HomePage() {
   const isAuthenticated = Boolean(user);
 
   return (
-    <div className="dark min-h-screen bg-[#090a0f] text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary overflow-x-clip">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary overflow-x-clip">
       {/* 1. Navbar */}
       <LandingNavbar isAuthenticated={isAuthenticated} />
 
