@@ -46,46 +46,6 @@ export function LedgerOrbitArc({
       style={style}
       aria-hidden="true"
     >
-      {/* 1. Multi-Tier Anti-Banding Atmospheric Glow System */}
-
-      {/* 1a. Localized Separation Lift (Directly under ring apex with 7-stop Hermite easing) */}
-      <div
-        className="absolute -top-4 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] h-[260px] sm:h-[380px] pointer-events-none -z-20 transition-opacity duration-300"
-        style={{
-          background: "var(--ring-separation-gradient)",
-        }}
-      />
-
-      {/* 1b. Smooth Far Horizon Glow (Multi-stop distribution prevents Mach bands) */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[92%] sm:w-[86%] h-[240px] sm:h-[360px] rounded-full blur-[50px] sm:blur-[75px] pointer-events-none -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 25%, var(--ring-glow-far) 0%, rgba(99, 102, 241, 0.12) 25%, rgba(99, 102, 241, 0.05) 50%, rgba(99, 102, 241, 0.015) 75%, transparent 100%)",
-        }}
-      />
-
-      {/* 1c. Tight Near Core Rim Glow (Illuminated Rim Aura) */}
-      <div
-        className="absolute top-3 left-1/2 -translate-x-1/2 w-[70%] sm:w-[62%] h-[140px] sm:h-[200px] rounded-full blur-[16px] sm:blur-[22px] pointer-events-none -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 20%, var(--ring-glow-near) 0%, rgba(139, 92, 246, 0.28) 25%, rgba(139, 92, 246, 0.10) 55%, transparent 80%)",
-        }}
-      />
-
-      {/* 1d. Ultra-Subtle Dither / Noise Overlay (Disrupts 8-bit quantization banding on all panels) */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none -z-10 opacity-[0.025]"
-        aria-hidden="true"
-      >
-        <filter id="antiBandingDither">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise" />
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.25 0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#antiBandingDither)" />
-      </svg>
-
       {/* 2. Rotating 3D Orbital Plane Container (Elliptical Perspective: 46deg desktop, 40deg mobile) */}
       <div
         className="w-full h-full flex items-start justify-center will-change-transform"

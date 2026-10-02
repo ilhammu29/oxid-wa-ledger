@@ -93,24 +93,70 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
           : "min-h-[140dvh]"
       } bg-background text-foreground`}
     >
-      {/* 1. Atmospheric Ambient Lighting (Layer 1) - Theme-Aware */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] lg:w-[1200px] h-[500px] bg-gradient-to-b from-primary/15 via-primary/5 to-transparent blur-3xl pointer-events-none -z-20"
-        />
-      </div>
-
       {/* STICKY STAGE CONTAINER (Desktop) or FLUID CONTAINER (Mobile / Reduced Motion) */}
       <div
         className={`${
           isMobile || reducedMotion
             ? "relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center"
-            : "sticky top-16 h-[calc(100dvh-4rem)] w-full flex flex-col items-center justify-start overflow-hidden pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8"
+            : "sticky top-16 h-[calc(100dvh-4rem)] w-full flex flex-col items-center justify-start overflow-hidden pt-4 sm:pt-6"
         }`}
       >
+        {/* ======================================================== */}
+        {/* FULL-BLEED AMBIENT ATMOSPHERE LAYER (Layer 1)            */}
+        {/* Viewport-centered, oversized, zero rectangular bounds     */}
+        {/* ======================================================== */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible flex items-start justify-center"
+          aria-hidden="true"
+        >
+          <div
+            className={`absolute left-1/2 -translate-x-1/2 pointer-events-none ${
+              isMobile || reducedMotion
+                ? "top-10 w-[180vw] h-[650px]"
+                : "top-0 w-[150vw] h-full"
+            }`}
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(ellipse 65% 55% at 50% 50%, black 0%, black 25%, rgba(0,0,0,0.5) 50%, transparent 75%)",
+              maskImage:
+                "radial-gradient(ellipse 65% 55% at 50% 50%, black 0%, black 25%, rgba(0,0,0,0.5) 50%, transparent 75%)",
+            }}
+          >
+            {/* Layer A: Celestial Horizon Far Bloom (Broad, Atmospheric Indigo-Violet) */}
+            <div
+              className="absolute inset-0 w-full h-full pointer-events-none dark:opacity-85 opacity-65"
+              style={{
+                background:
+                  "radial-gradient(ellipse 55% 42% at 50% 52%, var(--hero-ambient-far) 0%, var(--hero-ambient-mid) 28%, var(--hero-ambient-soft) 52%, transparent 72%)",
+              }}
+            />
+
+            {/* Layer B: Celestial Ring Near Core Aura (Focused Luminous Rim Halo) */}
+            <div
+              className="absolute inset-0 w-full h-full pointer-events-none dark:opacity-80 opacity-60"
+              style={{
+                background:
+                  "radial-gradient(ellipse 38% 22% at 50% 48%, var(--hero-ambient-near) 0%, var(--hero-ambient-core) 25%, transparent 60%)",
+              }}
+            />
+
+            {/* Layer C: Subtle Anti-Banding Dither (Ultra subtle 0.018 to eliminate 8-bit Mach bands) */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.018]"
+              aria-hidden="true"
+            >
+              <filter id="antiBandingDitherAtmosphere">
+                <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise" />
+                <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.25 0" />
+              </filter>
+              <rect width="100%" height="100%" filter="url(#antiBandingDitherAtmosphere)" />
+            </svg>
+          </div>
+        </div>
+
         {/* HERO TEXT STACK (Headline, Subhead, CTA row) */}
         <div
-          className="relative z-20 text-center max-w-4xl mx-auto flex flex-col items-center transition-all duration-75 will-change-transform pt-2"
+          className="relative z-20 text-center max-w-4xl mx-auto px-4 flex flex-col items-center transition-all duration-75 will-change-transform pt-2"
           style={
             isMobile || reducedMotion
               ? undefined
