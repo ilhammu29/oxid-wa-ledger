@@ -50,9 +50,10 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   const pathname = request.nextUrl.pathname;
   const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isAdminRoute = pathname.startsWith("/admin");
   const isLoginRoute = pathname === "/login";
 
-  if (isDashboardRoute && !user) {
+  if ((isDashboardRoute || isAdminRoute) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

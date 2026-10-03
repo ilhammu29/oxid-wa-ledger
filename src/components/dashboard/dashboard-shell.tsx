@@ -23,6 +23,7 @@ import {
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -52,6 +53,8 @@ interface DashboardShellProps {
     daysRemaining: number;
     isTrial: boolean;
   } | null;
+  isPlatformAdmin?: boolean;
+  platformAdminRole?: string;
   children: React.ReactNode;
 }
 
@@ -61,6 +64,8 @@ export function DashboardShell({
   userEmail,
   products,
   subscriptionState,
+  isPlatformAdmin,
+  platformAdminRole,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
@@ -391,6 +396,30 @@ export function DashboardShell({
                   );
                 })}
               </div>
+
+              {/* Platform Admin Group (Only for verified platform admins) */}
+              {isPlatformAdmin && (
+                <div className="space-y-0.5 pt-2 border-t border-border/50">
+                  {!isCollapsed && (
+                    <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-amber-500/90 font-semibold">
+                      Platform
+                    </div>
+                  )}
+                  <Link
+                    href="/admin"
+                    title={isCollapsed ? "Admin Control Center" : undefined}
+                    aria-label={isCollapsed ? "Admin Control Center" : undefined}
+                    className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                      isCollapsed
+                        ? "justify-center px-2 py-2 text-amber-500 hover:bg-amber-500/10"
+                        : "px-2.5 py-1.5 border-l-2 border-amber-500/60 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 font-semibold"
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 shrink-0 text-amber-500" />
+                    {!isCollapsed && <span className="truncate">Admin Control Center</span>}
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
 
@@ -522,6 +551,18 @@ export function DashboardShell({
                 <Sun className="w-4 h-4" />
               )}
             </button>
+
+            {/* Platform Admin Quick Entry (Only for verified platform admins) */}
+            {isPlatformAdmin && (
+              <Link
+                href="/admin"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20 text-xs font-semibold transition-colors"
+                title="Admin Control Center"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Admin</span>
+              </Link>
+            )}
 
             {/* User Profile Chip */}
             <div className="flex items-center gap-2 pl-2 border-l border-border">
@@ -679,6 +720,23 @@ export function DashboardShell({
                 <CreditCard className="w-4 h-4 text-muted" />
                 <span>Langganan</span>
               </Link>
+
+              {/* Platform Admin Entry (Mobile) */}
+              {isPlatformAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="col-span-2 flex items-center gap-2.5 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10 font-medium transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                  <div className="flex-1 truncate">
+                    <span className="font-semibold text-xs block">Admin Control Center</span>
+                    <span className="block text-[10px] text-amber-500/70 font-mono capitalize">
+                      {platformAdminRole ? platformAdminRole.replace("_", " ") : "Platform Admin"}
+                    </span>
+                  </div>
+                </Link>
+              )}
             </div>
 
             <div className="pt-2 border-t border-border flex items-center justify-between">

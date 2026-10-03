@@ -1,8 +1,9 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { getBillingPaymentSettingsForAdmin, getPlatformAdminUser } from "@/modules/subscriptions";
+import { getBillingPaymentSettingsForAdmin, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { AdminBillingSettingsClientView } from "@/components/admin/admin-billing-settings-client-view";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,15 @@ export default async function AdminBillingSettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const currentAdmin = await getPlatformAdminUser(user, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "settings:read")) {
+    redirect("/admin");
+  }
+
   const settings = await getBillingPaymentSettingsForAdmin(supabase);
 
   return (

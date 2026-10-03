@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AdminAuditLogRow } from "@/modules/subscriptions/admin";
+import type { AdminAuditLogRow } from "@/modules/subscriptions/admin";
 import { ScrollText, Search, Eye, X } from "lucide-react";
 import { formatShortId } from "@/lib/admin-utils";
 

@@ -1,8 +1,9 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { listPlatformUsers, getPlatformAdminUser } from "@/modules/subscriptions";
+import { listPlatformUsers, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { AdminUsersClientView } from "@/components/admin/admin-users-client-view";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,15 @@ export default async function AdminUsersPage() {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
 
+  if (!currentUser) {
+    redirect("/login");
+  }
+
   const currentAdmin = await getPlatformAdminUser(currentUser, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "users:read")) {
+    redirect("/admin");
+  }
+
   const users = await listPlatformUsers(supabase);
 
   return (

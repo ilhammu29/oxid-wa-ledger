@@ -1,8 +1,9 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { listAllSubscriptionsForAdmin, getPlatformAdminUser } from "@/modules/subscriptions";
+import { listAllSubscriptionsForAdmin, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { AdminSubscriptionsClientView } from "@/components/admin/admin-subscriptions-client-view";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,15 @@ export default async function AdminSubscriptionsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const currentAdmin = await getPlatformAdminUser(user, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "subscriptions:read")) {
+    redirect("/admin");
+  }
+
   const subscriptions = await listAllSubscriptionsForAdmin(supabase);
 
   return (

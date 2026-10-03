@@ -1079,6 +1079,22 @@ export async function submitManualPaymentAction(formData: FormData): Promise<Act
   }
 
   try {
+    // Idempotency check: prevent duplicate pending payment with same reference
+    const { data: existingPending } = await supabase
+      .from("subscription_payments")
+      .select("id")
+      .eq("business_id", session.business.id)
+      .eq("status", "pending")
+      .eq("reference", reference)
+      .maybeSingle();
+
+    if (existingPending) {
+      return {
+        success: false,
+        error: "Konfirmasi pembayaran dengan referensi ini sudah tercatat dan sedang diproses admin.",
+      };
+    }
+
     await createPaymentRecord(supabase, {
       businessId: session.business.id,
       subscriptionId: sub.id,

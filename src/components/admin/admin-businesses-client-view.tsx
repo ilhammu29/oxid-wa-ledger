@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AdminBusinessListItem } from "@/modules/subscriptions/admin";
+import type { AdminBusinessListItem } from "@/modules/subscriptions/admin";
 import {
   Search,
   ArrowRight,

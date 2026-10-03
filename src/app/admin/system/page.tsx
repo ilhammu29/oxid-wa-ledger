@@ -1,13 +1,27 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { getPlatformSystemStatus } from "@/modules/subscriptions";
+import { getPlatformSystemStatus, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { Database, Bot, FileSpreadsheet, Clock, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSystemPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const currentAdmin = await getPlatformAdminUser(user, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "system:read")) {
+    redirect("/admin");
+  }
+
   const services = await getPlatformSystemStatus(supabase);
 
   const getStatusBadge = (status: string) => {

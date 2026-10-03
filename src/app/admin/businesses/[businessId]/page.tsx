@@ -1,11 +1,11 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { isOxidSuperAdmin, getBusinessDetailForAdmin, getAllPlans } from "@/modules/subscriptions";
+import { getPlatformAdminUser, hasPlatformPermission, getBusinessDetailForAdmin, getAllPlans } from "@/modules/subscriptions";
 import { AdminBusinessDetailView } from "@/components/admin/admin-business-detail-view";
 import Link from "next/link";
-import { ShieldAlert, ArrowLeft } from "lucide-react";
-import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -21,40 +21,12 @@ export default async function AdminBusinessDetailPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center">
-          <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-foreground mb-1">Akses Ditolak</h1>
-          <p className="text-xs text-muted-foreground mb-4">Silakan login sebagai admin platform.</p>
-          <Link
-            href="/login"
-            className="inline-flex px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80"
-          >
-            Menuju Login
-          </Link>
-        </div>
-      </div>
-    );
+    redirect("/login");
   }
 
-  const isAdmin = await isOxidSuperAdmin(user, supabase);
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center">
-          <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-foreground mb-1">403 Terlarang</h1>
-          <p className="text-xs text-muted-foreground mb-4">Akun Anda tidak memiliki hak akses admin platform.</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80"
-          >
-            Kembali
-          </Link>
-        </div>
-      </div>
-    );
+  const adminRecord = await getPlatformAdminUser(user, supabase);
+  if (!adminRecord || !adminRecord.active || !hasPlatformPermission(adminRecord.role, "businesses:read")) {
+    redirect("/dashboard");
   }
 
   const detail = await getBusinessDetailForAdmin(supabase, businessId);
@@ -79,7 +51,15 @@ export default async function AdminBusinessDetailPage({
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {detail.business.name}
             </h1>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">{detail.business.id}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              <span className="font-mono">{detail.business.id}</span>
+              {detail.business.ownerEmail && (
+                <>
+                  <span className="mx-2 text-muted-foreground/40">·</span>
+                  <span>Pemilik: <strong className="text-foreground font-mono">{detail.business.ownerEmail}</strong></span>
+                </>
+              )}
+            </p>
           </div>
         </div>
       </div>

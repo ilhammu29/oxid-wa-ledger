@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AdminBusinessDetail } from "@/modules/subscriptions/admin";
+import type { AdminBusinessDetail } from "@/modules/subscriptions/admin";
 import { SubscriptionPlan } from "@/modules/subscriptions/types";
 import { formatIDR } from "@/modules/subscriptions/plans";
 import {

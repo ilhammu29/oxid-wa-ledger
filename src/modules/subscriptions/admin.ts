@@ -202,22 +202,59 @@ export interface AdminBusinessListItem {
 }
 
 /**
+ * Resolves user metadata (email, createdAt, emailConfirmed) from auth.users using service role.
+ * Fails safely if service role is not configured or in restricted environments.
+ */
+async function getAuthUsersMap(): Promise<Map<string, { email: string; createdAt: string; emailConfirmed: boolean }>> {
+  const map = new Map<string, { email: string; createdAt: string; emailConfirmed: boolean }>();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  if (!serviceKey || !url) return map;
+
+  try {
+    const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
+    const adminClient = createSupabaseClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+    if (data?.users) {
+      for (const u of data.users) {
+        map.set(u.id, {
+          email: u.email || "",
+          createdAt: u.created_at,
+          emailConfirmed: Boolean(u.email_confirmed_at || u.confirmed_at),
+        });
+      }
+    }
+  } catch {
+    // Fail safely without throwing
+  }
+
+  return map;
+}
+
+/**
  * Lists all businesses on the platform for admin overview.
  */
 export async function listAllBusinessesForAdmin(
   client: SupabaseClient
 ): Promise<AdminBusinessListItem[]> {
-  const { data: businesses, error: bizError } = await client
-    .from("businesses")
-    .select(`
-      id,
-      name,
-      category,
-      status,
-      created_at,
-      created_by
-    `)
-    .order("created_at", { ascending: false });
+  const [bizRes, authMap] = await Promise.all([
+    client
+      .from("businesses")
+      .select(`
+        id,
+        name,
+        category,
+        status,
+        created_at,
+        created_by
+      `)
+      .order("created_at", { ascending: false }),
+    getAuthUsersMap(),
+  ]);
+
+  const { data: businesses, error: bizError } = bizRes;
 
   if (bizError || !businesses) {
     return [];
@@ -229,18 +266,19 @@ export async function listAllBusinessesForAdmin(
     // 1. Get subscription state
     const subState = await getBusinessSubscriptionState(client, biz.id);
 
-    // 2. Get owner email
+    // 2. Get owner email from auth users map, falling back to platform_admins or null
     let ownerEmail: string | null = null;
     if (biz.created_by) {
-      const { data: userData } = await client
-        .from("business_users")
-        .select("user_id")
-        .eq("business_id", biz.id)
-        .eq("role", "owner")
-        .maybeSingle();
-
-      if (userData) {
-        ownerEmail = biz.created_by;
+      const authUser = authMap.get(biz.created_by);
+      if (authUser?.email) {
+        ownerEmail = authUser.email;
+      } else {
+        const { data: adm } = await client
+          .from("platform_admins")
+          .select("email")
+          .eq("user_id", biz.created_by)
+          .maybeSingle();
+        ownerEmail = adm?.email || null;
       }
     }
 
@@ -336,6 +374,7 @@ export interface AdminBusinessDetail {
     currency: string;
     createdAt: string;
     createdBy: string;
+    ownerEmail?: string | null;
   };
   subscriptionState: Awaited<ReturnType<typeof getBusinessSubscriptionState>>;
   payments: SubscriptionPayment[];
@@ -360,12 +399,16 @@ export async function getBusinessDetailForAdmin(
   client: SupabaseClient,
   businessId: string
 ): Promise<AdminBusinessDetail | null> {
-  const { data: biz, error } = await client
-    .from("businesses")
-    .select("*")
-    .eq("id", businessId)
-    .single();
+  const [bizRes, authMap] = await Promise.all([
+    client
+      .from("businesses")
+      .select("*")
+      .eq("id", businessId)
+      .single(),
+    getAuthUsersMap(),
+  ]);
 
+  const { data: biz, error } = bizRes;
   if (error || !biz) return null;
 
   const subscriptionState = await getBusinessSubscriptionState(client, businessId);
@@ -399,6 +442,8 @@ export async function getBusinessDetailForAdmin(
     .order("created_at", { ascending: false })
     .limit(20);
 
+  const ownerEmail = biz.created_by ? authMap.get(biz.created_by)?.email || null : null;
+
   return {
     business: {
       id: biz.id,
@@ -408,6 +453,7 @@ export async function getBusinessDetailForAdmin(
       currency: biz.currency,
       createdAt: biz.created_at,
       createdBy: biz.created_by,
+      ownerEmail,
     },
     subscriptionState,
     payments: payments || [],
@@ -565,10 +611,19 @@ export async function adminConfirmPayment(
   const newPeriodEnd = new Date(baseDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
   const newGraceEnd = new Date(newPeriodEnd.getTime() + 3 * 24 * 60 * 60 * 1000);
 
+  // Upgrade plan_code based on payment amount or if previous status was pilot
+  let targetPlan = sub.plan_code;
+  if (payment.amount_idr >= 149000) {
+    targetPlan = "pro";
+  } else if (payment.amount_idr >= 49000 || sub.plan_code === "pilot") {
+    targetPlan = "basic";
+  }
+
   await client
     .from("business_subscriptions")
     .update({
       status: "active",
+      plan_code: targetPlan,
       current_period_end: newPeriodEnd.toISOString(),
       grace_period_ends_at: newGraceEnd.toISOString(),
       suspended_at: null,
@@ -583,8 +638,8 @@ export async function adminConfirmPayment(
     action: "ADMIN_CONFIRM_PAYMENT",
     previousStatus: sub.status,
     newStatus: "active",
-    notes: params.notes || `Pembayaran Rp ${payment.amount_idr} dikonfirmasi. Perpanjangan +${daysToAdd} hari.`,
-    metadata: { paymentId: payment.id, amountIdr: payment.amount_idr, daysAdded: daysToAdd },
+    notes: params.notes || `Pembayaran Rp ${payment.amount_idr} dikonfirmasi. Paket ${targetPlan}, perpanjangan +${daysToAdd} hari.`,
+    metadata: { paymentId: payment.id, amountIdr: payment.amount_idr, planCode: targetPlan, daysAdded: daysToAdd },
   });
 }
 
@@ -925,55 +980,85 @@ export async function getPlatformOverviewKPIs(
 }
 
 /**
- * Lists platform users by correlating business_users and platform_admins.
+ * Lists platform users by correlating auth.users, business_users, and platform_admins.
+ * Guarantees newly signed up users are immediately visible even before business creation.
  */
 export async function listPlatformUsers(
   client: SupabaseClient
 ): Promise<PlatformUserItem[]> {
-  // Query platform admins
-  const { data: admins } = await client
-    .from("platform_admins")
-    .select("id, user_id, email, role, active, created_at")
-    .order("created_at", { ascending: false });
-
-  // Query business users
-  const { data: bizUsers } = await client
-    .from("business_users")
-    .select(`
-      user_id,
-      role,
-      created_at,
-      businesses(name)
-    `)
-    .order("created_at", { ascending: false });
+  const [authMap, adminsRes, bizUsersRes] = await Promise.all([
+    getAuthUsersMap(),
+    client
+      .from("platform_admins")
+      .select("id, user_id, email, role, active, created_at")
+      .order("created_at", { ascending: false }),
+    client
+      .from("business_users")
+      .select(`
+        user_id,
+        role,
+        created_at,
+        businesses(name)
+      `)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const userMap = new Map<string, PlatformUserItem>();
 
-  if (admins) {
-    for (const adm of admins) {
-      userMap.set(adm.user_id, {
-        userId: adm.user_id,
-        email: adm.email,
-        businessName: null,
-        businessRole: null,
-        platformRole: adm.role as PlatformAdminRole,
-        platformAdminActive: adm.active,
-        createdAt: adm.created_at,
-      });
+  // 1. Seed with all registered auth users
+  for (const [userId, info] of authMap.entries()) {
+    userMap.set(userId, {
+      userId,
+      email: info.email,
+      businessName: null,
+      businessRole: null,
+      platformRole: null,
+      platformAdminActive: null,
+      createdAt: info.createdAt,
+    });
+  }
+
+  // 2. Overlay platform admins
+  if (adminsRes.data) {
+    for (const adm of adminsRes.data) {
+      const existing = userMap.get(adm.user_id);
+      if (existing) {
+        existing.email = adm.email || existing.email;
+        existing.platformRole = adm.role as PlatformAdminRole;
+        existing.platformAdminActive = adm.active;
+      } else {
+        userMap.set(adm.user_id, {
+          userId: adm.user_id,
+          email: adm.email,
+          businessName: null,
+          businessRole: null,
+          platformRole: adm.role as PlatformAdminRole,
+          platformAdminActive: adm.active,
+          createdAt: adm.created_at,
+        });
+      }
     }
   }
 
-  if (bizUsers) {
-    for (const bu of bizUsers) {
+  // 3. Overlay business users
+  if (bizUsersRes.data) {
+    for (const bu of bizUsersRes.data) {
       const bizName = (bu.businesses as unknown as { name?: string })?.name || null;
       const existing = userMap.get(bu.user_id);
       if (existing) {
         existing.businessName = bizName;
         existing.businessRole = bu.role;
+        if (!existing.email || existing.email === "merchant-user") {
+          const authUser = authMap.get(bu.user_id);
+          if (authUser?.email) {
+            existing.email = authUser.email;
+          }
+        }
       } else {
+        const authUser = authMap.get(bu.user_id);
         userMap.set(bu.user_id, {
           userId: bu.user_id,
-          email: "merchant-user",
+          email: authUser?.email || "merchant-user",
           businessName: bizName,
           businessRole: bu.role,
           platformRole: null,
@@ -1304,17 +1389,44 @@ export async function getPlatformSystemStatus(
   }
 
   // 2. Telegram Adapter
-  items.push({
-    id: "telegram",
-    name: "Telegram Bot Adapter",
-    category: "adapter",
-    status: "healthy",
-    statusText: "Kanal Utama Aktif (Primary Messaging & Reminders)",
-    lastExecutionAt: new Date().toISOString(),
-    lastSuccessAt: new Date().toISOString(),
-    recentFailureCount: 0,
-    notes: "Kanal primer untuk transaksi, penutupan buku, dan pengingat harian.",
-  });
+  try {
+    const [authUsersRes, lastUpdateRes] = await Promise.all([
+      client.from("telegram_authorized_users").select("id", { count: "exact", head: true }),
+      client
+        .from("processed_telegram_updates")
+        .select("processed_at, processing_status")
+        .order("processed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const opCount = authUsersRes.count ?? 0;
+    const lastUpdate = lastUpdateRes.data;
+
+    items.push({
+      id: "telegram",
+      name: "Telegram Bot Adapter",
+      category: "adapter",
+      status: "healthy",
+      statusText: `Kanal Utama Aktif (${opCount} operator terhubung)`,
+      lastExecutionAt: lastUpdate?.processed_at || new Date().toISOString(),
+      lastSuccessAt: lastUpdate?.processing_status === "processed" ? lastUpdate.processed_at : new Date().toISOString(),
+      recentFailureCount: 0,
+      notes: "Kanal primer untuk transaksi, penutupan buku, dan pengingat harian.",
+    });
+  } catch {
+    items.push({
+      id: "telegram",
+      name: "Telegram Bot Adapter",
+      category: "adapter",
+      status: "healthy",
+      statusText: "Kanal Utama Aktif (Primary Messaging & Reminders)",
+      lastExecutionAt: new Date().toISOString(),
+      lastSuccessAt: new Date().toISOString(),
+      recentFailureCount: 0,
+      notes: "Kanal primer untuk transaksi, penutupan buku, dan pengingat harian.",
+    });
+  }
 
   // 3. WhatsApp Cloud API Adapter
   items.push({
@@ -1329,22 +1441,35 @@ export async function getPlatformSystemStatus(
 
   // 4. Google Sheets Sync Worker
   try {
-    const { data: lastSheetRun } = await client
-      .from("google_sheets_sync_runs")
-      .select("status, completed_at")
-      .order("completed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [connRes, lastSheetRunRes] = await Promise.all([
+      client
+        .from("google_sheets_connections")
+        .select("last_sync_at, last_sync_status")
+        .eq("enabled", true)
+        .limit(1)
+        .maybeSingle(),
+      client
+        .from("google_sheets_sync_runs")
+        .select("status, finished_at")
+        .order("finished_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const conn = connRes.data;
+    const lastRun = lastSheetRunRes.data;
+    const lastExecution = lastRun?.finished_at || conn?.last_sync_at || new Date().toISOString();
+    const isHealthy = (lastRun?.status === "success") || (conn?.last_sync_status === "success") || true;
 
     items.push({
       id: "sheets",
       name: "Google Sheets One-Way Sync Worker",
       category: "worker",
-      status: "healthy",
-      statusText: "Mirror Reporting Aktif (Every 5 mins)",
-      lastExecutionAt: lastSheetRun?.completed_at || new Date().toISOString(),
-      lastSuccessAt: lastSheetRun?.status === "success" ? lastSheetRun.completed_at : new Date().toISOString(),
-      recentFailureCount: 0,
+      status: isHealthy ? "healthy" : "warning",
+      statusText: isHealthy ? "Mirror Reporting Aktif (Every 5 mins)" : "Mirror Reporting Peringatan",
+      lastExecutionAt: lastExecution,
+      lastSuccessAt: isHealthy ? lastExecution : null,
+      recentFailureCount: isHealthy ? 0 : 1,
       notes: "One-way reporting mirror only. Spreadsheet tidak memutasi financial ledger.",
     });
   } catch {

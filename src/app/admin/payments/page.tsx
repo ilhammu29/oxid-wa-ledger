@@ -1,8 +1,9 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { listAllPaymentsForAdmin, getPlatformAdminUser } from "@/modules/subscriptions";
+import { listAllPaymentsForAdmin, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { AdminPaymentsClientView } from "@/components/admin/admin-payments-client-view";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,15 @@ export default async function AdminPaymentsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const currentAdmin = await getPlatformAdminUser(user, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "payments:read")) {
+    redirect("/admin");
+  }
+
   const payments = await listAllPaymentsForAdmin(supabase);
 
   return (

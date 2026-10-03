@@ -2,7 +2,7 @@ import "server-only";
 
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { createClient } from "@/lib/supabase/server";
-import { getBusinessSubscriptionState } from "@/modules/subscriptions";
+import { getBusinessSubscriptionState, getPlatformAdminUser } from "@/modules/subscriptions";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { redirect } from "next/navigation";
 
@@ -20,16 +20,22 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
-  // Fetch active products for this business to populate manual sale dialog
   const supabase = await createClient();
-  const { data: productsData } = await supabase
-    .from("products")
-    .select("id, name, unit, default_price, is_default, active")
-    .eq("business_id", session.business.id)
-    .eq("active", true)
-    .order("is_default", { ascending: false });
 
-  const products = (productsData || []).map((p) => ({
+  // Fetch active products, subscription state, and platform admin status in parallel
+  const [productsData, subscriptionState, platformAdmin] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, unit, default_price, is_default, active")
+      .eq("business_id", session.business.id)
+      .eq("active", true)
+      .order("is_default", { ascending: false })
+      .then((res) => res.data || []),
+    getBusinessSubscriptionState(supabase, session.business.id),
+    getPlatformAdminUser(session.user, supabase).catch(() => null),
+  ]);
+
+  const products = productsData.map((p) => ({
     id: p.id,
     name: p.name,
     unit: p.unit,
@@ -37,8 +43,6 @@ export default async function DashboardLayout({
     is_default: Boolean(p.is_default),
     active: Boolean(p.active),
   }));
-
-  const subscriptionState = await getBusinessSubscriptionState(supabase, session.business.id);
 
   return (
     <DashboardShell
@@ -51,6 +55,8 @@ export default async function DashboardLayout({
         daysRemaining: subscriptionState.remainingDays,
         isTrial: subscriptionState.isTrial,
       }}
+      isPlatformAdmin={Boolean(platformAdmin && platformAdmin.active)}
+      platformAdminRole={platformAdmin?.role}
     >
       {children}
     </DashboardShell>

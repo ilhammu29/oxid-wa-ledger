@@ -1,13 +1,26 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { getAdminAuditLogs, listAllBusinessesForAdmin } from "@/modules/subscriptions";
+import { getAdminAuditLogs, listAllBusinessesForAdmin, getPlatformAdminUser, hasPlatformPermission } from "@/modules/subscriptions";
 import { AdminAuditClientView } from "@/components/admin/admin-audit-client-view";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAuditPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const currentAdmin = await getPlatformAdminUser(user, supabase);
+  if (!currentAdmin || !currentAdmin.active || !hasPlatformPermission(currentAdmin.role, "audit:read")) {
+    redirect("/admin");
+  }
 
   const [logs, businesses] = await Promise.all([
     getAdminAuditLogs(supabase, { limit: 100 }),
