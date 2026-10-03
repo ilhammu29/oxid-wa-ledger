@@ -121,6 +121,21 @@ export type PlatformAdminRole =
   | "billing_admin"
   | "viewer";
 
+export type PlatformPermission =
+  | "admin:view"
+  | "businesses:read"
+  | "businesses:write"
+  | "users:read"
+  | "users:write"
+  | "subscriptions:read"
+  | "subscriptions:write"
+  | "payments:read"
+  | "payments:write"
+  | "settings:read"
+  | "settings:write"
+  | "audit:read"
+  | "system:read";
+
 export interface PlatformAdminRecord {
   id: string;
   userId: string;

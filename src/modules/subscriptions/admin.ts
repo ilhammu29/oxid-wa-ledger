@@ -4,6 +4,7 @@ import {
   SubscriptionStatus,
   SubscriptionPayment,
   PlatformAdminRole,
+  PlatformPermission,
   PlatformAdminRecord,
   PlatformOverviewKPIs,
   PlatformSystemStatusItem,
@@ -119,20 +120,7 @@ export async function getPlatformAdminUser(
   return null;
 }
 
-export type PlatformPermission =
-  | "admin:view"
-  | "businesses:read"
-  | "businesses:write"
-  | "users:read"
-  | "users:write"
-  | "subscriptions:read"
-  | "subscriptions:write"
-  | "payments:read"
-  | "payments:write"
-  | "settings:read"
-  | "settings:write"
-  | "audit:read"
-  | "system:read";
+export type { PlatformPermission } from "./types";
 
 /**
  * Checks whether a platform admin role has a specific operational permission.
