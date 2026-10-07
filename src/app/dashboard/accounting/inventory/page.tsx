@@ -13,13 +13,37 @@ export default async function InventoryPage() {
   const business = session.business!;
   const supabase = await createClient();
 
-  const { data: products } = await supabase
-    .from("products")
-    .select("id, name, stock, unit, unit_cost, default_price, active")
-    .eq("business_id", business.id)
-    .order("name", { ascending: true });
+  const [productsRes, movementsRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, unit, unit_cost, default_price, active")
+      .eq("business_id", business.id)
+      .order("name", { ascending: true }),
+    supabase
+      .from("inventory_movements")
+      .select("product_id, quantity")
+      .eq("business_id", business.id),
+  ]);
 
-  const rows = products || [];
+  const stockByProductId = new Map<string, number>();
+  (movementsRes.data || []).forEach((m: { product_id: string; quantity: number | string }) => {
+    stockByProductId.set(
+      m.product_id,
+      (stockByProductId.get(m.product_id) || 0) + Number(m.quantity)
+    );
+  });
+
+  const rows = (productsRes.data || []).map((p: {
+    id: string;
+    name: string;
+    unit: string;
+    unit_cost: number | string;
+    default_price: number | string;
+    active: boolean;
+  }) => ({
+    ...p,
+    stock: stockByProductId.get(p.id) || 0,
+  }));
   const totalItems = rows.length;
   const totalStockUnits = rows.reduce((acc, p) => acc + (Number(p.stock) || 0), 0);
   const totalValuation = rows.reduce((acc, p) => acc + (Number(p.stock) || 0) * (Number(p.unit_cost) || 0), 0);

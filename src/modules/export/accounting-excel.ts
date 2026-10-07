@@ -88,8 +88,8 @@ interface PayableExportRow {
 }
 
 interface ProductExportRow {
+  id: string;
   name: string;
-  stock: number | string;
   unit: string;
   unit_cost: number | string;
   default_price: number | string;
@@ -165,6 +165,7 @@ export async function generateAccountingExcelWorkbook(
     receivablesRes,
     payablesRes,
     productsRes,
+    inventoryRes,
     journalRes,
   ] = await Promise.all([
     client
@@ -200,9 +201,13 @@ export async function generateAccountingExcelWorkbook(
       .order("created_at", { ascending: true }),
     client
       .from("products")
-      .select("name, stock, unit, unit_cost, default_price")
+      .select("id, name, unit, unit_cost, default_price")
       .eq("business_id", businessId)
       .order("name", { ascending: true }),
+    client
+      .from("inventory_movements")
+      .select("product_id, quantity")
+      .eq("business_id", businessId),
     client
       .from("journal_lines")
       .select(`
@@ -686,8 +691,16 @@ export async function generateAccountingExcelWorkbook(
   ];
   styleHeaderRow(sInventory.getRow(1));
 
+  const stockByProductId = new Map<string, number>();
+  (inventoryRes.data || []).forEach((m: { product_id: string; quantity: number | string }) => {
+    stockByProductId.set(
+      m.product_id,
+      (stockByProductId.get(m.product_id) || 0) + Number(m.quantity)
+    );
+  });
+
   ((productsRes.data || []) as unknown as ProductExportRow[]).forEach((p) => {
-    const stock = Number(p.stock) || 0;
+    const stock = stockByProductId.get(p.id) || 0;
     const cost = Number(p.unit_cost) || 0;
     const r = sInventory.addRow([
       p.name,

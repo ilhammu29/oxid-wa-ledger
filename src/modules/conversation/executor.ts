@@ -756,11 +756,24 @@ export async function executeConversationAction(
     // Status Checks: Inventory / Receivables / Payables
     // ------------------------------------------------------------------------
     if (evaluated.action === "SHOW_INVENTORY_STATUS") {
-      const { data: invData } = await client
-        .from("products")
-        .select("name, stock, unit, unit_cost")
-        .eq("business_id", context.businessId);
-      const lines = (invData || []).map((p: { name: string; stock?: number | null; unit?: string | null }) => `• ${p.name}: ${p.stock ?? 0} ${p.unit || "kg"}`);
+      const [prodsRes, movesRes] = await Promise.all([
+        client
+          .from("products")
+          .select("id, name, unit, unit_cost")
+          .eq("business_id", context.businessId),
+        client
+          .from("inventory_movements")
+          .select("product_id, quantity")
+          .eq("business_id", context.businessId),
+      ]);
+      const stockMap = new Map<string, number>();
+      (movesRes.data || []).forEach((m: { product_id: string; quantity: number | string }) => {
+        stockMap.set(m.product_id, (stockMap.get(m.product_id) || 0) + Number(m.quantity));
+      });
+      const lines = (prodsRes.data || []).map(
+        (p: { id: string; name: string; unit?: string | null }) =>
+          `• ${p.name}: ${stockMap.get(p.id) ?? 0} ${p.unit || "kg"}`
+      );
       return {
         action: "SHOW_INVENTORY_STATUS",
         status: "SUCCESS",

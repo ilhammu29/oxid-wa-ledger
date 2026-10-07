@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "pg";
 
 const MIGRATION_SQL = `
--- 1. Extend products table with authoritative unit_cost (HPP)
+-- 1. Extend products table with authoritative unit_cost (HPP) and stock tracking
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS unit_cost BIGINT NOT NULL DEFAULT 0 CHECK (unit_cost >= 0);
+
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS stock NUMERIC(12, 3) NOT NULL DEFAULT 0;
 
 -- 2. Extend transactions table with credit sales and customer metadata
 ALTER TABLE public.transactions
