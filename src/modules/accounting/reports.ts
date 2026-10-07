@@ -103,7 +103,7 @@ export async function getProfitAndLoss(
       )
     `)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .gte("journal_entries.journal_date", startDate)
     .lte("journal_entries.journal_date", endDate);
 
@@ -218,7 +218,7 @@ export async function getTrialBalance(
       )
     `)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .lte("journal_entries.journal_date", asOfDate);
 
   if (error) {
@@ -321,7 +321,7 @@ export async function getBalanceSheet(
       )
     `)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .lte("journal_entries.journal_date", asOfDate);
 
   if (error) {
@@ -440,7 +440,7 @@ export async function getCashFlowStatement(
       journal_entries!inner (business_id, journal_date, status)
     `)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .in("chart_of_accounts.code", ["1100", "1200"])
     .lt("journal_entries.journal_date", startDate);
 
@@ -464,7 +464,7 @@ export async function getCashFlowStatement(
       )
     `)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .in("chart_of_accounts.code", ["1100", "1200"])
     .gte("journal_entries.journal_date", startDate)
     .lte("journal_entries.journal_date", endDate);
@@ -665,7 +665,7 @@ export async function getGeneralLedger(
     `)
     .eq("account_id", account.id)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .lt("journal_entries.journal_date", startDate);
 
   let openingBalance = 0;
@@ -694,7 +694,7 @@ export async function getGeneralLedger(
     `)
     .eq("account_id", account.id)
     .eq("journal_entries.business_id", businessId)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .gte("journal_entries.journal_date", startDate)
     .lte("journal_entries.journal_date", endDate)
     .order("journal_entries(journal_date)", { ascending: true })

@@ -30,7 +30,7 @@ export default async function CashBankPage() {
       journal_entries!inner(entry_number, journal_date, source_type, reference)
     `)
     .eq("journal_entries.business_id", business.id)
-    .neq("journal_entries.status", "voided")
+    .neq("journal_entries.status", "draft")
     .in("chart_of_accounts.code", ["1100", "1200"])
     .order("created_at", { ascending: false })
     .limit(50);

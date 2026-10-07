@@ -216,7 +216,7 @@ export async function generateAccountingExcelWorkbook(
         journal_entries!inner(entry_number, journal_date, source_type, reference, status)
       `)
       .eq("journal_entries.business_id", businessId)
-      .neq("journal_entries.status", "voided")
+      .neq("journal_entries.status", "draft")
       .gte("journal_entries.journal_date", startDate)
       .lte("journal_entries.journal_date", endDate)
       .order("journal_entries(journal_date)", { ascending: true }),
