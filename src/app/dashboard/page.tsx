@@ -11,8 +11,12 @@ import {
   CheckCircle2,
   ArrowRight,
   HelpCircle,
+  Scale,
 } from "lucide-react";
 import { getBusinessOnboardingState } from "@/modules/onboarding/client-launch";
+import { getProfitAndLoss, getBalanceSheet } from "@/modules/accounting/reports";
+import { getBusinessTimezone } from "@/modules/transactions/service";
+import { getMonthUtcRange } from "@/modules/transactions/timezone";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +25,26 @@ export default async function DashboardOverviewPage() {
   const business = session.business!;
   const supabase = await createClient();
 
-  // 1. Fetch KPIs, 14-day sales time-series, and onboarding progress
-  const [kpis, dailySeries, onboardingProgress] = await Promise.all([
+  const timezone = await getBusinessTimezone(supabase, business.id);
+  const monthRange = getMonthUtcRange(new Date(), timezone);
+  const startDate = monthRange.startAt.toISOString().slice(0, 10);
+  const endDate = monthRange.endAt.toISOString().slice(0, 10);
+
+  // 1. Fetch KPIs, 14-day sales time-series, onboarding progress, and accounting reports
+  const [kpis, dailySeries, onboardingProgress, pnl, bs] = await Promise.all([
     getOverviewKPIs(supabase, business.id),
     getDailySalesSeries(supabase, business.id, 14),
     getBusinessOnboardingState(supabase, business.id),
+    getProfitAndLoss(supabase, { businessId: business.id, startDate, endDate }),
+    getBalanceSheet(supabase, { businessId: business.id, asOfDate: endDate }),
   ]);
+
+  const kas = bs.currentAssets.cash;
+  const bank = bs.currentAssets.bank;
+  const piutang = bs.currentAssets.accountsReceivable;
+  const persediaan = bs.currentAssets.inventory;
+  const hutang = bs.totalLiabilities;
+  const modal = bs.equity.totalEquity;
 
   // 2. Fetch products map and list
   const { data: productsData } = await supabase
@@ -228,6 +246,116 @@ export default async function DashboardOverviewPage() {
             <p className="text-[11px] text-muted mt-1">
               Total kuantitas hari ini
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Accounting & Bookkeeping Overview (Double-Entry Engine) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
+              <Scale className="w-4 h-4 text-primary" />
+              <span>Ikhtisar Pembukuan & Akuntansi</span>
+            </h3>
+            <p className="text-xs text-muted">
+              Posisi keuangan terverifikasi double-entry ledger periode bulan ini
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/reports/profit-loss"
+              className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <span>Laporan Laba Rugi</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Laba Bersih */}
+          <div className="p-4 rounded-xl bg-surface border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted">Laba Bersih</span>
+              <span className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border ${
+                pnl.netProfit >= 0
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                  : "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20"
+              }`}>
+                {pnl.netProfit >= 0 ? "Profit" : "Defisit"}
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <p className={`text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${
+                pnl.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+              }`}>
+                {formatIDR(pnl.netProfit)}
+              </p>
+              <p className="text-[11px] text-muted mt-1">
+                Laba Kotor: <span className="font-mono text-foreground/80">{formatIDR(pnl.grossProfit)}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* HPP & Beban */}
+          <div className="p-4 rounded-xl bg-surface border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted">Beban Operasional</span>
+              <span className="text-[10px] font-mono font-medium text-muted/80 bg-surface-hover px-1.5 py-0.5 rounded border border-border">
+                Biaya
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight tabular-nums">
+                {formatIDR(pnl.totalOperatingExpenses)}
+              </p>
+              <p className="text-[11px] text-muted mt-1">
+                HPP: <span className="font-mono text-foreground/80">{formatIDR(pnl.cogs)}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Likuiditas Kas & Bank */}
+          <div className="p-4 rounded-xl bg-surface border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted">Kas & Bank</span>
+              <span className="text-[10px] font-mono font-medium text-sky-600 dark:text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">
+                Likuiditas
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight tabular-nums">
+                {formatIDR(kas + bank)}
+              </p>
+              <p className="text-[11px] text-muted mt-1 font-mono">
+                Kas: {formatIDR(kas)} | Bank: {formatIDR(bank)}
+              </p>
+            </div>
+          </div>
+
+          {/* Posisi Piutang, Hutang, Stok & Modal */}
+          <div className="p-4 rounded-xl bg-surface border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted">Posisi Neraca Saldo</span>
+              <span className="text-[10px] font-mono font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                Aset & Kewajiban
+              </span>
+            </div>
+            <div className="mt-2.5 space-y-1">
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted">Piutang / Hutang:</span>
+                <span className="font-mono text-foreground font-semibold">
+                  {formatIDR(piutang)} / {formatIDR(hutang)}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-muted">Stok / Modal:</span>
+                <span className="font-mono text-foreground/80">
+                  {formatIDR(persediaan)} / {formatIDR(modal)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

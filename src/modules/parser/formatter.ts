@@ -57,11 +57,67 @@ export function formatActionResponse(
         `*Panduan Penggunaan OXID WA Ledger*\n\n` +
         `Anda dapat mencatat transaksi secara natural tanpa perintah kaku. Contoh format pesan:\n\n` +
         `• *Penjualan:* "Kejual 15kg", "Ada pembeli 7 kilo", "Jual 2,5 kg", "Tadi laku 20 kilogram"\n` +
-        `• *Laporan:* "Laporan hari ini", "Laporan minggu ini", "Bulan ini omzet berapa?"\n` +
+        `• *Pengeluaran:* "Listrik 150 ribu", "Bayar bensin 50 ribu"\n` +
+        `• *Modal & Prive:* "Modal masuk 5 juta", "Ambil uang usaha 500 ribu"\n` +
+        `• *Pembelian:* "Beli stok lele 100kg 2 juta"\n` +
+        `• *Piutang/Hutang:* "Budi bayar hutang 1 juta", "Bayar hutang supplier 2 juta"\n` +
+        `• *Laporan:* "Laporan hari ini", "Laba bulan ini", "Neraca bulan ini", "Saldo kas"\n` +
+        `• *Export Excel:* "Export laporan bulan ini"\n` +
         `• *Status Harian:* "Gak ada penjualan hari ini", "Hari ini libur", "Tutup hari ini"\n` +
         `• *Koreksi/Batal:* "Batal terakhir", "Ubah terakhir jadi 20kg"\n` +
         `• *Bantuan:* "Help" atau "Cara pakai"`
       );
+
+    case "RECORD_EXPENSE":
+      return `Mencatat pengeluaran...`;
+
+    case "RECORD_CAPITAL_IN":
+      return `Mencatat setoran modal...`;
+
+    case "RECORD_OWNER_DRAW":
+      return `Mencatat penarikan prive...`;
+
+    case "RECORD_PURCHASE":
+      return `Mencatat pembelian persediaan...`;
+
+    case "RECORD_PAY_RECEIVABLE":
+      return `Mencatat pelunasan piutang...`;
+
+    case "RECORD_PAY_PAYABLE":
+      return `Mencatat pembayaran hutang...`;
+
+    case "SHOW_CASH_BALANCE":
+      return `Menyiapkan saldo kas & bank...`;
+
+    case "SHOW_PROFIT_LOSS":
+      return `Menyiapkan laporan laba rugi...`;
+
+    case "SHOW_BALANCE_SHEET":
+      return `Menyiapkan neraca keuangan...`;
+
+    case "SHOW_CASH_FLOW":
+      return `Menyiapkan laporan arus kas...`;
+
+    case "SHOW_TRIAL_BALANCE":
+      return `Menyiapkan neraca saldo...`;
+
+    case "SHOW_GENERAL_LEDGER":
+      return `Menyiapkan buku besar...`;
+
+    case "SHOW_INVENTORY_STATUS":
+      return `Menyiapkan ringkasan persediaan...`;
+
+    case "SHOW_RECEIVABLE_STATUS":
+      return `Menyiapkan status piutang...`;
+
+    case "SHOW_PAYABLE_STATUS":
+      return `Menyiapkan status hutang...`;
+
+    case "EXECUTE_EXPORT_REPORT":
+      return `Menyiapkan berkas Excel laporan keuangan...`;
+
+    case "ASK_AMBIGUITY_CLARIFICATION":
+      return `Konfirmasi maksud transaksi diperlukan.`;
 
     case "SHOW_UNKNOWN_HELP":
     default:

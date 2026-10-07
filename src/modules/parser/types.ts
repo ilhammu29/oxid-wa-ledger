@@ -13,7 +13,24 @@ export type ParserIntent =
   | "CANCEL_LAST"
   | "CORRECT_LAST"
   | "HELP"
-  | "UNKNOWN";
+  | "UNKNOWN"
+  | "EXPENSE"
+  | "CAPITAL_IN"
+  | "OWNER_DRAW"
+  | "PURCHASE"
+  | "PAY_RECEIVABLE"
+  | "PAY_PAYABLE"
+  | "CASH_BALANCE"
+  | "PROFIT_LOSS"
+  | "BALANCE_SHEET"
+  | "CASH_FLOW"
+  | "TRIAL_BALANCE"
+  | "GENERAL_LEDGER"
+  | "INVENTORY_STATUS"
+  | "EXPORT_REPORT"
+  | "RECEIVABLE_STATUS"
+  | "PAYABLE_STATUS"
+  | "AMBIGUOUS_FINANCIAL";
 
 export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
 
@@ -28,7 +45,24 @@ export type ConversationActionType =
   | "REQUEST_CORRECT_LAST"
   | "SHOW_HELP"
   | "ASK_CONFIRMATION"
-  | "SHOW_UNKNOWN_HELP";
+  | "SHOW_UNKNOWN_HELP"
+  | "RECORD_EXPENSE"
+  | "RECORD_CAPITAL_IN"
+  | "RECORD_OWNER_DRAW"
+  | "RECORD_PURCHASE"
+  | "RECORD_PAY_RECEIVABLE"
+  | "RECORD_PAY_PAYABLE"
+  | "SHOW_CASH_BALANCE"
+  | "SHOW_PROFIT_LOSS"
+  | "SHOW_BALANCE_SHEET"
+  | "SHOW_CASH_FLOW"
+  | "SHOW_TRIAL_BALANCE"
+  | "SHOW_GENERAL_LEDGER"
+  | "SHOW_INVENTORY_STATUS"
+  | "EXECUTE_EXPORT_REPORT"
+  | "SHOW_RECEIVABLE_STATUS"
+  | "SHOW_PAYABLE_STATUS"
+  | "ASK_AMBIGUITY_CLARIFICATION";
 
 export interface ExtractedQuantity {
   /** Normalized decimal string formatted for database NUMERIC(12, 3), e.g. "15.000", "2.500" */
@@ -76,6 +110,12 @@ export interface ParsedMessage {
   productName?: string | null;
   /** Whether the default product was used as fallback */
   isDefaultProductUsed?: boolean;
+  /** Extracted integer IDR money amount or null */
+  moneyAmount?: number | null;
+  /** Extracted category, e.g. "listrik", "bensin", "gaji" */
+  category?: string | null;
+  /** Counterparty name (customer/supplier) */
+  counterpartyName?: string | null;
 }
 
 export interface ConversationActionResult {

@@ -5,12 +5,15 @@ import {
   TelegramSendResult,
 } from "./types";
 import { maskTelegramUserId, normalizeTelegramCommand } from "./normalizer";
-import { sendTelegramText } from "./telegram-client";
+import { sendTelegramText, sendTelegramDocument } from "./telegram-client";
 import { executeConversationAction } from "../conversation/executor";
 import { ExecutionContext } from "../transactions/types";
 import { captureConversationFailure, FailureType } from "../pilot-hardening";
 import { recordIntegrationEvent } from "../monitoring/telemetry";
 import { derivePairingTokenHash } from "./pairing-crypto";
+import { generateAccountingExcelWorkbook } from "../export";
+import { getBusinessTimezone } from "../transactions/service";
+import { getMonthUtcRange } from "../transactions/timezone";
 
 export interface ProcessTelegramWebhookOptions {
   sendOutbound?: boolean;
@@ -595,38 +598,69 @@ export async function processIncomingTelegramWebhook(
 
   // 10. Send Outbound Telegram Reply
   let sendResult: TelegramSendResult | undefined;
-  if (options.sendOutbound !== false && executionResult.replyText) {
-    try {
-      sendResult = await telegramSend({
-        chatId: replyChatId,
-        text: executionResult.replyText,
-      });
+  if (options.sendOutbound !== false) {
+    if (executionResult.action === "EXECUTE_EXPORT_REPORT") {
+      try {
+        const timezone = await getBusinessTimezone(client, businessId);
+        const range = getMonthUtcRange(messageDate, timezone);
+        const startDate = range.startAt.toISOString().slice(0, 10);
+        const endDate = range.endAt.toISOString().slice(0, 10);
+        const excelBuffer = await generateAccountingExcelWorkbook(client, {
+          businessId,
+          startDate,
+          endDate,
+        });
+        const yearMonth = startDate.slice(0, 7);
+        const filename = `OXID_Ledger_Laporan_${yearMonth}.xlsx`;
 
-      if (!sendResult.success) {
-        console.error(
-          `[TelegramWebhook] Financial action succeeded, but outbound reply failed | updateId: ${updateId} | error: ${sendResult.errorCode}`
-        );
+        sendResult = await sendTelegramDocument({
+          chatId: replyChatId,
+          document: excelBuffer,
+          filename,
+          caption: `📊 Laporan Pembukuan Lengkap (${startDate} s.d. ${endDate})\n14 Lembar Kerja Akuntansi Standar UMKM.`,
+        });
+      } catch (docErr) {
+        console.error(`[TelegramWebhook] Failed to generate/send export document:`, docErr);
+        sendResult = await telegramSend({
+          chatId: replyChatId,
+          text: "Gagal menyiapkan berkas Excel laporan. Silakan coba kembali sesaat lagi.",
+        });
       }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(
-        `[TelegramWebhook] Exception sending outbound reply | updateId: ${updateId} | error: ${errorMsg}`
-      );
-      sendResult = {
-        success: false,
-        errorCode: "REPLY_EXCEPTION",
-        errorMessage: errorMsg,
-      };
+    } else if (executionResult.replyText) {
+      try {
+        sendResult = await telegramSend({
+          chatId: replyChatId,
+          text: executionResult.replyText,
+        });
+
+        if (!sendResult.success) {
+          console.error(
+            `[TelegramWebhook] Financial action succeeded, but outbound reply failed | updateId: ${updateId} | error: ${sendResult.errorCode}`
+          );
+        }
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(
+          `[TelegramWebhook] Exception sending outbound reply | updateId: ${updateId} | error: ${errorMsg}`
+        );
+        sendResult = {
+          success: false,
+          errorCode: "REPLY_EXCEPTION",
+          errorMessage: errorMsg,
+        };
+      }
     }
 
-    await recordIntegrationEvent(client, {
-      businessId,
-      channel: "telegram",
-      direction: "outbound",
-      eventType: sendResult?.success ? "telegram.outbound.sent" : "telegram.outbound.failed",
-      status: sendResult?.success ? "success" : "failed",
-      errorCode: sendResult?.errorCode,
-    });
+    if (sendResult) {
+      await recordIntegrationEvent(client, {
+        businessId,
+        channel: "telegram",
+        direction: "outbound",
+        eventType: sendResult.success ? "telegram.outbound.sent" : "telegram.outbound.failed",
+        status: sendResult.success ? "success" : "failed",
+        errorCode: sendResult.errorCode,
+      });
+    }
   }
 
   return {

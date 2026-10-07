@@ -24,6 +24,19 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  ShoppingCart,
+  Wallet,
+  Coins,
+  Users,
+  Scale,
+  Boxes,
+  Building2,
+  TrendingUp,
+  ArrowLeftRight,
+  PieChart,
+  CheckSquare,
+  BookOpen,
+  FileDown,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -116,14 +129,36 @@ export function DashboardShell({
   }, []);
 
   // Navigation Items
+  // Navigation Items
   const primaryNavItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Transaksi", href: "/dashboard/transactions", icon: Receipt },
-    { name: "Produk", href: "/dashboard/products", icon: Package },
-    { name: "Status Harian", href: "/dashboard/status", icon: CalendarCheck },
+  ];
+
+  const bookkeepingNavItems = [
+    { name: "Penjualan", href: "/dashboard/transactions", icon: Receipt },
+    { name: "Pengeluaran", href: "/dashboard/accounting/expenses", icon: CreditCard },
+    { name: "Pembelian", href: "/dashboard/accounting/purchases", icon: ShoppingCart },
+    { name: "Kas & Bank", href: "/dashboard/accounting/cash-bank", icon: Wallet },
+    { name: "Modal Pemilik", href: "/dashboard/accounting/capital", icon: Coins },
+    { name: "Piutang Usaha", href: "/dashboard/accounting/receivables", icon: Users },
+    { name: "Hutang Usaha", href: "/dashboard/accounting/payables", icon: Scale },
+    { name: "Persediaan", href: "/dashboard/accounting/inventory", icon: Boxes },
+    { name: "Aset Tetap", href: "/dashboard/accounting/assets", icon: Building2 },
+  ];
+
+  const reportsNavItems = [
+    { name: "Laba Rugi", href: "/dashboard/reports/profit-loss", icon: TrendingUp },
+    { name: "Neraca", href: "/dashboard/reports/balance-sheet", icon: Scale },
+    { name: "Arus Kas", href: "/dashboard/reports/cash-flow", icon: ArrowLeftRight },
+    { name: "Perubahan Ekuitas", href: "/dashboard/reports/equity", icon: PieChart },
+    { name: "Neraca Saldo", href: "/dashboard/reports/trial-balance", icon: CheckSquare },
+    { name: "Buku Besar", href: "/dashboard/reports/general-ledger", icon: BookOpen },
+    { name: "Ekspor Excel", href: "/dashboard/reports/export", icon: FileDown },
   ];
 
   const operationsNavItems = [
+    { name: "Produk & Alias", href: "/dashboard/products", icon: Package },
+    { name: "Status Harian", href: "/dashboard/status", icon: CalendarCheck },
     { name: "Monitoring & Bot", href: "/dashboard/monitoring", icon: Activity },
     { name: "Pengingat Harian", href: "/dashboard/settings/reminders", icon: Bell },
     { name: "Kanal Pesan", href: "/dashboard/settings/channels", icon: Radio },
@@ -143,7 +178,22 @@ export function DashboardShell({
 
   const getBreadcrumbTitle = () => {
     if (pathname === "/dashboard") return "Overview";
-    if (pathname.startsWith("/dashboard/transactions")) return "Transaksi";
+    if (pathname.startsWith("/dashboard/transactions")) return "Penjualan";
+    if (pathname.startsWith("/dashboard/accounting/expenses")) return "Pengeluaran";
+    if (pathname.startsWith("/dashboard/accounting/purchases")) return "Pembelian";
+    if (pathname.startsWith("/dashboard/accounting/cash-bank")) return "Kas & Bank";
+    if (pathname.startsWith("/dashboard/accounting/capital")) return "Modal Pemilik";
+    if (pathname.startsWith("/dashboard/accounting/receivables")) return "Piutang Usaha";
+    if (pathname.startsWith("/dashboard/accounting/payables")) return "Hutang Usaha";
+    if (pathname.startsWith("/dashboard/accounting/inventory")) return "Persediaan";
+    if (pathname.startsWith("/dashboard/accounting/assets")) return "Aset Tetap";
+    if (pathname.startsWith("/dashboard/reports/profit-loss")) return "Laba Rugi";
+    if (pathname.startsWith("/dashboard/reports/balance-sheet")) return "Neraca";
+    if (pathname.startsWith("/dashboard/reports/cash-flow")) return "Arus Kas";
+    if (pathname.startsWith("/dashboard/reports/equity")) return "Perubahan Ekuitas";
+    if (pathname.startsWith("/dashboard/reports/trial-balance")) return "Neraca Saldo";
+    if (pathname.startsWith("/dashboard/reports/general-ledger")) return "Buku Besar";
+    if (pathname.startsWith("/dashboard/reports/export")) return "Ekspor Excel";
     if (pathname.startsWith("/dashboard/products")) return "Produk & Alias";
     if (pathname.startsWith("/dashboard/status")) return "Status Harian";
     if (pathname.startsWith("/dashboard/monitoring")) return "Monitoring";
@@ -311,6 +361,92 @@ export function DashboardShell({
                 })}
               </div>
 
+              {/* Bookkeeping Group */}
+              <div className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-muted/70">
+                    Pembukuan
+                  </div>
+                )}
+                {bookkeepingNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={isCollapsed ? item.name : undefined}
+                      aria-label={isCollapsed ? item.name : undefined}
+                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                        isCollapsed
+                          ? `justify-center px-2 py-2 ${
+                              isActive
+                                ? "bg-primary/10 text-primary shadow-2xs"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                          : `px-2.5 py-1.5 border-l-2 ${
+                              isActive
+                                ? "bg-primary/10 text-foreground font-semibold border-primary"
+                                : "border-transparent text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                      }`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-muted group-hover:text-foreground"
+                        }`}
+                      />
+                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Reports Group */}
+              <div className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-muted/70">
+                    Laporan
+                  </div>
+                )}
+                {reportsNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={isCollapsed ? item.name : undefined}
+                      aria-label={isCollapsed ? item.name : undefined}
+                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                        isCollapsed
+                          ? `justify-center px-2 py-2 ${
+                              isActive
+                                ? "bg-primary/10 text-primary shadow-2xs"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                          : `px-2.5 py-1.5 border-l-2 ${
+                              isActive
+                                ? "bg-primary/10 text-foreground font-semibold border-primary"
+                                : "border-transparent text-muted hover:text-foreground hover:bg-surface-hover/70"
+                            }`
+                      }`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-muted group-hover:text-foreground"
+                        }`}
+                      />
+                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+
               {/* Operations Group */}
               <div className="space-y-0.5">
                 {!isCollapsed && (
@@ -416,7 +552,16 @@ export function DashboardShell({
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4 shrink-0 text-amber-500" />
-                    {!isCollapsed && <span className="truncate">Admin Control Center</span>}
+                    {!isCollapsed && (
+                      <div className="flex items-center justify-between flex-1 min-w-0">
+                        <span className="truncate">Admin Control</span>
+                        {platformAdminRole && (
+                          <span className="text-[9px] font-mono uppercase bg-amber-500/20 text-amber-500 px-1 py-0.5 rounded ml-1">
+                            {platformAdminRole.replace("_admin", "")}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </Link>
                 </div>
               )}
@@ -666,77 +811,75 @@ export function DashboardShell({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <Link
-                href="/dashboard/status"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <CalendarCheck className="w-4 h-4 text-muted" />
-                <span>Status Harian</span>
-              </Link>
+            {/* Mobile Pembukuan */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Pembukuan</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {bookkeepingNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileSheetOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
+                      <span className="truncate">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
 
-              <Link
-                href="/dashboard/monitoring"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <Activity className="w-4 h-4 text-muted" />
-                <span>Monitoring</span>
-              </Link>
+            {/* Mobile Laporan */}
+            <div className="space-y-1.5 pt-2 border-t border-border/50">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Laporan Keuangan</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {reportsNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileSheetOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
+                      <span className="truncate">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
 
-              <Link
-                href="/dashboard/settings/reminders"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <Bell className="w-4 h-4 text-muted" />
-                <span>Pengingat</span>
-              </Link>
-
-              <Link
-                href="/dashboard/settings/channels"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <Radio className="w-4 h-4 text-muted" />
-                <span>Kanal Pesan</span>
-              </Link>
-
-              <Link
-                href="/dashboard/settings/google-sheets"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-muted" />
-                <span>Google Sheets</span>
-              </Link>
-
-              <Link
-                href="/dashboard/subscription"
-                onClick={() => setMobileSheetOpen(false)}
-                className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-surface-hover"
-              >
-                <CreditCard className="w-4 h-4 text-muted" />
-                <span>Langganan</span>
-              </Link>
-
-              {/* Platform Admin Entry (Mobile) */}
-              {isPlatformAdmin && (
+            {/* Mobile Operasional */}
+            <div className="space-y-1.5 pt-2 border-t border-border/50">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Operasional & Sistem</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {operationsNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileSheetOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
+                      <span className="truncate">{item.name}</span>
+                    </Link>
+                  );
+                })}
                 <Link
-                  href="/admin"
+                  href="/dashboard/subscription"
                   onClick={() => setMobileSheetOpen(false)}
-                  className="col-span-2 flex items-center gap-2.5 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10 font-medium transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
-                  <div className="flex-1 truncate">
-                    <span className="font-semibold text-xs block">Admin Control Center</span>
-                    <span className="block text-[10px] text-amber-500/70 font-mono capitalize">
-                      {platformAdminRole ? platformAdminRole.replace("_", " ") : "Platform Admin"}
-                    </span>
-                  </div>
+                  <CreditCard className="w-3.5 h-3.5 text-muted shrink-0" />
+                  <span>Langganan</span>
                 </Link>
-              )}
+              </div>
             </div>
 
             <div className="pt-2 border-t border-border flex items-center justify-between">

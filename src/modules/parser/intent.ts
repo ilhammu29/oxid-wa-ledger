@@ -20,7 +20,19 @@ import {
   CANCEL_LAST_PATTERNS,
   CORRECT_LAST_PATTERNS,
   HELP_PATTERNS,
+  CASH_PATTERNS,
+  PROFIT_PATTERNS,
+  BALANCE_SHEET_PATTERNS,
+  CASH_FLOW_PATTERNS,
+  TRIAL_BALANCE_PATTERNS,
+  GENERAL_LEDGER_PATTERNS,
+  EXPORT_REPORT_PATTERNS,
+  CAPITAL_PATTERNS,
+  OWNER_DRAW_PATTERNS,
+  PURCHASE_PATTERNS,
+  EXPENSE_CATEGORIES,
 } from "./keywords";
+import { extractMoneyAmount } from "./money";
 
 /**
  * Parses any incoming message deterministically into a structured ParsedMessage.
@@ -194,6 +206,26 @@ export function parseMessage(rawInput: string): ParsedMessage {
     };
   }
 
+  // 7.5 EXPORT_REPORT Intent (Placed before sales report patterns)
+  if (EXPORT_REPORT_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "EXPORT_REPORT",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["export_report"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan ekspor laporan pembukuan Excel terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
   // 8. REPORT_TODAY Intent
   if (REPORT_TODAY_PATTERNS.some((p) => p.test(normalizedText))) {
     return {
@@ -252,6 +284,330 @@ export function parseMessage(rawInput: string): ParsedMessage {
       reason: "Permintaan laporan penjualan bulanan terdeteksi.",
       multipleQuantitiesDetected: false,
     };
+  }
+
+  // 10.2 CASH_BALANCE Intent
+  if (CASH_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "CASH_BALANCE",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["saldo_kas"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan informasi saldo kas & bank terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.3 TRIAL_BALANCE Intent (Placed before general balance sheet)
+  if (TRIAL_BALANCE_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "TRIAL_BALANCE",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["neraca_saldo"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan neraca saldo terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.4 BALANCE_SHEET Intent
+  if (BALANCE_SHEET_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "BALANCE_SHEET",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["neraca"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan neraca keuangan terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.5 CASH_FLOW Intent
+  if (CASH_FLOW_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "CASH_FLOW",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["arus_kas"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan laporan arus kas terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.6 GENERAL_LEDGER Intent
+  if (GENERAL_LEDGER_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "GENERAL_LEDGER",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["buku_besar"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan buku besar terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.7 PROFIT_LOSS Intent
+  if (PROFIT_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "PROFIT_LOSS",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["laba_rugi"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan laporan laba rugi terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.8 CAPITAL_IN Intent
+  if (CAPITAL_PATTERNS.some((p) => p.test(normalizedText))) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "CAPITAL_IN",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["modal_masuk"],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pencatatan setoran modal Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  // 10.9 OWNER_DRAW Intent
+  if (OWNER_DRAW_PATTERNS.some((p) => p.test(normalizedText))) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "OWNER_DRAW",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["prive"],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pencatatan prive pemilik Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  // 10.10 PURCHASE Intent
+  if (PURCHASE_PATTERNS.some((p) => p.test(normalizedText))) {
+    const money = extractMoneyAmount(normalizedText);
+    const { primaryQuantity: pQty } = extractQuantities(normalizedText);
+    if (money) {
+      return {
+        intent: "PURCHASE",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: pQty?.decimalString || null,
+        rawQuantity: pQty?.rawNumber || null,
+        unit: pQty?.unit || "kg",
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["beli_stok"],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pencatatan pembelian stok Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  // 10.11 PAY_RECEIVABLE / PAY_PAYABLE
+  const recvMatch = normalizedText.match(/\b([a-z0-9_-]+)\s+bayar\s+hutang\b/i) ||
+                    normalizedText.match(/\bpelunasan\s+([a-z0-9_-]+)\b/i) ||
+                    normalizedText.match(/\bterima\s+pembayaran\s+piutang\b/i);
+  if (recvMatch) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      const customerName = recvMatch[1] && recvMatch[1] !== "terima" ? recvMatch[1] : null;
+      return {
+        intent: "PAY_RECEIVABLE",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        counterpartyName: customerName,
+        matchedKeywords: ["bayar_hutang_pelanggan"],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pembayaran piutang ${customerName ? `dari ${customerName} ` : ""}sebesar Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  const paybMatch = normalizedText.match(/\bbayar\s+hutang\s+(?:supplier|pakan|toko|ke\s+([a-z0-9_-]+)|([a-z0-9_-]+))\b/i) ||
+                    normalizedText.match(/^bayar\s+hutang\b/i);
+  if (paybMatch) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "PAY_PAYABLE",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["bayar_hutang_supplier"],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pembayaran hutang usaha sebesar Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  // 10.12 EXPENSE Intent (Evaluated before generic ambiguous payment)
+  const matchedCategory = EXPENSE_CATEGORIES.find((cat) => {
+    const catRegex = new RegExp(`\\b${cat}\\b`, "i");
+    return catRegex.test(normalizedText);
+  });
+
+  if (matchedCategory) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "EXPENSE",
+        confidence: "HIGH",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        category: matchedCategory,
+        matchedKeywords: [matchedCategory],
+        negativeKeywords: [],
+        requiresConfirmation: false,
+        reason: `Pengeluaran ${matchedCategory} sebesar Rp ${money.amount.toLocaleString()} terdeteksi.`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  // 10.13 Ambiguity Handling: "bayar 500 ribu" or "masuk 5 juta"
+  if (/^bayar\s+/i.test(normalizedText)) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "AMBIGUOUS_FINANCIAL",
+        confidence: "LOW",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["bayar_ambigu"],
+        negativeKeywords: [],
+        requiresConfirmation: true,
+        reason: `Pembayaran Rp ${money.amount.toLocaleString()} terdeteksi tanpa keterangan jelas (pengeluaran atau pelunasan hutang).`,
+        multipleQuantitiesDetected: false,
+      };
+    }
+  }
+
+  if (/^masuk\s+/i.test(normalizedText) || /^uang\s+masuk\s+/i.test(normalizedText)) {
+    const money = extractMoneyAmount(normalizedText);
+    if (money) {
+      return {
+        intent: "AMBIGUOUS_FINANCIAL",
+        confidence: "LOW",
+        originalText,
+        normalizedText,
+        quantity: null,
+        rawQuantity: null,
+        unit: null,
+        correctedQuantity: null,
+        rawCorrectedQuantity: null,
+        moneyAmount: money.amount,
+        matchedKeywords: ["masuk_ambigu"],
+        negativeKeywords: [],
+        requiresConfirmation: true,
+        reason: `Uang masuk Rp ${money.amount.toLocaleString()} terdeteksi tanpa keterangan jelas (penjualan, modal, atau piutang).`,
+        multipleQuantitiesDetected: false,
+      };
+    }
   }
 
   // 11. Extract Quantities and Match Keywords

@@ -21,6 +21,7 @@ import {
   getMonthUtcRange,
 } from "./timezone";
 import { canCreateFinancialMutation } from "../subscriptions";
+import { postSaleToAccounting, voidSaleFromAccounting } from "../accounting";
 
 interface RpcSaleResult {
   transaction_id: string;
@@ -199,6 +200,32 @@ export async function recordSale(
 
   const result = data as unknown as RpcSaleResult;
 
+  // Post to double-entry accounting engine (non-blocking)
+  try {
+    let unitCost = 0;
+    if (result.product_id) {
+      const { data: prod } = await client
+        .from("products")
+        .select("unit_cost")
+        .eq("id", result.product_id)
+        .maybeSingle();
+      if (prod?.unit_cost) unitCost = Number(prod.unit_cost);
+    }
+
+    await postSaleToAccounting(client, {
+      businessId: result.business_id,
+      transactionId: result.transaction_id,
+      totalAmount: Number(result.total_amount),
+      unitCost,
+      quantity: Number(result.quantity),
+      transactionDate: String(result.transaction_at).slice(0, 10),
+      description: `Penjualan ${result.product_name || "Produk"}`,
+      actorUserId: context.authenticatedUserId,
+    });
+  } catch (acctErr) {
+    console.warn(`[recordSale] Accounting posting warning: ${acctErr instanceof Error ? acctErr.message : String(acctErr)}`);
+  }
+
   return {
     transactionId: result.transaction_id,
     businessId: result.business_id,
@@ -245,6 +272,18 @@ export async function cancelLastSale(
   }
 
   const result = data as unknown as RpcCancelResult;
+
+  // Void from double-entry accounting engine (non-blocking)
+  try {
+    await voidSaleFromAccounting(client, {
+      businessId: context.businessId,
+      transactionId: result.transaction_id,
+      voidReason: "Dibatalkan oleh pengguna",
+      actorUserId: context.authenticatedUserId,
+    });
+  } catch (acctErr) {
+    console.warn(`[cancelLastSale] Accounting void warning: ${acctErr instanceof Error ? acctErr.message : String(acctErr)}`);
+  }
 
   return {
     transactionId: result.transaction_id,
@@ -297,6 +336,39 @@ export async function correctLastSale(
   }
 
   const result = data as unknown as RpcCorrectResult;
+
+  // Void original and post corrected transaction in accounting engine
+  try {
+    await voidSaleFromAccounting(client, {
+      businessId: context.businessId,
+      transactionId: result.original_transaction_id,
+      voidReason: "Dikoreksi oleh pengguna",
+      actorUserId: context.authenticatedUserId,
+    });
+
+    const { data: newTx } = await client
+      .from("transactions")
+      .select("product_id, products(unit_cost, name)")
+      .eq("id", result.new_transaction_id)
+      .maybeSingle();
+
+    const prodInfo = (newTx?.products as unknown as { unit_cost?: number; name?: string }) || {};
+    const unitCost = Number(prodInfo.unit_cost) || 0;
+    const prodName = prodInfo.name || "Produk";
+
+    await postSaleToAccounting(client, {
+      businessId: context.businessId,
+      transactionId: result.new_transaction_id,
+      totalAmount: Number(result.new_total_amount),
+      unitCost,
+      quantity: Number(result.new_quantity),
+      transactionDate: String(result.corrected_at).slice(0, 10),
+      description: `Koreksi Penjualan ${prodName}`,
+      actorUserId: context.authenticatedUserId,
+    });
+  } catch (acctErr) {
+    console.warn(`[correctLastSale] Accounting correction warning: ${acctErr instanceof Error ? acctErr.message : String(acctErr)}`);
+  }
 
   return {
     originalTransactionId: result.original_transaction_id,

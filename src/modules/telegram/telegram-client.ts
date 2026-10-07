@@ -111,3 +111,115 @@ export async function sendTelegramText(
     };
   }
 }
+
+export interface SendTelegramDocumentOptions {
+  chatId: number | string;
+  document: Buffer;
+  filename: string;
+  caption?: string;
+  botToken?: string;
+  timeoutMs?: number;
+}
+
+/**
+ * Sends a binary document/file (e.g. XLSX workbook) to a Telegram chat via multipart/form-data.
+ */
+export async function sendTelegramDocument(
+  options: SendTelegramDocumentOptions
+): Promise<TelegramSendResult> {
+  const token = options.botToken || process.env.TELEGRAM_BOT_TOKEN;
+
+  if (!token) {
+    return {
+      success: false,
+      errorCode: "TELEGRAM_BOT_TOKEN_MISSING",
+      errorMessage: "TELEGRAM_BOT_TOKEN is not configured on the server runtime.",
+    };
+  }
+
+  if (!options.chatId) {
+    return {
+      success: false,
+      errorCode: "CHAT_ID_MISSING",
+      errorMessage: "chatId is missing in outbound send options.",
+    };
+  }
+
+  const endpoint = `https://api.telegram.org/bot${token}/sendDocument`;
+  const timeoutMs = options.timeoutMs || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const formData = new FormData();
+    formData.append("chat_id", String(options.chatId));
+    if (options.caption) {
+      formData.append("caption", options.caption);
+    }
+
+    const blob = new Blob([new Uint8Array(options.document)], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    formData.append("document", blob, options.filename);
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      description?: string;
+      error_code?: number;
+      result?: { message_id?: number };
+    } | null;
+
+    if (!res.ok || !json?.ok) {
+      const description = json?.description
+        ? String(json.description).slice(0, 200)
+        : res.statusText || "Unknown error";
+      const errorCode = json?.error_code
+        ? `TELEGRAM_API_${json.error_code}`
+        : `TELEGRAM_HTTP_${res.status}`;
+
+      console.warn(
+        `[TelegramClient] Outbound document send failed | code: ${errorCode} | chat: ${options.chatId} | error: ${description}`
+      );
+
+      return {
+        success: false,
+        errorCode,
+        errorMessage: description,
+      };
+    }
+
+    return {
+      success: true,
+      messageId: json.result?.message_id,
+    };
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    const isAbort =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("aborted"));
+    const errorMsg = isAbort
+      ? `Outbound document request timed out after ${timeoutMs}ms`
+      : err instanceof Error
+      ? err.message
+      : String(err);
+
+    console.error(
+      `[TelegramClient] Exception sending outbound document | chat: ${options.chatId} | error: ${errorMsg}`
+    );
+
+    return {
+      success: false,
+      errorCode: isAbort ? "TELEGRAM_TIMEOUT" : "TELEGRAM_SEND_EXCEPTION",
+      errorMessage: errorMsg,
+    };
+  }
+}
+

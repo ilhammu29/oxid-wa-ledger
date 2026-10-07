@@ -189,14 +189,27 @@ export function formatFriendlyError(errorCode?: string, fallbackMessage?: string
 }
 
 /**
- * Formats a successful cancellation response.
+ * Formats a successful cancellation response with accounting impact.
  */
-export function formatCancelSuccess(result: CancelResultDTO): string {
+export function formatCancelSuccess(
+  result: CancelResultDTO,
+  acctDetails?: { cogs?: number; grossProfit?: number }
+): string {
   const amountFormatted = formatRupiah(result.totalAmount);
-  return (
+  let text =
     `Transaksi terakhir berhasil dibatalkan.\n\n` +
-    `Dibatalkan: ${result.quantity} ${result.unit} (${amountFormatted})`
-  );
+    `Dibatalkan: ${result.quantity} ${result.unit} (${amountFormatted})`;
+
+  if (acctDetails) {
+    text +=
+      `\n\nDampak Pembukuan:\n` +
+      `• Omzet: -${amountFormatted}\n` +
+      `• HPP: -${formatRupiah(acctDetails.cogs || 0)}\n` +
+      `• Laba Kotor: -${formatRupiah(acctDetails.grossProfit || 0)}\n` +
+      `• Kas/Piutang dikembalikan\n` +
+      `• Persediaan dipulihkan`;
+  }
+  return text;
 }
 
 /**
@@ -226,5 +239,202 @@ export function formatConfirmationInquiry(parsed: ParsedMessage): string {
   return (
     `Saya membaca kemungkinan penjualan *${qty} kg*.\n` +
     `Apakah transaksi ini ingin dicatat ke buku kas? (Balas: Ya / Batal)`
+  );
+}
+
+/**
+ * Formats successful expense recording response.
+ */
+export function formatExpenseSuccess(params: {
+  category: string;
+  amount: number;
+  description: string;
+}): string {
+  const amountFormatted = formatRupiah(params.amount);
+  return (
+    `✅ Pengeluaran dicatat\n\n` +
+    `Kategori: ${params.category}\n` +
+    `Jumlah: ${amountFormatted}\n` +
+    `Keterangan: ${params.description}\n\n` +
+    `Dicatat ke akun beban operasional dan mengurangi saldo kas.`
+  );
+}
+
+/**
+ * Formats successful capital contribution or owner draw response.
+ */
+export function formatCapitalSuccess(params: {
+  type: "CAPITAL_ADDITION" | "OWNER_DRAW";
+  amount: number;
+  description?: string;
+}): string {
+  const amountFormatted = formatRupiah(params.amount);
+  if (params.type === "CAPITAL_ADDITION") {
+    return (
+      `✅ Setoran modal dicatat\n\n` +
+      `Jumlah: ${amountFormatted}\n\n` +
+      `Saldo kas bertambah dan ekuitas modal pemilik bertambah.`
+    );
+  } else {
+    return (
+      `✅ Penarikan prive dicatat\n\n` +
+      `Jumlah: ${amountFormatted}\n\n` +
+      `Saldo kas berkurang dan ekuitas modal pemilik berkurang (tidak mempengaruhi laba/rugi).`
+    );
+  }
+}
+
+/**
+ * Formats successful purchase recording response.
+ */
+export function formatPurchaseSuccess(params: {
+  amount: number;
+  itemName?: string;
+  quantity?: number;
+  unit?: string;
+}): string {
+  const amountFormatted = formatRupiah(params.amount);
+  const itemInfo = params.itemName
+    ? `\nBarang: ${params.itemName}${params.quantity ? ` (${params.quantity} ${params.unit || "kg"})` : ""}`
+    : "";
+  return (
+    `✅ Pembelian dicatat\n` +
+    itemInfo +
+    `\nTotal: ${amountFormatted}\n\n` +
+    `Persediaan bertambah dan saldo kas berkurang.`
+  );
+}
+
+/**
+ * Formats successful customer receivable collection response.
+ */
+export function formatReceivablePaymentSuccess(params: {
+  customerName: string;
+  amount: number;
+}): string {
+  const amountFormatted = formatRupiah(params.amount);
+  return (
+    `✅ Penerimaan piutang dicatat\n\n` +
+    `Pelanggan: ${params.customerName}\n` +
+    `Jumlah: ${amountFormatted}\n\n` +
+    `Saldo kas bertambah dan piutang usaha berkurang.`
+  );
+}
+
+/**
+ * Formats successful supplier payable payment response.
+ */
+export function formatPayablePaymentSuccess(params: {
+  supplierName: string;
+  amount: number;
+}): string {
+  const amountFormatted = formatRupiah(params.amount);
+  return (
+    `✅ Pembayaran hutang dicatat\n\n` +
+    `Supplier: ${params.supplierName}\n` +
+    `Jumlah: ${amountFormatted}\n\n` +
+    `Saldo kas berkurang dan hutang usaha berkurang.`
+  );
+}
+
+/**
+ * Formats cash & bank liquid balances.
+ */
+export function formatCashBalance(params: {
+  cash: number;
+  bank: number;
+  totalLiquidity: number;
+}): string {
+  return (
+    `💰 Saldo Kas & Bank\n\n` +
+    `Kas Tunai: ${formatRupiah(params.cash)}\n` +
+    `Bank: ${formatRupiah(params.bank)}\n` +
+    `────────────────────\n` +
+    `Total Likuiditas: ${formatRupiah(params.totalLiquidity)}`
+  );
+}
+
+/**
+ * Formats profit & loss report summary.
+ */
+export function formatProfitLossSummary(params: {
+  revenue: number;
+  cogs: number;
+  grossProfit: number;
+  expenses: number;
+  netProfit: number;
+  periodLabel: string;
+}): string {
+  return (
+    `📈 Laporan Laba Rugi (${params.periodLabel})\n\n` +
+    `Omzet (Pendapatan): ${formatRupiah(params.revenue)}\n` +
+    `HPP (Harga Pokok): ${formatRupiah(params.cogs)}\n` +
+    `Laba Kotor: ${formatRupiah(params.grossProfit)}\n` +
+    `Beban Operasional: ${formatRupiah(params.expenses)}\n` +
+    `────────────────────\n` +
+    `Laba Bersih: ${formatRupiah(params.netProfit)}`
+  );
+}
+
+/**
+ * Formats balance sheet summary.
+ */
+export function formatBalanceSheetSummary(params: {
+  assets: number;
+  liabilities: number;
+  equity: number;
+  isBalanced: boolean;
+}): string {
+  return (
+    `🏛️ Neraca Keuangan\n\n` +
+    `Total Aset: ${formatRupiah(params.assets)}\n` +
+    `Total Kewajiban (Hutang): ${formatRupiah(params.liabilities)}\n` +
+    `Total Ekuitas (Modal): ${formatRupiah(params.equity)}\n` +
+    `────────────────────\n` +
+    `Persamaan: Aset ${params.isBalanced ? "=" : "≠"} Hutang + Modal`
+  );
+}
+
+/**
+ * Formats cash flow statement summary.
+ */
+export function formatCashFlowSummary(params: {
+  operatingCashFlow: number;
+  investingCashFlow: number;
+  financingCashFlow: number;
+  netChange: number;
+  endingCash: number;
+}): string {
+  return (
+    `🌊 Laporan Arus Kas\n\n` +
+    `Arus Kas Operasi: ${formatRupiah(params.operatingCashFlow)}\n` +
+    `Arus Kas Investasi: ${formatRupiah(params.investingCashFlow)}\n` +
+    `Arus Kas Pendanaan: ${formatRupiah(params.financingCashFlow)}\n` +
+    `────────────────────\n` +
+    `Kenaikan/Penurunan Kas: ${formatRupiah(params.netChange)}\n` +
+    `Saldo Kas Akhir: ${formatRupiah(params.endingCash)}`
+  );
+}
+
+/**
+ * Formats clarification inquiry for ambiguous financial messages.
+ */
+export function formatAmbiguityInquiry(parsed: ParsedMessage): string {
+  const amountStr = parsed.moneyAmount ? formatRupiah(parsed.moneyAmount) : "transaksi ini";
+  if (parsed.normalizedText.includes("bayar")) {
+    return (
+      `Jumlah ${amountStr} ini untuk apa?\n\n` +
+      `Pilihan:\n` +
+      `1. Pengeluaran / Beban operasional (contoh: "Listrik 150rb", "Bayar bensin 50rb")\n` +
+      `2. Pembayaran hutang supplier (contoh: "Bayar hutang supplier 2jt")\n` +
+      `3. Pembelian persediaan (contoh: "Beli stok lele 100kg 2jt")`
+    );
+  }
+  return (
+    `Penerimaan ${amountStr} ini berasal dari apa?\n\n` +
+    `Pilihan:\n` +
+    `1. Penjualan barang (contoh: "Kejual lele 10kg")\n` +
+    `2. Setoran modal pemilik (contoh: "Modal masuk 5jt")\n` +
+    `3. Pelunasan piutang pelanggan (contoh: "Budi bayar hutang 1jt")`
   );
 }

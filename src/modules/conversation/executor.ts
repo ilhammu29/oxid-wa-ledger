@@ -18,7 +18,11 @@ import {
   correctLastSale,
   setDailyStatus,
   getSalesReport,
+  getBusinessTimezone,
 } from "../transactions/service";
+import {
+  getMonthUtcRange,
+} from "../transactions/timezone";
 import {
   formatSaleSuccess,
   formatDailyReport,
@@ -28,9 +32,31 @@ import {
   formatCancelSuccess,
   formatCorrectSuccess,
   formatConfirmationInquiry,
+  formatExpenseSuccess,
+  formatCapitalSuccess,
+  formatPurchaseSuccess,
+  formatReceivablePaymentSuccess,
+  formatPayablePaymentSuccess,
+  formatCashBalance,
+  formatProfitLossSummary,
+  formatBalanceSheetSummary,
+  formatCashFlowSummary,
+  formatAmbiguityInquiry,
 } from "./response-formatter";
+import { formatRupiah } from "../transactions/money";
 import { resolveProductForSale, getActiveProductNames } from "../products";
 import { canCreateFinancialMutation } from "../subscriptions";
+import {
+  postExpenseToAccounting,
+  postCapitalMovementToAccounting,
+  postPurchaseToAccounting,
+  postReceivablePaymentToAccounting,
+  postPayablePaymentToAccounting,
+  getProfitAndLoss,
+  getBalanceSheet,
+  getCashFlowStatement,
+  getTrialBalance,
+} from "../accounting";
 
 /**
  * Safely fetches breakdown of today's sales by product in a single query.
@@ -116,7 +142,13 @@ export async function executeConversationAction(
       evaluated.action === "MARK_NO_SALE" ||
       evaluated.action === "MARK_CLOSED" ||
       evaluated.action === "REQUEST_CANCEL_LAST" ||
-      evaluated.action === "REQUEST_CORRECT_LAST";
+      evaluated.action === "REQUEST_CORRECT_LAST" ||
+      evaluated.action === "RECORD_EXPENSE" ||
+      evaluated.action === "RECORD_CAPITAL_IN" ||
+      evaluated.action === "RECORD_OWNER_DRAW" ||
+      evaluated.action === "RECORD_PURCHASE" ||
+      evaluated.action === "RECORD_PAY_RECEIVABLE" ||
+      evaluated.action === "RECORD_PAY_PAYABLE";
 
     if (isMutationAction) {
       const gate = await canCreateFinancialMutation(client, context.businessId);
@@ -379,6 +411,424 @@ export async function executeConversationAction(
         replyText: formatCorrectSuccess(correctResult),
         parsed,
         data: correctResult,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_EXPENSE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_EXPENSE") {
+      const amount = parsed.moneyAmount || 0;
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal pengeluaran tidak terdeteksi atau tidak valid.");
+      }
+      const category = parsed.category || "operasional";
+      await postExpenseToAccounting(client, {
+        businessId: context.businessId,
+        amount,
+        category,
+        description: rawMessage,
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_EXPENSE",
+        status: "SUCCESS",
+        replyText: formatExpenseSuccess({ category, amount, description: rawMessage }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_CAPITAL_IN
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_CAPITAL_IN") {
+      const amount = parsed.moneyAmount || 0;
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal setoran modal tidak terdeteksi atau tidak valid.");
+      }
+      await postCapitalMovementToAccounting(client, {
+        businessId: context.businessId,
+        type: "CAPITAL_IN",
+        amount,
+        description: rawMessage,
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_CAPITAL_IN",
+        status: "SUCCESS",
+        replyText: formatCapitalSuccess({ type: "CAPITAL_ADDITION", amount }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_OWNER_DRAW
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_OWNER_DRAW") {
+      const amount = parsed.moneyAmount || 0;
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal penarikan prive tidak terdeteksi atau tidak valid.");
+      }
+      await postCapitalMovementToAccounting(client, {
+        businessId: context.businessId,
+        type: "OWNER_DRAW",
+        amount,
+        description: rawMessage,
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_OWNER_DRAW",
+        status: "SUCCESS",
+        replyText: formatCapitalSuccess({ type: "OWNER_DRAW", amount }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_PURCHASE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_PURCHASE") {
+      const amount = parsed.moneyAmount || 0;
+      const quantity = parsed.rawQuantity || (parsed.quantity ? Number(parsed.quantity) : 1);
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal pembelian tidak terdeteksi atau tidak valid.");
+      }
+      const unitCost = Math.round(amount / (quantity || 1));
+      await postPurchaseToAccounting(client, {
+        businessId: context.businessId,
+        totalAmount: amount,
+        quantity,
+        unitCost,
+        unit: parsed.unit || "kg",
+        supplierName: parsed.counterpartyName || "Supplier",
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_PURCHASE",
+        status: "SUCCESS",
+        replyText: formatPurchaseSuccess({
+          amount,
+          itemName: parsed.productName || "Persediaan",
+          quantity,
+          unit: parsed.unit || "kg",
+        }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_PAY_RECEIVABLE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_PAY_RECEIVABLE") {
+      const amount = parsed.moneyAmount || 0;
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal pelunasan piutang tidak terdeteksi atau tidak valid.");
+      }
+      const customer = parsed.counterpartyName || "Pelanggan";
+      let targetRecvId: string = "";
+      const { data: recvs } = await client
+        .from("receivables")
+        .select("id, customer_name")
+        .eq("business_id", context.businessId)
+        .neq("status", "paid")
+        .order("created_at", { ascending: false });
+
+      const matchedRecv = (recvs || []).find((r) => r.customer_name?.toLowerCase().includes(customer.toLowerCase()));
+      targetRecvId = matchedRecv?.id || recvs?.[0]?.id || "";
+
+      if (!targetRecvId) {
+        const { data: newRecv } = await client
+          .from("receivables")
+          .insert({
+            business_id: context.businessId,
+            customer_name: customer,
+            total_amount: amount,
+            paid_amount: 0,
+            status: "open",
+          })
+          .select("id")
+          .single();
+        targetRecvId = newRecv?.id || "";
+      }
+
+      await postReceivablePaymentToAccounting(client, {
+        businessId: context.businessId,
+        receivableId: targetRecvId,
+        amount,
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_PAY_RECEIVABLE",
+        status: "SUCCESS",
+        replyText: formatReceivablePaymentSuccess({ customerName: customer, amount }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Accounting: RECORD_PAY_PAYABLE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "RECORD_PAY_PAYABLE") {
+      const amount = parsed.moneyAmount || 0;
+      if (amount <= 0) {
+        throw new DomainError("INVALID_QUANTITY", "Nominal pembayaran hutang tidak terdeteksi atau tidak valid.");
+      }
+      const supplier = parsed.counterpartyName || "Supplier";
+      let targetPayId: string = "";
+      const { data: pays } = await client
+        .from("payables")
+        .select("id, supplier_name")
+        .eq("business_id", context.businessId)
+        .neq("status", "paid")
+        .order("created_at", { ascending: false });
+
+      const matchedPay = (pays || []).find((p) => p.supplier_name?.toLowerCase().includes(supplier.toLowerCase()));
+      targetPayId = matchedPay?.id || pays?.[0]?.id || "";
+
+      if (!targetPayId) {
+        const { data: newPay } = await client
+          .from("payables")
+          .insert({
+            business_id: context.businessId,
+            supplier_name: supplier,
+            total_amount: amount,
+            paid_amount: 0,
+            status: "open",
+          })
+          .select("id")
+          .single();
+        targetPayId = newPay?.id || "";
+      }
+
+      await postPayablePaymentToAccounting(client, {
+        businessId: context.businessId,
+        payableId: targetPayId,
+        amount,
+        actorUserId: context.authenticatedUserId,
+      });
+      return {
+        action: "RECORD_PAY_PAYABLE",
+        status: "SUCCESS",
+        replyText: formatPayablePaymentSuccess({ supplierName: supplier, amount }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_CASH_BALANCE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_CASH_BALANCE") {
+      const bs = await getBalanceSheet(client, {
+        businessId: context.businessId,
+        asOfDate: new Date().toISOString().slice(0, 10),
+      });
+      const cash = bs.currentAssets.cash;
+      const bank = bs.currentAssets.bank;
+      return {
+        action: "SHOW_CASH_BALANCE",
+        status: "SUCCESS",
+        replyText: formatCashBalance({ cash, bank, totalLiquidity: cash + bank }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_PROFIT_LOSS
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_PROFIT_LOSS") {
+      const timezone = await getBusinessTimezone(client, context.businessId);
+      const refDate = context.now || new Date();
+      const range = getMonthUtcRange(refDate, timezone);
+      const pnl = await getProfitAndLoss(client, {
+        businessId: context.businessId,
+        startDate: range.startAt.toISOString().slice(0, 10),
+        endDate: range.endAt.toISOString().slice(0, 10),
+      });
+      return {
+        action: "SHOW_PROFIT_LOSS",
+        status: "SUCCESS",
+        replyText: formatProfitLossSummary({
+          revenue: pnl.netRevenue,
+          cogs: pnl.cogs,
+          grossProfit: pnl.grossProfit,
+          expenses: pnl.totalOperatingExpenses,
+          netProfit: pnl.netProfit,
+          periodLabel: "Bulan Ini",
+        }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_BALANCE_SHEET
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_BALANCE_SHEET") {
+      const bs = await getBalanceSheet(client, {
+        businessId: context.businessId,
+        asOfDate: new Date().toISOString().slice(0, 10),
+      });
+      return {
+        action: "SHOW_BALANCE_SHEET",
+        status: "SUCCESS",
+        replyText: formatBalanceSheetSummary({
+          assets: bs.totalAssets,
+          liabilities: bs.totalLiabilities,
+          equity: bs.equity.totalEquity,
+          isBalanced: bs.isBalanced,
+        }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_CASH_FLOW
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_CASH_FLOW") {
+      const timezone = await getBusinessTimezone(client, context.businessId);
+      const refDate = context.now || new Date();
+      const range = getMonthUtcRange(refDate, timezone);
+      const cf = await getCashFlowStatement(client, {
+        businessId: context.businessId,
+        startDate: range.startAt.toISOString().slice(0, 10),
+        endDate: range.endAt.toISOString().slice(0, 10),
+      });
+      return {
+        action: "SHOW_CASH_FLOW",
+        status: "SUCCESS",
+        replyText: formatCashFlowSummary({
+          operatingCashFlow: cf.netOperatingCashFlow,
+          investingCashFlow: cf.netInvestingCashFlow,
+          financingCashFlow: cf.netFinancingCashFlow,
+          netChange: cf.netCashChange,
+          endingCash: cf.endingCashAndBank,
+        }),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_TRIAL_BALANCE
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_TRIAL_BALANCE") {
+      const tb = await getTrialBalance(client, {
+        businessId: context.businessId,
+        asOfDate: new Date().toISOString().slice(0, 10),
+      });
+      const statusIcon = tb.isBalanced ? "✅ Seimbang" : "⚠️ Tidak Seimbang";
+      return {
+        action: "SHOW_TRIAL_BALANCE",
+        status: "SUCCESS",
+        replyText:
+          `⚖️ Neraca Saldo (Bulan Ini)\n\n` +
+          `Total Debit: ${formatRupiah(tb.totalDebit)}\n` +
+          `Total Kredit: ${formatRupiah(tb.totalCredit)}\n` +
+          `Status: ${statusIcon}\n` +
+          `Akun Terlibat: ${tb.items.length}`,
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Reports: SHOW_GENERAL_LEDGER
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_GENERAL_LEDGER") {
+      return {
+        action: "SHOW_GENERAL_LEDGER",
+        status: "SUCCESS",
+        replyText: "Buku besar dapat diakses secara detail melalui Web Dashboard menu Pembukuan / Buku Besar atau via Export Excel.",
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Status Checks: Inventory / Receivables / Payables
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "SHOW_INVENTORY_STATUS") {
+      const { data: invData } = await client
+        .from("products")
+        .select("name, stock, unit, unit_cost")
+        .eq("business_id", context.businessId);
+      const lines = (invData || []).map((p: { name: string; stock?: number | null; unit?: string | null }) => `• ${p.name}: ${p.stock ?? 0} ${p.unit || "kg"}`);
+      return {
+        action: "SHOW_INVENTORY_STATUS",
+        status: "SUCCESS",
+        replyText: `📦 Status Stok Persediaan:\n\n${lines.length > 0 ? lines.join("\n") : "Belum ada produk aktif."}`,
+        parsed,
+        data: null,
+      };
+    }
+
+    if (evaluated.action === "SHOW_RECEIVABLE_STATUS") {
+      const { data: recvData } = await client
+        .from("receivables")
+        .select("customer_name, total_amount, paid_amount, status")
+        .eq("business_id", context.businessId)
+        .in("status", ["unpaid", "partially_paid"]);
+      const lines = (recvData || []).map(
+        (r: { customer_name: string; total_amount: number | string; paid_amount: number | string }) => `• ${r.customer_name}: sisa ${formatRupiah(Number(r.total_amount) - Number(r.paid_amount))}`
+      );
+      return {
+        action: "SHOW_RECEIVABLE_STATUS",
+        status: "SUCCESS",
+        replyText: `📋 Daftar Piutang Belum Lunas:\n\n${lines.length > 0 ? lines.join("\n") : "Tidak ada piutang outstanding."}`,
+        parsed,
+        data: null,
+      };
+    }
+
+    if (evaluated.action === "SHOW_PAYABLE_STATUS") {
+      const { data: payData } = await client
+        .from("payables")
+        .select("supplier_name, total_amount, paid_amount, status")
+        .eq("business_id", context.businessId)
+        .in("status", ["unpaid", "partially_paid"]);
+      const lines = (payData || []).map(
+        (p: { supplier_name: string; total_amount: number | string; paid_amount: number | string }) => `• ${p.supplier_name}: sisa ${formatRupiah(Number(p.total_amount) - Number(p.paid_amount))}`
+      );
+      return {
+        action: "SHOW_PAYABLE_STATUS",
+        status: "SUCCESS",
+        replyText: `📋 Daftar Hutang Belum Lunas:\n\n${lines.length > 0 ? lines.join("\n") : "Tidak ada hutang outstanding."}`,
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Financial Ambiguity Clarification
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "ASK_AMBIGUITY_CLARIFICATION") {
+      return {
+        action: "ASK_AMBIGUITY_CLARIFICATION",
+        status: "CONFIRMATION_REQUIRED",
+        replyText: formatAmbiguityInquiry(parsed),
+        parsed,
+        data: null,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // Export Report Command
+    // ------------------------------------------------------------------------
+    if (evaluated.action === "EXECUTE_EXPORT_REPORT") {
+      return {
+        action: "EXECUTE_EXPORT_REPORT",
+        status: "SUCCESS",
+        replyText: "📄 Menyiapkan berkas Excel laporan pembukuan lengkap...",
+        parsed,
+        data: null,
       };
     }
 

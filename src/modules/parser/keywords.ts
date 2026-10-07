@@ -159,3 +159,89 @@ export const HELP_PATTERNS: RegExp[] = [
   /\bcontoh\s+pesan\b/,
   /\bpetunjuk\s+penggunaan\b/,
 ];
+
+/**
+ * Patterns for cash & bank balance inquiries.
+ */
+export const CASH_PATTERNS: RegExp[] = [
+  /\b(?:saldo\s+(?:kas|bank|uang)|cek\s+saldo|uang\s+kas|kas\s+dan\s+bank|kas\s+sekarang)\b/,
+  /^saldo$/,
+  /^kas$/,
+];
+
+/**
+ * Patterns for Profit & Loss (Laba Rugi) inquiries.
+ */
+export const PROFIT_PATTERNS: RegExp[] = [
+  /\b(?:laba\s+rugi|laba\s+(?:bulan|hari|minggu|bersih|kotor)|untung\s+(?:bulan|hari|minggu|bersih))\b/,
+  /^laba$/,
+  /^untung$/,
+];
+
+/**
+ * Patterns for Balance Sheet (Neraca) inquiries.
+ */
+export const BALANCE_SHEET_PATTERNS: RegExp[] = [
+  /\b(?:neraca(?:\s+keuangan|\s+bulan\s+ini|\s+hari\s+ini)?)\b/,
+];
+
+/**
+ * Patterns for Cash Flow (Arus Kas) inquiries.
+ */
+export const CASH_FLOW_PATTERNS: RegExp[] = [
+  /\b(?:arus\s+kas(?:\s+bulan\s+ini)?|cash\s+flow)\b/,
+];
+
+/**
+ * Patterns for Trial Balance (Neraca Saldo) inquiries.
+ */
+export const TRIAL_BALANCE_PATTERNS: RegExp[] = [
+  /\b(?:neraca\s+saldo(?:\s+bulan\s+ini)?)\b/,
+];
+
+/**
+ * Patterns for General Ledger (Buku Besar) inquiries.
+ */
+export const GENERAL_LEDGER_PATTERNS: RegExp[] = [
+  /\b(?:buku\s+besar(?:\s+kas|\s+bank)?)\b/,
+];
+
+/**
+ * Patterns for Excel export requests.
+ */
+export const EXPORT_REPORT_PATTERNS: RegExp[] = [
+  /\b(?:export\s+(?:laporan|excel|transaksi)|ekspor\s+(?:laporan|excel)|download\s+(?:laporan|excel))\b/,
+  /^export$/,
+];
+
+/**
+ * Patterns for Capital (Modal Masuk).
+ */
+export const CAPITAL_PATTERNS: RegExp[] = [
+  /\b(?:modal\s+masuk|tambah\s+modal|setor\s+modal)\b/,
+];
+
+/**
+ * Patterns for Owner Draw (Prive).
+ */
+export const OWNER_DRAW_PATTERNS: RegExp[] = [
+  /\b(?:ambil\s+(?:uang\s+usaha|kas|prive|uang)|tarik\s+(?:uang\s+usaha|uang|kas)|prive|tarik\s+pribadi|ambil\s+pribadi)\b/,
+  /\b(?:ambil|tarik)\b.*\b(?:pribadi|prive)\b/,
+];
+
+/**
+ * Patterns for Purchases (Beli stok).
+ */
+export const PURCHASE_PATTERNS: RegExp[] = [
+  /\b(?:beli\s+stok|beli\s+bibit|beli\s+pakan|kulakan|beli\s+barang)\b/,
+];
+
+/**
+ * Common expense category identifiers in Indonesian.
+ */
+export const EXPENSE_CATEGORIES = [
+  "listrik", "pln", "air", "pdam", "gaji", "upah", "karyawan",
+  "sewa", "transport", "bensin", "solar", "bbm", "ongkir",
+  "atk", "administrasi", "tulis", "marketing", "iklan", "promo",
+  "pulsa", "paket data", "wifi", "internet", "makan", "konsumsi"
+] as const;

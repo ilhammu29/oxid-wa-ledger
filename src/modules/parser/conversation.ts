@@ -86,6 +86,108 @@ export function evaluateConversationAction(parsed: ParsedMessage): ConversationA
       break;
     }
 
+    case "EXPENSE": {
+      action = "RECORD_EXPENSE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "CAPITAL_IN": {
+      action = "RECORD_CAPITAL_IN";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "OWNER_DRAW": {
+      action = "RECORD_OWNER_DRAW";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "PURCHASE": {
+      action = "RECORD_PURCHASE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "PAY_RECEIVABLE": {
+      action = "RECORD_PAY_RECEIVABLE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "PAY_PAYABLE": {
+      action = "RECORD_PAY_PAYABLE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "CASH_BALANCE": {
+      action = "SHOW_CASH_BALANCE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "PROFIT_LOSS": {
+      action = "SHOW_PROFIT_LOSS";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "BALANCE_SHEET": {
+      action = "SHOW_BALANCE_SHEET";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "CASH_FLOW": {
+      action = "SHOW_CASH_FLOW";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "TRIAL_BALANCE": {
+      action = "SHOW_TRIAL_BALANCE";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "GENERAL_LEDGER": {
+      action = "SHOW_GENERAL_LEDGER";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "INVENTORY_STATUS": {
+      action = "SHOW_INVENTORY_STATUS";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "RECEIVABLE_STATUS": {
+      action = "SHOW_RECEIVABLE_STATUS";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "PAYABLE_STATUS": {
+      action = "SHOW_PAYABLE_STATUS";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "EXPORT_REPORT": {
+      action = "EXECUTE_EXPORT_REPORT";
+      requiresConfirmation = false;
+      break;
+    }
+
+    case "AMBIGUOUS_FINANCIAL": {
+      action = "ASK_AMBIGUITY_CLARIFICATION";
+      requiresConfirmation = false;
+      break;
+    }
+
     case "UNKNOWN":
     default: {
       action = "SHOW_UNKNOWN_HELP";
