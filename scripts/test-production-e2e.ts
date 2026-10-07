@@ -677,7 +677,7 @@ async function runProductionE2EVerification() {
   console.log("\n--- 15. Testing Telegram Webhook Pipeline ---");
 
   // Pair a test Telegram user to this business
-  const testTelegramUserId = 999888777;
+  const testTelegramUserId = Math.floor(100000000 + Math.random() * 800000000);
   await supabase.from("telegram_authorized_users").insert({
     business_id: businessId,
     telegram_user_id: testTelegramUserId,
