@@ -1,0 +1,333 @@
+"use client";
+
+import { useState } from "react";
+import { formatRupiah } from "@/modules/transactions/money";
+import { recordPayablePaymentAction } from "@/app/dashboard/actions";
+import { Scale, CheckCircle, Clock, Banknote, Loader2, AlertTriangle, X } from "lucide-react";
+
+export interface PayableRow {
+  id: string;
+  supplier_name: string;
+  total_amount: number;
+  paid_amount: number;
+  status: string;
+  due_date: string | null;
+  created_at?: string;
+}
+
+interface PayablesClientViewProps {
+  payables: PayableRow[];
+  timezone: string;
+}
+
+export function PayablesClientView({ payables }: PayablesClientViewProps) {
+  const [payingPayable, setPayingPayable] = useState<PayableRow | null>(null);
+
+  // Form State
+  const [payAmountStr, setPayAmountStr] = useState("");
+  const [paymentAccount, setPaymentAccount] = useState<"kas" | "bank">("kas");
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const rows = payables || [];
+  const totalPayables = rows.reduce((acc, row) => acc + (Number(row.total_amount) || 0), 0);
+  const totalPaid = rows.reduce((acc, row) => acc + (Number(row.paid_amount) || 0), 0);
+  const totalOutstanding = totalPayables - totalPaid;
+
+  const openPaymentModal = (pay: PayableRow) => {
+    setPayingPayable(pay);
+    const remaining = Number(pay.total_amount) - Number(pay.paid_amount);
+    setPayAmountStr(remaining > 0 ? remaining.toLocaleString("id-ID") : "");
+    setNotes(`Pembayaran hutang supplier ${pay.supplier_name}`);
+    setFormError("");
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payingPayable) return;
+    setFormError("");
+
+    const parsedAmount = parseInt(payAmountStr.replace(/\D/g, ""), 10);
+    const remaining = Number(payingPayable.total_amount) - Number(payingPayable.paid_amount);
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      setFormError("Nominal pembayaran harus lebih besar dari Rp 0.");
+      return;
+    }
+    if (parsedAmount > remaining) {
+      setFormError(`Nominal pembayaran melebihi sisa hutang (${formatRupiah(remaining)}).`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const fd = new FormData();
+    fd.append("payableId", payingPayable.id);
+    fd.append("amount", parsedAmount.toString());
+    fd.append("paymentAccount", paymentAccount);
+    fd.append("paymentDate", paymentDate);
+    fd.append("notes", notes.trim());
+
+    try {
+      const res = await recordPayablePaymentAction(fd);
+      if (!res.success) {
+        setFormError(res.error || "Gagal mencatat pembayaran hutang.");
+      } else {
+        setPayingPayable(null);
+        setPayAmountStr("");
+      }
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Hutang Usaha (Kewajiban Supplier)
+          </h1>
+          <p className="text-xs sm:text-sm text-muted mt-1">
+            Daftar kewajiban pembayaran tempo ke supplier barang dagangan atau pihak ketiga.
+          </p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Total Hutang Timbul</span>
+            <Scale className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-2xl font-bold text-foreground mt-2 tabular-nums">
+            {formatRupiah(totalPayables)}
+          </p>
+          <p className="text-[11px] text-muted mt-1">Kewajiban pembelian tempo</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Sisa Hutang (Outstanding)</span>
+            <Clock className="w-4 h-4 text-rose-500" />
+          </div>
+          <p className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2 tabular-nums">
+            {formatRupiah(totalOutstanding)}
+          </p>
+          <p className="text-[11px] text-muted mt-1">Harus dilunasi ke supplier</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Sudah Dilunasi</span>
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+          </div>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2 tabular-nums">
+            {formatRupiah(totalPaid)}
+          </p>
+          <p className="text-[11px] text-muted mt-1">Telah dibayarkan via kas/bank</p>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-xs">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold text-sm text-foreground">Daftar Hutang Supplier</h3>
+          <span className="text-xs text-muted font-mono">{rows.length} supplier</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-surface-hover text-muted uppercase font-mono text-[10px] tracking-wider border-b border-border">
+              <tr>
+                <th className="px-4 py-3">Supplier / Pihak</th>
+                <th className="px-4 py-3">Total Hutang</th>
+                <th className="px-4 py-3">Sudah Dibayar</th>
+                <th className="px-4 py-3">Sisa Hutang</th>
+                <th className="px-4 py-3">Jatuh Tempo</th>
+                <th className="px-4 py-3 text-center">Status</th>
+                <th className="px-4 py-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border font-sans">
+              {rows.map((row) => {
+                const total = Number(row.total_amount) || 0;
+                const paid = Number(row.paid_amount) || 0;
+                const rem = total - paid;
+                const isPaid = row.status === "paid" || rem <= 0;
+
+                return (
+                  <tr key={row.id} className="hover:bg-surface-hover/50 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-foreground">{row.supplier_name}</td>
+                    <td className="px-4 py-3 font-mono text-muted whitespace-nowrap">{formatRupiah(total)}</td>
+                    <td className="px-4 py-3 font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      {formatRupiah(paid)}
+                    </td>
+                    <td className="px-4 py-3 font-mono font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                      {formatRupiah(rem)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-muted whitespace-nowrap">{row.due_date || "-"}</td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                          isPaid
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                            : paid > 0
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                        }`}
+                      >
+                        {isPaid ? "LUNAS" : paid > 0 ? "SEBAGIAN" : "BELUM LUNAS"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {!isPaid && (
+                        <button
+                          onClick={() => openPaymentModal(row)}
+                          className="inline-flex items-center gap-1 text-[11px] text-primary hover:text-primary-hover font-medium px-2 py-1 rounded hover:bg-primary/10 transition-colors"
+                          title="Catat pengeluaran kas untuk membayar hutang"
+                        >
+                          <Banknote className="w-3.5 h-3.5" />
+                          <span>Bayar Hutang</span>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                    Tidak ada hutang usaha yang tercatat saat ini.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* RECORD PAYABLE PAYMENT MODAL */}
+      {payingPayable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                  <Banknote className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Catat Pembayaran Hutang</h3>
+                  <p className="text-xs text-muted">Membayar kewajiban kepada {payingPayable.supplier_name}.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPayingPayable(null)}
+                className="text-muted hover:text-foreground p-1 rounded-lg hover:bg-surface-hover"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-lg bg-surface-hover border border-border text-xs flex justify-between">
+              <div>
+                <span className="text-muted block text-[11px]">Sisa Hutang:</span>
+                <span className="font-mono font-semibold text-rose-600 dark:text-rose-400 text-sm">
+                  {formatRupiah(Number(payingPayable.total_amount) - Number(payingPayable.paid_amount))}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-muted block text-[11px]">Total Hutang Awal:</span>
+                <span className="font-mono text-muted text-xs">
+                  {formatRupiah(Number(payingPayable.total_amount))}
+                </span>
+              </div>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePaymentSubmit} className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Tanggal Bayar</label>
+                  <input
+                    type="date"
+                    required
+                    value={paymentDate}
+                    onChange={(e) => setPaymentDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Sumber Rekening</label>
+                  <select
+                    value={paymentAccount}
+                    onChange={(e) => setPaymentAccount(e.target.value as "kas" | "bank")}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option value="kas">Kas Tunai (1-1001)</option>
+                    <option value="bank">Bank / Transfer (1-1002)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Nominal Pembayaran (Rp)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: 1000000"
+                  value={payAmountStr}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setPayAmountStr(val ? parseInt(val, 10).toLocaleString("id-ID") : "");
+                  }}
+                  className="w-full px-3 py-2 text-xs font-mono font-medium rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Catatan</label>
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setPayingPayable(null)}
+                  className="px-3.5 py-2 text-xs font-medium rounded-lg border border-border text-foreground hover:bg-surface-hover"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-primary hover:bg-primary-hover text-white disabled:opacity-50"
+                >
+                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Simpan Pembayaran</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

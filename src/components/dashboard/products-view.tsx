@@ -18,6 +18,8 @@ import {
   setDefaultProductAction,
   addProductAliasAction,
   deleteProductAliasAction,
+  toggleProductActiveAction,
+  updateProductAliasAction,
 } from "@/app/dashboard/actions";
 
 export interface ProductRecord {
@@ -44,6 +46,8 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
   const [editingProduct, setEditingProduct] = useState<ProductRecord | null>(null);
   const [aliasModalProduct, setAliasModalProduct] = useState<ProductRecord | null>(null);
   const [newAliasText, setNewAliasText] = useState("");
+  const [editingAlias, setEditingAlias] = useState<{ id: string; alias: string; productName: string } | null>(null);
+  const [editAliasText, setEditAliasText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [loading, setLoading] = useState(false);
@@ -162,6 +166,34 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
       showNotification(res.error || "Gagal menghapus alias.", true);
     } else {
       showNotification("Alias berhasil dihapus.");
+    }
+  };
+
+  const handleToggleActive = async (productId: string, currentActive: boolean) => {
+    setLoading(true);
+    const res = await toggleProductActiveAction(productId);
+    setLoading(false);
+    if (!res.success) {
+      showNotification(res.error || "Gagal mengubah status produk.", true);
+    } else {
+      showNotification(`Produk berhasil di${!currentActive ? "aktifkan" : "nonaktifkan"}!`);
+    }
+  };
+
+  const handleUpdateAliasSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingAlias || !editAliasText.trim()) return;
+
+    setLoading(true);
+    const res = await updateProductAliasAction(editingAlias.id, editAliasText);
+    setLoading(false);
+
+    if (!res.success) {
+      showNotification(res.error || "Gagal memperbarui alias.", true);
+    } else {
+      showNotification("Alias produk berhasil diperbarui!");
+      setEditingAlias(null);
+      setEditAliasText("");
     }
   };
 
@@ -321,12 +353,25 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                             key={al.id}
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-surface-hover text-muted border border-border"
                           >
-                            {al.alias}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (canManage) {
+                                  setEditingAlias({ id: al.id, alias: al.alias, productName: p.name });
+                                  setEditAliasText(al.alias);
+                                }
+                              }}
+                              className={canManage ? "hover:text-primary transition-colors cursor-pointer" : ""}
+                              title={canManage ? "Klik untuk edit alias" : undefined}
+                            >
+                              {al.alias}
+                            </button>
                             {canManage && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteAlias(al.id)}
                                 className="text-muted hover:text-rose-500 transition-colors"
+                                title="Hapus alias"
                               >
                                 <X className="w-2.5 h-2.5" />
                               </button>
@@ -348,7 +393,20 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                       </div>
                     </td>
                     <td className="py-2.5 px-3.5 whitespace-nowrap">
-                      {p.active ? (
+                      {canManage && !p.is_default ? (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(p.id, p.active)}
+                          disabled={loading}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline cursor-pointer transition-opacity disabled:opacity-50"
+                          title={p.active ? "Klik untuk nonaktifkan produk" : "Klik untuk aktifkan produk"}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${p.active ? "bg-emerald-500" : "bg-muted"}`} />
+                          <span className={p.active ? "text-emerald-600 dark:text-emerald-400" : "text-muted"}>
+                            {p.active ? "Aktif" : "Nonaktif"}
+                          </span>
+                        </button>
+                      ) : p.active ? (
                         <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Aktif
@@ -732,6 +790,73 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
                   className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 shadow-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Simpan Alias"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Alias Modal */}
+      {editingAlias && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-surface rounded-xl border border-border shadow-xl max-w-sm w-full overflow-hidden text-foreground animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-surface-hover/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
+                  Edit Alias Bot
+                </h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Produk: <span className="font-semibold text-foreground">{editingAlias.productName}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingAlias(null);
+                  setEditAliasText("");
+                }}
+                className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateAliasSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1.5">
+                  Kata Kunci Alias
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={editAliasText}
+                  onChange={(e) => setEditAliasText(e.target.value)}
+                  placeholder="Contoh: ikan lele, lele dumbo"
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-surface text-foreground placeholder:text-muted/60 text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+                />
+                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">
+                  Perubahan alias akan langsung berlaku untuk parsing pesan Telegram & WhatsApp.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAlias(null);
+                    setEditAliasText("");
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 shadow-xs transition"
+                >
+                  {loading ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
               </div>
             </form>

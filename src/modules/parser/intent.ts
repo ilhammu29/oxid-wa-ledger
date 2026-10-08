@@ -27,6 +27,9 @@ import {
   TRIAL_BALANCE_PATTERNS,
   GENERAL_LEDGER_PATTERNS,
   EXPORT_REPORT_PATTERNS,
+  INVENTORY_PATTERNS,
+  RECEIVABLE_STATUS_PATTERNS,
+  PAYABLE_STATUS_PATTERNS,
   CAPITAL_PATTERNS,
   OWNER_DRAW_PATTERNS,
   PURCHASE_PATTERNS,
@@ -406,6 +409,66 @@ export function parseMessage(rawInput: string): ParsedMessage {
     };
   }
 
+  // 10.75 INVENTORY_STATUS Intent
+  if (INVENTORY_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "INVENTORY_STATUS",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["stok"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan status stok persediaan terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.76 RECEIVABLE_STATUS Intent
+  if (RECEIVABLE_STATUS_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "RECEIVABLE_STATUS",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["piutang"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan status piutang usaha terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
+  // 10.77 PAYABLE_STATUS Intent
+  if (PAYABLE_STATUS_PATTERNS.some((p) => p.test(normalizedText))) {
+    return {
+      intent: "PAYABLE_STATUS",
+      confidence: "HIGH",
+      originalText,
+      normalizedText,
+      quantity: null,
+      rawQuantity: null,
+      unit: null,
+      correctedQuantity: null,
+      rawCorrectedQuantity: null,
+      matchedKeywords: ["hutang"],
+      negativeKeywords: [],
+      requiresConfirmation: false,
+      reason: "Permintaan status hutang usaha terdeteksi.",
+      multipleQuantitiesDetected: false,
+    };
+  }
+
   // 10.8 CAPITAL_IN Intent
   if (CAPITAL_PATTERNS.some((p) => p.test(normalizedText))) {
     const money = extractMoneyAmount(normalizedText);
@@ -480,8 +543,9 @@ export function parseMessage(rawInput: string): ParsedMessage {
   }
 
   // 10.11 PAY_RECEIVABLE / PAY_PAYABLE
-  const recvMatch = normalizedText.match(/\b([a-z0-9_-]+)\s+bayar\s+hutang\b/i) ||
-                    normalizedText.match(/\bpelunasan\s+([a-z0-9_-]+)\b/i) ||
+  const recvMatch = normalizedText.match(/\b([a-z0-9_-]+)\s+bayar\s+(?:piutang|hutang)\b/i) ||
+                    normalizedText.match(/\bpelunasan\s+(?:piutang\s+)?([a-z0-9_-]+)\b/i) ||
+                    normalizedText.match(/\bbayar\s+piutang\b/i) ||
                     normalizedText.match(/\bterima\s+pembayaran\s+piutang\b/i);
   if (recvMatch) {
     const money = extractMoneyAmount(normalizedText);

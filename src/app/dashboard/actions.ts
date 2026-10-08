@@ -1,13 +1,32 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { getAuthenticatedBusiness } from "@/modules/auth/server";
-import { recordSale, cancelLastSale, setDailyStatus, setDefaultProduct } from "@/modules/transactions";
-import { normalizeProductTerm } from "@/modules/products";
+import {
+  recordSale,
+  cancelLastSale,
+  setDailyStatus,
+  setDefaultProduct,
+  voidTransaction,
+  correctTransaction,
+} from "@/modules/transactions";
+import {
+  postExpenseToAccounting,
+  voidExpenseFromAccounting,
+  postPurchaseToAccounting,
+  voidPurchaseFromAccounting,
+  postCapitalMovementToAccounting,
+  voidCapitalMovementFromAccounting,
+  postReceivablePaymentToAccounting,
+  voidReceivablePaymentFromAccounting,
+  postPayablePaymentToAccounting,
+  voidPayablePaymentFromAccounting,
+} from "@/modules/accounting";
 import { getBusinessSubscription, createPaymentRecord, getPlanByCode, getBusinessSubscriptionState } from "@/modules/subscriptions";
 import { generateTelegramPairingToken } from "@/modules/onboarding/client-launch";
 import { derivePairingTokenHash } from "@/modules/telegram/pairing-crypto";
 import { TelegramPairingTokenResult } from "@/modules/onboarding/types";
+import { getAuthenticatedBusiness } from "@/modules/auth/server";
+import { normalizeProductTerm } from "@/modules/products/normalizer";
 import { revalidatePath } from "next/cache";
 
 export interface ActionResult<T = unknown> {
@@ -113,6 +132,119 @@ export async function cancelLastSaleAction(): Promise<ActionResult> {
       return { success: false, error: "Tidak ada transaksi aktif yang dapat dibatalkan." };
     }
     return { success: false, error: "Gagal membatalkan transaksi." };
+  }
+}
+
+/**
+ * Voids a specific confirmed sale transaction by ID with full reversal and audit trail.
+ */
+export async function voidTransactionAction(
+  transactionId: string,
+  reason: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!transactionId) {
+    return { success: false, error: "ID transaksi wajib disertakan." };
+  }
+
+  if (!reason?.trim()) {
+    return { success: false, error: "Alasan pembatalan wajib diisi untuk riwayat audit." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const result = await voidTransaction(
+      supabase,
+      {
+        businessId: session.business.id,
+        authenticatedUserId: session.user.id,
+        source: "dashboard",
+      },
+      {
+        transactionId,
+        voidReason: reason.trim(),
+      }
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/transactions");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/profit-loss");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("ALREADY_CANCELLED")) {
+      return { success: false, error: "Transaksi ini sudah dibatalkan sebelumnya." };
+    }
+    if (msg.includes("CANNOT_CANCEL_CORRECTED")) {
+      return { success: false, error: "Transaksi historis ini sudah pernah dikoreksi dan tidak dapat dibatalkan lagi." };
+    }
+    return { success: false, error: `Gagal membatalkan transaksi: ${msg}` };
+  }
+}
+
+/**
+ * Corrects a specific transaction by ID, preserving historical unit price,
+ * creating an exact replacement transaction, and updating general ledger.
+ */
+export async function correctTransactionAction(
+  transactionId: string,
+  correctedQuantity: number,
+  reason: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!transactionId) {
+    return { success: false, error: "ID transaksi wajib disertakan." };
+  }
+
+  if (isNaN(correctedQuantity) || correctedQuantity <= 0) {
+    return { success: false, error: "Kuantitas koreksi harus lebih besar dari 0." };
+  }
+
+  if (!reason?.trim()) {
+    return { success: false, error: "Alasan koreksi wajib diisi untuk riwayat audit." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const result = await correctTransaction(
+      supabase,
+      {
+        businessId: session.business.id,
+        authenticatedUserId: session.user.id,
+        source: "dashboard",
+      },
+      {
+        transactionId,
+        correctedQuantity,
+        reason: reason.trim(),
+      }
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/transactions");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/profit-loss");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mengoreksi transaksi: ${msg}` };
   }
 }
 
@@ -1469,3 +1601,516 @@ export async function updateTelegramOperatorAction(
     return { success: false, error: msg };
   }
 }
+
+// ============================================================================
+// ACCOUNTING CRUD SERVER ACTIONS
+// ============================================================================
+
+/**
+ * Creates a business expense from the dashboard, posting to double-entry general ledger.
+ */
+export async function createExpenseAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const category = (formData.get("category") as string)?.trim() || "operasional";
+  const amountStr = formData.get("amount") as string;
+  const description = (formData.get("description") as string)?.trim() || "Beban Operasional";
+  const expenseDate = (formData.get("expenseDate") as string) || new Date().toISOString().slice(0, 10);
+  const paymentAccountCode = ((formData.get("paymentAccountCode") as string) || "1100") as "1100" | "1200";
+
+  const amount = parseInt(amountStr, 10);
+  if (isNaN(amount) || amount <= 0) {
+    return { success: false, error: "Nominal pengeluaran harus lebih besar dari 0." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const res = await postExpenseToAccounting(supabase, {
+      businessId: session.business.id,
+      category,
+      amount,
+      description,
+      expenseDate,
+      paymentAccountCode,
+      source: "dashboard",
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/expenses");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/profit-loss");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mencatat pengeluaran: ${msg}` };
+  }
+}
+
+/**
+ * Voids an expense, posting a reversing journal entry in the general ledger.
+ */
+export async function voidExpenseAction(expenseId: string, reason: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!expenseId) return { success: false, error: "ID pengeluaran wajib disertakan." };
+  if (!reason?.trim()) return { success: false, error: "Alasan pembatalan wajib diisi." };
+
+  const supabase = await createClient();
+
+  try {
+    await voidExpenseFromAccounting(supabase, {
+      businessId: session.business.id,
+      expenseId,
+      voidReason: reason.trim(),
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/expenses");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/profit-loss");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal membatalkan pengeluaran: ${msg}` };
+  }
+}
+
+/**
+ * Creates an inventory purchase from dashboard (Cash, Bank, or Credit AP).
+ */
+export async function createPurchaseAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const productId = (formData.get("productId") as string) || null;
+  const supplierName = (formData.get("supplierName") as string)?.trim() || null;
+  const quantityStr = formData.get("quantity") as string;
+  const unit = (formData.get("unit") as string)?.trim() || "kg";
+  const unitCostStr = formData.get("unitCost") as string;
+  const totalAmountStr = formData.get("totalAmount") as string;
+  const paymentMethod = ((formData.get("paymentMethod") as string) || "cash") as "cash" | "bank" | "credit";
+  const purchaseDate = (formData.get("purchaseDate") as string) || new Date().toISOString().slice(0, 10);
+
+  const quantity = parseFloat(quantityStr?.replace(",", ".") || "0");
+  const unitCost = parseInt(unitCostStr || "0", 10);
+  const totalAmount = parseInt(totalAmountStr || "0", 10) || Math.round(quantity * unitCost);
+
+  if (quantity <= 0 || totalAmount <= 0) {
+    return { success: false, error: "Kuantitas dan total pembelian harus lebih besar dari 0." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const res = await postPurchaseToAccounting(supabase, {
+      businessId: session.business.id,
+      productId,
+      supplierName,
+      quantity,
+      unit,
+      unitCost: unitCost || Math.round(totalAmount / quantity),
+      totalAmount,
+      paymentMethod,
+      purchaseDate,
+      source: "dashboard",
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/purchases");
+    revalidatePath("/dashboard/accounting/inventory");
+    revalidatePath("/dashboard/accounting/payables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mencatat pembelian: ${msg}` };
+  }
+}
+
+/**
+ * Voids an inventory purchase, reversing inventory movement and accounts payable.
+ */
+export async function voidPurchaseAction(purchaseId: string, reason: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!purchaseId) return { success: false, error: "ID pembelian wajib disertakan." };
+  if (!reason?.trim()) return { success: false, error: "Alasan pembatalan wajib diisi." };
+
+  const supabase = await createClient();
+
+  try {
+    await voidPurchaseFromAccounting(supabase, {
+      businessId: session.business.id,
+      purchaseId,
+      voidReason: reason.trim(),
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/purchases");
+    revalidatePath("/dashboard/accounting/inventory");
+    revalidatePath("/dashboard/accounting/payables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal membatalkan pembelian: ${msg}` };
+  }
+}
+
+/**
+ * Records Owner Capital Contribution or Owner Draw (Prive).
+ */
+export async function createCapitalMovementAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const type = (formData.get("type") as string) as "CAPITAL_IN" | "OWNER_DRAW";
+  const amountStr = formData.get("amount") as string;
+  const description = (formData.get("description") as string)?.trim() || (type === "CAPITAL_IN" ? "Setoran Modal" : "Prive Pribadi");
+  const movementDate = (formData.get("movementDate") as string) || new Date().toISOString().slice(0, 10);
+  const accountCode = ((formData.get("accountCode") as string) || "1100") as "1100" | "1200";
+
+  const amount = parseInt(amountStr, 10);
+  if (isNaN(amount) || amount <= 0) {
+    return { success: false, error: "Nominal transaksi modal harus lebih besar dari 0." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const res = await postCapitalMovementToAccounting(supabase, {
+      businessId: session.business.id,
+      type,
+      amount,
+      description,
+      movementDate,
+      accountCode,
+      source: "dashboard",
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/capital");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/equity");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mencatat transaksi modal: ${msg}` };
+  }
+}
+
+/**
+ * Voids an owner capital contribution or prive draw.
+ */
+export async function voidCapitalMovementAction(movementId: string, reason: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!movementId) return { success: false, error: "ID transaksi modal wajib disertakan." };
+  if (!reason?.trim()) return { success: false, error: "Alasan pembatalan wajib diisi." };
+
+  const supabase = await createClient();
+
+  try {
+    await voidCapitalMovementFromAccounting(supabase, {
+      businessId: session.business.id,
+      movementId,
+      voidReason: reason.trim(),
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/capital");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/equity");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal membatalkan transaksi modal: ${msg}` };
+  }
+}
+
+/**
+ * Records customer repayment for an outstanding account receivable.
+ */
+export async function recordReceivablePaymentAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const receivableId = formData.get("receivableId") as string;
+  const amountStr = formData.get("amount") as string;
+  const paymentDate = (formData.get("paymentDate") as string) || new Date().toISOString().slice(0, 10);
+  const paymentAccountCode = ((formData.get("paymentAccountCode") as string) || "1100") as "1100" | "1200";
+
+  const amount = parseInt(amountStr, 10);
+  if (!receivableId || isNaN(amount) || amount <= 0) {
+    return { success: false, error: "ID piutang dan nominal pembayaran valid harus disertakan." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const res = await postReceivablePaymentToAccounting(supabase, {
+      businessId: session.business.id,
+      receivableId,
+      amount,
+      paymentDate,
+      paymentAccountCode,
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/receivables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mencatat pelunasan piutang: ${msg}` };
+  }
+}
+
+/**
+ * Voids a customer repayment for an account receivable.
+ */
+export async function voidReceivablePaymentAction(paymentId: string, reason: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!paymentId) return { success: false, error: "ID pembayaran piutang wajib disertakan." };
+  if (!reason?.trim()) return { success: false, error: "Alasan pembatalan wajib diisi." };
+
+  const supabase = await createClient();
+
+  try {
+    await voidReceivablePaymentFromAccounting(supabase, {
+      businessId: session.business.id,
+      paymentId,
+      voidReason: reason.trim(),
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/receivables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal membatalkan pembayaran piutang: ${msg}` };
+  }
+}
+
+/**
+ * Records business debt repayment for an outstanding account payable.
+ */
+export async function recordPayablePaymentAction(formData: FormData): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  const payableId = formData.get("payableId") as string;
+  const amountStr = formData.get("amount") as string;
+  const paymentDate = (formData.get("paymentDate") as string) || new Date().toISOString().slice(0, 10);
+  const paymentAccountCode = ((formData.get("paymentAccountCode") as string) || "1100") as "1100" | "1200";
+
+  const amount = parseInt(amountStr, 10);
+  if (!payableId || isNaN(amount) || amount <= 0) {
+    return { success: false, error: "ID hutang dan nominal pembayaran valid harus disertakan." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const res = await postPayablePaymentToAccounting(supabase, {
+      businessId: session.business.id,
+      payableId,
+      amount,
+      paymentDate,
+      paymentAccountCode,
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/payables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true, data: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mencatat pembayaran hutang: ${msg}` };
+  }
+}
+
+/**
+ * Voids a business debt repayment for an account payable.
+ */
+export async function voidPayablePaymentAction(paymentId: string, reason: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!paymentId) return { success: false, error: "ID pembayaran hutang wajib disertakan." };
+  if (!reason?.trim()) return { success: false, error: "Alasan pembatalan wajib diisi." };
+
+  const supabase = await createClient();
+
+  try {
+    await voidPayablePaymentFromAccounting(supabase, {
+      businessId: session.business.id,
+      paymentId,
+      voidReason: reason.trim(),
+      actorUserId: session.user.id,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/accounting/payables");
+    revalidatePath("/dashboard/analytics");
+    revalidatePath("/dashboard/reports/balance-sheet");
+    revalidatePath("/dashboard/reports/cash-flow");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal membatalkan pembayaran hutang: ${msg}` };
+  }
+}
+
+/**
+ * Toggles product active/archived status safely without destroying historical transactions.
+ */
+export async function toggleProductActiveAction(productId: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah status produk." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { data: prod } = await supabase
+      .from("products")
+      .select("active, is_default")
+      .eq("id", productId)
+      .eq("business_id", session.business.id)
+      .single();
+
+    if (!prod) return { success: false, error: "Produk tidak ditemukan." };
+    if (prod.is_default && prod.active) {
+      return { success: false, error: "Produk default tidak dapat dinonaktifkan. Ubah produk default terlebih dahulu." };
+    }
+
+    const nextActive = !prod.active;
+    const { error } = await supabase
+      .from("products")
+      .update({ active: nextActive, updated_at: new Date().toISOString() })
+      .eq("id", productId)
+      .eq("business_id", session.business.id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard");
+
+    return { success: true, data: { active: nextActive } };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal mengubah status produk: ${msg}` };
+  }
+}
+
+/**
+ * Updates an existing product alias term.
+ */
+export async function updateProductAliasAction(aliasId: string, aliasTerm: string): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    return { success: false, error: "Hanya pemilik atau admin yang dapat mengubah alias produk." };
+  }
+
+  const normalized = normalizeProductTerm(aliasTerm);
+  if (!normalized) {
+    return { success: false, error: "Kata kunci alias tidak valid." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("product_aliases")
+      .update({ alias: normalized })
+      .eq("id", aliasId)
+      .eq("business_id", session.business.id);
+
+    if (error) {
+      if (error.code === "23505") {
+        return { success: false, error: "Alias kata kunci ini sudah digunakan oleh produk lain." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/dashboard/products");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal memperbarui alias: ${msg}` };
+  }
+}
+

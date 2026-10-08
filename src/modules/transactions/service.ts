@@ -576,3 +576,260 @@ export async function setDefaultProduct(
   return data as { success: boolean; productId: string; businessId: string };
 }
 
+/**
+ * Atomically voids a specific transaction by ID with full accounting reversal and audit trail.
+ */
+export async function voidTransaction(
+  client: SupabaseClient,
+  context: ExecutionContext,
+  params: {
+    transactionId: string;
+    voidReason?: string;
+  }
+): Promise<CancelResultDTO> {
+  const { transactionId, voidReason = "Dibatalkan oleh pengguna" } = params;
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Pembatalan transaksi dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
+  // 1. Fetch target transaction with business isolation
+  const { data: tx, error: fetchErr } = await client
+    .from("transactions")
+    .select("*")
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId)
+    .single();
+
+  if (fetchErr || !tx) {
+    throw new DomainError("TRANSACTION_NOT_FOUND", "Transaksi tidak ditemukan.");
+  }
+
+  if (tx.status === "cancelled") {
+    throw new DomainError("TRANSACTION_ALREADY_CANCELLED", "Transaksi ini sudah dibatalkan sebelumnya.");
+  }
+
+  if (tx.status === "corrected") {
+    throw new DomainError("CANNOT_CANCEL_CORRECTED", "Transaksi historis ini sudah pernah dikoreksi.");
+  }
+
+  const nowIso = new Date().toISOString();
+
+  // 2. Mark cancelled
+  const { error: updateErr } = await client
+    .from("transactions")
+    .update({
+      status: "cancelled",
+      updated_at: nowIso,
+    })
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId);
+
+  if (updateErr) {
+    throw mapDatabaseError(updateErr);
+  }
+
+  // 3. Insert transaction event audit log
+  try {
+    await client.from("transaction_events").insert({
+      business_id: context.businessId,
+      transaction_id: transactionId,
+      event_type: "cancelled",
+      old_values: {
+        status: tx.status,
+        quantity: tx.quantity,
+        total_amount: tx.total_amount,
+      },
+      new_values: {
+        status: "cancelled",
+        reason: voidReason,
+      },
+      actor_user_id: context.authenticatedUserId || null,
+      source: context.source || "dashboard",
+    });
+  } catch (evErr) {
+    console.warn(`[voidTransaction] Audit event warning: ${evErr}`);
+  }
+
+  // 4. Void from accounting engine
+  try {
+    await voidSaleFromAccounting(client, {
+      businessId: context.businessId,
+      transactionId,
+      voidReason,
+      actorUserId: context.authenticatedUserId,
+    });
+  } catch (acctErr) {
+    console.warn(`[voidTransaction] Accounting void warning: ${acctErr instanceof Error ? acctErr.message : String(acctErr)}`);
+  }
+
+  return {
+    transactionId: tx.id,
+    businessId: tx.business_id,
+    quantity: Number(tx.quantity),
+    unit: tx.unit,
+    unitPrice: Number(tx.unit_price),
+    totalAmount: Number(tx.total_amount),
+    status: "cancelled",
+    cancelledAt: nowIso,
+  };
+}
+
+/**
+ * Atomically corrects a specific transaction by ID, preserving historical unit price,
+ * creating an exact replacement transaction, and executing accounting reversal and re-posting.
+ */
+export async function correctTransaction(
+  client: SupabaseClient,
+  context: ExecutionContext,
+  params: {
+    transactionId: string;
+    correctedQuantity: number | string;
+    reason?: string;
+  }
+): Promise<CorrectResultDTO> {
+  const { transactionId, reason } = params;
+  const rawQty =
+    typeof params.correctedQuantity === "number"
+      ? params.correctedQuantity
+      : parseFloat(params.correctedQuantity);
+
+  if (isNaN(rawQty) || rawQty <= 0) {
+    throw new DomainError("INVALID_QUANTITY", "Kuantitas koreksi harus lebih besar dari 0.");
+  }
+
+  const gate = await canCreateFinancialMutation(client, context.businessId);
+  if (!gate.allowed) {
+    throw new DomainError(
+      gate.reason || "SUBSCRIPTION_MUTATION_BLOCKED",
+      gate.replyText || "Koreksi transaksi dibatasi karena status langganan bisnis tidak aktif atau telah berakhir."
+    );
+  }
+
+  // 1. Fetch target transaction with business isolation
+  const { data: tx, error: fetchErr } = await client
+    .from("transactions")
+    .select("*, products(name, unit_cost)")
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId)
+    .single();
+
+  if (fetchErr || !tx) {
+    throw new DomainError("TRANSACTION_NOT_FOUND", "Transaksi tidak ditemukan.");
+  }
+
+  if (tx.status === "cancelled") {
+    throw new DomainError("CANNOT_CORRECT_CANCELLED", "Transaksi yang sudah dibatalkan tidak dapat dikoreksi.");
+  }
+
+  if (tx.status === "corrected") {
+    throw new DomainError("TRANSACTION_ALREADY_CORRECTED", "Transaksi ini sudah pernah dikoreksi.");
+  }
+
+  const nowIso = new Date().toISOString();
+  const unitPrice = Number(tx.unit_price);
+  const newTotalAmount = Math.round(unitPrice * rawQty);
+
+  // 2. Mark original transaction as corrected
+  const { error: origUpdateErr } = await client
+    .from("transactions")
+    .update({
+      status: "corrected",
+      updated_at: nowIso,
+    })
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId);
+
+  if (origUpdateErr) throw mapDatabaseError(origUpdateErr);
+
+  // 3. Insert replacement transaction
+  const { data: newTx, error: newTxErr } = await client
+    .from("transactions")
+    .insert({
+      business_id: context.businessId,
+      product_id: tx.product_id,
+      quantity: rawQty,
+      unit: tx.unit,
+      unit_price: unitPrice,
+      total_amount: newTotalAmount,
+      status: "confirmed",
+      source: context.source || "dashboard",
+      raw_message: reason ? `Koreksi: ${reason}` : `Koreksi dari transaksi ${transactionId.slice(0, 8)}`,
+      transaction_at: tx.transaction_at,
+    })
+    .select()
+    .single();
+
+  if (newTxErr || !newTx) {
+    throw mapDatabaseError(newTxErr || new Error("Gagal membuat transaksi pengganti"));
+  }
+
+  // 4. Audit events
+  try {
+    await client.from("transaction_events").insert([
+      {
+        business_id: context.businessId,
+        transaction_id: transactionId,
+        event_type: "corrected",
+        old_values: { status: "confirmed", quantity: tx.quantity, total_amount: tx.total_amount },
+        new_values: { status: "corrected", replacement_id: newTx.id, reason },
+        actor_user_id: context.authenticatedUserId || null,
+        source: context.source || "dashboard",
+      },
+      {
+        business_id: context.businessId,
+        transaction_id: newTx.id,
+        event_type: "created",
+        old_values: null,
+        new_values: { status: "confirmed", quantity: rawQty, total_amount: newTotalAmount, corrected_from_id: transactionId },
+        actor_user_id: context.authenticatedUserId || null,
+        source: context.source || "dashboard",
+      },
+    ]);
+  } catch (evErr) {
+    console.warn(`[correctTransaction] Audit events warning: ${evErr}`);
+  }
+
+  // 5. Accounting: Void original and post replacement
+  try {
+    await voidSaleFromAccounting(client, {
+      businessId: context.businessId,
+      transactionId,
+      voidReason: reason || "Dikoreksi melalui dashboard",
+      actorUserId: context.authenticatedUserId,
+    });
+
+    const prodInfo = (tx.products as unknown as { unit_cost?: number; name?: string }) || {};
+    const unitCost = Number(prodInfo.unit_cost) || 0;
+    const prodName = prodInfo.name || "Produk";
+
+    await postSaleToAccounting(client, {
+      businessId: context.businessId,
+      transactionId: newTx.id,
+      totalAmount: newTotalAmount,
+      unitCost,
+      quantity: rawQty,
+      transactionDate: String(tx.transaction_at).slice(0, 10),
+      description: `Koreksi Penjualan ${prodName}`,
+      actorUserId: context.authenticatedUserId,
+    });
+  } catch (acctErr) {
+    console.warn(`[correctTransaction] Accounting posting warning: ${acctErr}`);
+  }
+
+  return {
+    originalTransactionId: transactionId,
+    originalQuantity: Number(tx.quantity),
+    originalTotalAmount: Number(tx.total_amount),
+    newTransactionId: newTx.id,
+    newQuantity: rawQty,
+    unit: tx.unit,
+    unitPrice,
+    newTotalAmount,
+    correctedAt: nowIso,
+  };
+}
+

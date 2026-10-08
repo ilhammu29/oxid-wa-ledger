@@ -17,6 +17,9 @@ export type DomainErrorCode =
   | "DAY_STATUS_CONFLICT"
   | "TRANSACTION_ALREADY_CANCELLED"
   | "TRANSACTION_ALREADY_CORRECTED"
+  | "TRANSACTION_NOT_FOUND"
+  | "CANNOT_CANCEL_CORRECTED"
+  | "CANNOT_CORRECT_CANCELLED"
   | "DATABASE_OPERATION_FAILED"
   | "UNAUTHORIZED"
   | "SUBSCRIPTION_MUTATION_BLOCKED"
@@ -71,6 +74,12 @@ export function getUserFriendlyErrorMessage(code: DomainErrorCode): string {
       return "Transaksi ini sudah dibatalkan sebelumnya.";
     case "TRANSACTION_ALREADY_CORRECTED":
       return "Transaksi ini sudah dikoreksi sebelumnya.";
+    case "TRANSACTION_NOT_FOUND":
+      return "Transaksi tidak ditemukan.";
+    case "CANNOT_CANCEL_CORRECTED":
+      return "Transaksi historis ini sudah pernah dikoreksi dan tidak dapat dibatalkan langsung.";
+    case "CANNOT_CORRECT_CANCELLED":
+      return "Transaksi yang sudah dibatalkan tidak dapat dikoreksi.";
     case "UNAUTHORIZED":
       return "Anda tidak memiliki izin untuk melakukan aksi pada bisnis ini.";
     case "SUBSCRIPTION_MUTATION_BLOCKED":

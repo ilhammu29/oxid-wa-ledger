@@ -791,3 +791,270 @@ export async function voidSaleFromAccounting(
     // Continue
   }
 }
+
+/**
+ * Voids an Expense transaction from the accounting engine.
+ * Posts an exact reversing journal entry and updates expense status to 'voided'.
+ */
+export async function voidExpenseFromAccounting(
+  client: SupabaseClient,
+  params: {
+    businessId: string;
+    expenseId: string;
+    voidReason: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const { businessId, expenseId, voidReason, actorUserId } = params;
+
+  const { error: updErr } = await client
+    .from("expenses")
+    .update({ status: "voided" })
+    .eq("id", expenseId)
+    .eq("business_id", businessId);
+
+  if (updErr) throw updErr;
+
+  try {
+    await voidJournalEntry(client, {
+      businessId,
+      sourceType: "EXPENSE",
+      sourceId: expenseId,
+      voidReason,
+      actorUserId,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[voidExpenseFromAccounting] Journal void warning: ${msg}`);
+  }
+}
+
+/**
+ * Voids a Purchase transaction from the accounting engine.
+ * Posts reversing journal entry, compensates inventory movement,
+ * voids associated payable (if credit), and marks purchase as 'voided'.
+ */
+export async function voidPurchaseFromAccounting(
+  client: SupabaseClient,
+  params: {
+    businessId: string;
+    purchaseId: string;
+    voidReason: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const { businessId, purchaseId, voidReason, actorUserId } = params;
+
+  const { data: purchase, error: pErr } = await client
+    .from("purchases")
+    .select("*")
+    .eq("id", purchaseId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (pErr || !purchase) {
+    throw new Error("Data pembelian tidak ditemukan.");
+  }
+
+  await client
+    .from("purchases")
+    .update({ status: "voided" })
+    .eq("id", purchaseId)
+    .eq("business_id", businessId);
+
+  if (purchase.product_id) {
+    try {
+      await client.from("inventory_movements").insert({
+        business_id: businessId,
+        product_id: purchase.product_id,
+        quantity: -Math.abs(Number(purchase.quantity)),
+        unit_cost: purchase.unit_cost,
+        total_cost: purchase.total_amount,
+        movement_type: "purchase_void",
+        reference_type: "purchase_void",
+        reference_id: purchaseId,
+      });
+    } catch {
+      // Continue
+    }
+  }
+
+  if (purchase.payment_method === "credit") {
+    try {
+      await client
+        .from("payables")
+        .update({ status: "voided" })
+        .eq("purchase_id", purchaseId)
+        .eq("business_id", businessId);
+    } catch {
+      // Continue
+    }
+  }
+
+  try {
+    await voidJournalEntry(client, {
+      businessId,
+      sourceType: "PURCHASE",
+      sourceId: purchaseId,
+      voidReason,
+      actorUserId,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[voidPurchaseFromAccounting] Journal void warning: ${msg}`);
+  }
+}
+
+/**
+ * Voids a Capital or Prive transaction from the accounting engine.
+ */
+export async function voidCapitalMovementFromAccounting(
+  client: SupabaseClient,
+  params: {
+    businessId: string;
+    movementId: string;
+    voidReason: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const { businessId, movementId, voidReason, actorUserId } = params;
+
+  const { data: mov, error: mErr } = await client
+    .from("capital_movements")
+    .select("*")
+    .eq("id", movementId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (mErr || !mov) {
+    throw new Error("Data transaksi modal tidak ditemukan.");
+  }
+
+  await client
+    .from("capital_movements")
+    .update({ status: "voided" })
+    .eq("id", movementId)
+    .eq("business_id", businessId);
+
+  try {
+    await voidJournalEntry(client, {
+      businessId,
+      sourceType: mov.type as "CAPITAL_IN" | "OWNER_DRAW",
+      sourceId: movementId,
+      voidReason,
+      actorUserId,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[voidCapitalMovementFromAccounting] Journal void warning: ${msg}`);
+  }
+}
+
+/**
+ * Voids a Receivable payment transaction from the accounting engine.
+ * Restores the receivable outstanding balance.
+ */
+export async function voidReceivablePaymentFromAccounting(
+  client: SupabaseClient,
+  params: {
+    businessId: string;
+    paymentId: string;
+    voidReason: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const { businessId, paymentId, voidReason, actorUserId } = params;
+
+  const { data: pay, error: pErr } = await client
+    .from("receivable_payments")
+    .select("*, receivables(*)")
+    .eq("id", paymentId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (pErr || !pay) throw new Error("Data pembayaran piutang tidak ditemukan.");
+
+  await client
+    .from("receivable_payments")
+    .update({ status: "voided" })
+    .eq("id", paymentId)
+    .eq("business_id", businessId);
+
+  const recv = pay.receivables;
+  if (recv) {
+    const newPaid = Math.max(0, Number(recv.paid_amount) - Number(pay.amount));
+    const newStatus = newPaid <= 0 ? "unpaid" : "partially_paid";
+    await client
+      .from("receivables")
+      .update({ paid_amount: newPaid, status: newStatus })
+      .eq("id", recv.id);
+  }
+
+  try {
+    await voidJournalEntry(client, {
+      businessId,
+      sourceType: "PAYMENT_RECEIVABLE",
+      sourceId: paymentId,
+      voidReason,
+      actorUserId,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[voidReceivablePaymentFromAccounting] Journal void warning: ${msg}`);
+  }
+}
+
+/**
+ * Voids a Payable payment transaction from the accounting engine.
+ * Restores the payable outstanding balance.
+ */
+export async function voidPayablePaymentFromAccounting(
+  client: SupabaseClient,
+  params: {
+    businessId: string;
+    paymentId: string;
+    voidReason: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const { businessId, paymentId, voidReason, actorUserId } = params;
+
+  const { data: pay, error: pErr } = await client
+    .from("payable_payments")
+    .select("*, payables(*)")
+    .eq("id", paymentId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (pErr || !pay) throw new Error("Data pembayaran hutang tidak ditemukan.");
+
+  await client
+    .from("payable_payments")
+    .update({ status: "voided" })
+    .eq("id", paymentId)
+    .eq("business_id", businessId);
+
+  const payb = pay.payables;
+  if (payb) {
+    const newPaid = Math.max(0, Number(payb.paid_amount) - Number(pay.amount));
+    const newStatus = newPaid <= 0 ? "unpaid" : "partially_paid";
+    await client
+      .from("payables")
+      .update({ paid_amount: newPaid, status: newStatus })
+      .eq("id", payb.id);
+  }
+
+  try {
+    await voidJournalEntry(client, {
+      businessId,
+      sourceType: "PAYMENT_PAYABLE",
+      sourceId: paymentId,
+      voidReason,
+      actorUserId,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[voidPayablePaymentFromAccounting] Journal void warning: ${msg}`);
+  }
+}
+

@@ -135,23 +135,39 @@ export function formatPeriodReport(period: "week" | "month", report: ReportResul
  */
 export function formatHelp(activeProducts?: string[]): string {
   let text =
-    `OXID Ledger siap digunakan. (Panduan Penggunaan)\n\n` +
-    `Contoh pencatatan:\n` +
+    `📖 Panduan Penggunaan OXID Ledger\n\n` +
+    `🛒 PENJUALAN\n` +
     `• Kejual lele 15kg\n` +
     `• Nila laku 5 kilo\n\n` +
-    `Laporan:\n` +
-    `• laporan hari ini\n` +
-    `• minggu ini dapat berapa\n` +
-    `• bulan ini omzet berapa\n\n` +
-    `Koreksi:\n` +
-    `• batal terakhir\n` +
-    `• ubah terakhir jadi 20kg\n\n` +
-    `Status:\n` +
-    `• gak ada penjualan hari ini\n` +
-    `• libur hari ini`;
+    `💸 BEBAN & PENGELUARAN\n` +
+    `• Listrik 150rb\n` +
+    `• Bensin operasional 50rb\n` +
+    `• Gaji karyawan 1.5jt\n\n` +
+    `📦 PENGADAAN & STOK\n` +
+    `• Beli stok lele 100kg 2jt\n` +
+    `• stok (atau /stok) — Cek persediaan gudang\n\n` +
+    `💼 MODAL & PRIVE\n` +
+    `• Modal masuk 5jt (Setoran pemilik)\n` +
+    `• Prive 500rb (Tarik uang keperluan pribadi)\n\n` +
+    `👥 PIUTANG & HUTANG\n` +
+    `• piutang (atau /piutang) — Cek tagihan pelanggan\n` +
+    `• hutang (atau /hutang) — Cek kewajiban supplier\n` +
+    `• Budi bayar piutang 500rb\n` +
+    `• Bayar hutang supplier 1jt\n\n` +
+    `📊 LAPORAN KEUANGAN\n` +
+    `• saldo (atau /saldo) — Kas & Bank terkini\n` +
+    `• laba rugi (atau /laba) — Omzet, HPP & Net Profit\n` +
+    `• neraca (atau /neraca) — Posisi Aset vs Kewajiban\n` +
+    `• arus kas — Ringkasan kas operasi/investasi\n` +
+    `• laporan hari ini / minggu ini / bulan ini\n` +
+    `• export excel (atau /export) — Download buku besar\n\n` +
+    `↩️ KOREKSI & STATUS\n` +
+    `• batal terakhir — Batalkan transaksi terakhir\n` +
+    `• ubah terakhir jadi 20kg\n` +
+    `• gak ada penjualan hari ini / libur hari ini`;
 
   if (activeProducts && activeProducts.length > 0) {
-    text += `\n\nProduk aktif:\n` + activeProducts.map((p) => `• ${p}`).join("\n");
+    text += `\n\n🏷️ Produk aktif:\n` + activeProducts.map((p) => `• ${p}`).join("\n");
   }
 
   return text;

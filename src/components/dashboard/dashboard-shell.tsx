@@ -265,58 +265,58 @@ export function DashboardShell({
 
       {/* Desktop Collapsible Sidebar */}
       <aside
-        className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-surface border-r border-border flex-col justify-between transition-all duration-200 ${
+        className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-surface border-r border-border h-dvh max-h-screen flex-col transition-all duration-200 ${
           isCollapsed ? "w-16" : "w-[220px]"
         }`}
       >
-        <div className="flex flex-col h-full justify-between">
-          {/* Top Branding & Quick Add */}
-          <div className="p-3">
-            <div
-              className={`flex items-center gap-2.5 px-2 py-2 mb-2 ${
-                isCollapsed ? "justify-center" : ""
-              }`}
-            >
-              <BrandLogo size="sm" container="primary" />
-              {!isCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-xs truncate leading-tight">
-                    {business.name}
-                  </div>
-                  <div className="text-[10px] text-muted flex items-center gap-1 font-mono">
-                    <span>Ledger UKM</span>
-                    <span>·</span>
-                    <span className="capitalize">{role}</span>
-                  </div>
+        {/* Top Branding & Quick Add */}
+        <div className="shrink-0 p-3 pb-2 border-b border-border/40">
+          <div
+            className={`flex items-center gap-2.5 px-2 py-1.5 mb-2 ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+          >
+            <BrandLogo size="sm" container="primary" />
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-xs truncate leading-tight">
+                  {business.name}
                 </div>
-              )}
-            </div>
+                <div className="text-[10px] text-muted flex items-center gap-1 font-mono">
+                  <span>Ledger UKM</span>
+                  <span>·</span>
+                  <span className="capitalize">{role}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
-            {/* Quick Action Button */}
-            {!isCollapsed ? (
+          {/* Quick Action Button */}
+          {!isCollapsed ? (
+            <button
+              type="button"
+              onClick={() => setSaleModalOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-fg text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Catat Penjualan</span>
+            </button>
+          ) : (
+            <div className="flex justify-center">
               <button
                 type="button"
                 onClick={() => setSaleModalOpen(true)}
-                className="w-full mt-1 mb-3 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-fg text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
+                className="w-8 h-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center hover:bg-primary/90 transition-colors shadow-xs"
+                title="Catat Penjualan"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Catat Penjualan</span>
+                <Plus className="w-4 h-4" />
               </button>
-            ) : (
-              <div className="flex justify-center mb-3">
-                <button
-                  type="button"
-                  onClick={() => setSaleModalOpen(true)}
-                  className="w-8 h-8 rounded-lg bg-primary text-primary-fg flex items-center justify-center hover:bg-primary/90 transition-colors shadow-xs"
-                  title="Catat Penjualan"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            </div>
+          )}
+        </div>
 
-            {/* Navigation Lists */}
-            <div className="space-y-4">
+        {/* Scrollable Middle Navigation */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-4 [scrollbar-width:thin]">
               {/* Primary Group */}
               <div className="space-y-0.5">
                 {!isCollapsed && (
@@ -567,11 +567,10 @@ export function DashboardShell({
                   </Link>
                 </div>
               )}
-            </div>
-          </div>
+        </nav>
 
-          {/* Bottom Sidebar: Subscription compact row & collapse toggle */}
-          <div className="p-3 border-t border-border space-y-2">
+        {/* Bottom Sidebar: Subscription compact row & collapse toggle */}
+        <div className="shrink-0 p-3 border-t border-border space-y-2 bg-surface">
             {!isCollapsed && subscriptionState && (
               <div className="p-2.5 rounded-lg border border-border/80 bg-surface-hover/40 text-[11px] space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -640,7 +639,6 @@ export function DashboardShell({
               </div>
             )}
           </div>
-        </div>
       </aside>
 
       {/* Main Content Area */}

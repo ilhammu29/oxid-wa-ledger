@@ -211,7 +211,32 @@ export const GENERAL_LEDGER_PATTERNS: RegExp[] = [
  */
 export const EXPORT_REPORT_PATTERNS: RegExp[] = [
   /\b(?:export\s+(?:laporan|excel|transaksi)|ekspor\s+(?:laporan|excel)|download\s+(?:laporan|excel))\b/,
-  /^export$/,
+  /^(?:export|ekspor|excel|unduh\s+excel)$/,
+];
+
+/**
+ * Patterns for Stock / Inventory status inquiry.
+ */
+export const INVENTORY_PATTERNS: RegExp[] = [
+  /\b(?:stok\s+(?:sekarang|saat\s+ini|tersedia|gudang|barang)|cek\s+stok|sisa\s+stok|posisi\s+stok|info\s+stok)\b/,
+  /^stok$/,
+  /^stok\s+[a-z0-9_-]+$/,
+];
+
+/**
+ * Patterns for Accounts Receivable (Piutang) status inquiry.
+ */
+export const RECEIVABLE_STATUS_PATTERNS: RegExp[] = [
+  /\b(?:daftar\s+piutang|cek\s+piutang|total\s+piutang|status\s+piutang|tagihan\s+pelanggan|rekap\s+piutang|info\s+piutang)\b/,
+  /^piutang$/,
+];
+
+/**
+ * Patterns for Accounts Payable (Hutang) status inquiry.
+ */
+export const PAYABLE_STATUS_PATTERNS: RegExp[] = [
+  /\b(?:daftar\s+hutang|cek\s+hutang|total\s+hutang|status\s+hutang|kewajiban\s+supplier|rekap\s+hutang|info\s+hutang)\b/,
+  /^hutang$/,
 ];
 
 /**
@@ -245,3 +270,4 @@ export const EXPENSE_CATEGORIES = [
   "atk", "administrasi", "tulis", "marketing", "iklan", "promo",
   "pulsa", "paket data", "wifi", "internet", "makan", "konsumsi"
 ] as const;
+

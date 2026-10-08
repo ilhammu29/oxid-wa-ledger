@@ -6,7 +6,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ArrowUpRight,
   CheckCircle2,
   XCircle,
   RefreshCw,
@@ -19,6 +18,8 @@ import {
   TransactionRowData,
 } from "./transaction-detail-modal";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
+import { EditTransactionModal } from "./edit-transaction-modal";
+import { VoidTransactionModal } from "./void-transaction-modal";
 
 interface ProductItem {
   id: string;
@@ -51,6 +52,8 @@ export function TransactionsView({
   const searchParams = useSearchParams();
 
   const [selectedTx, setSelectedTx] = useState<TransactionRowData | null>(null);
+  const [editingTx, setEditingTx] = useState<TransactionRowData | null>(null);
+  const [voidingTx, setVoidingTx] = useState<TransactionRowData | null>(null);
   const [catatModalOpen, setCatatModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
 
@@ -319,10 +322,35 @@ export function TransactionsView({
                       {statusBadge(tx.status)}
                     </td>
                     <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary group-hover:underline">
-                        Detail
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </span>
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTx(tx)}
+                          className="px-2 py-1 rounded-md text-[11px] font-medium border border-border bg-surface hover:bg-surface-hover text-foreground transition-colors"
+                        >
+                          Detail
+                        </button>
+                        {tx.status === "confirmed" && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setEditingTx(tx)}
+                              className="px-2 py-1 rounded-md text-[11px] font-medium border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-colors"
+                              title="Koreksi Transaksi"
+                            >
+                              Koreksi
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVoidingTx(tx)}
+                              className="px-2 py-1 rounded-md text-[11px] font-medium border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors"
+                              title="Batalkan Transaksi"
+                            >
+                              Batalkan
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -354,9 +382,38 @@ export function TransactionsView({
                     {formatTime(tx.transaction_at)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1.5 border-t border-border">
-                  {sourceBadge(tx.source)}
-                  {statusBadge(tx.status)}
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <div className="flex items-center gap-1.5">
+                    {sourceBadge(tx.source)}
+                    {statusBadge(tx.status)}
+                  </div>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTx(tx)}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium border border-border text-foreground hover:bg-surface-hover"
+                    >
+                      Detail
+                    </button>
+                    {tx.status === "confirmed" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditingTx(tx)}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium border border-amber-500/20 text-amber-500 hover:bg-amber-500/10"
+                        >
+                          Koreksi
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVoidingTx(tx)}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium border border-rose-500/20 text-rose-500 hover:bg-rose-500/10"
+                        >
+                          Batal
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -410,6 +467,22 @@ export function TransactionsView({
         timezone={timezone}
       />
 
+      {/* Edit Transaction Modal */}
+      {editingTx && (
+        <EditTransactionModal
+          transaction={editingTx}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
+
+      {/* Void Transaction Modal */}
+      {voidingTx && (
+        <VoidTransactionModal
+          transaction={voidingTx}
+          onClose={() => setVoidingTx(null)}
+        />
+      )}
+
       {/* Catat Penjualan Modal Component */}
       <CatatPenjualanModal
         isOpen={catatModalOpen}
@@ -425,3 +498,4 @@ export function TransactionsView({
     </div>
   );
 }
+
