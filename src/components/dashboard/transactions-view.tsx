@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -15,6 +15,7 @@ import {
   Archive,
   MoreHorizontal,
   Ban,
+  X,
 } from "lucide-react";
 import {
   TransactionDetailModal,
@@ -43,6 +44,12 @@ interface TransactionsViewProps {
   timezone: string;
 }
 
+interface MenuAnchorState {
+  tx: TransactionRowData;
+  top: number;
+  right: number;
+}
+
 export function TransactionsView({
   transactions,
   products,
@@ -59,17 +66,27 @@ export function TransactionsView({
   const [editingTx, setEditingTx] = useState<TransactionRowData | null>(null);
   const [voidingTx, setVoidingTx] = useState<TransactionRowData | null>(null);
   const [archivingTx, setArchivingTx] = useState<TransactionRowData | null>(null);
-  const [menuOpenTxId, setMenuOpenTxId] = useState<string | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<MenuAnchorState | null>(null);
   const [catatModalOpen, setCatatModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
 
-  useEffect(() => {
-    function handleClickOutside() {
-      setMenuOpenTxId(null);
+  const handleOpenMenu = (e: React.MouseEvent<HTMLButtonElement>, tx: TransactionRowData) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (menuAnchor?.tx.id === tx.id) {
+      setMenuAnchor(null);
+      return;
     }
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isNearBottom = rect.bottom + 120 > window.innerHeight;
+    const top = isNearBottom ? Math.max(10, rect.top - 88) : rect.bottom + 4;
+    const right = Math.max(8, window.innerWidth - rect.right);
+    setMenuAnchor({
+      tx,
+      top,
+      right,
+    });
+  };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -375,52 +392,19 @@ export function TransactionsView({
                             Diarsipkan
                           </span>
                         )}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setMenuOpenTxId(menuOpenTxId === tx.id ? null : tx.id)}
-                            className="p-1 rounded-md text-[11px] font-medium border border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
-                            title="Lainnya"
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </button>
-                          {menuOpenTxId === tx.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-border bg-surface p-1 shadow-lg z-30 animate-in fade-in zoom-in-95 duration-100 text-left">
-                              <button
-                                type="button"
-                                disabled={tx.status !== "confirmed"}
-                                onClick={() => {
-                                  setMenuOpenTxId(null);
-                                  setEditingTx(tx);
-                                }}
-                                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors ${
-                                  tx.status === "confirmed"
-                                    ? "text-foreground hover:bg-surface-hover cursor-pointer"
-                                    : "text-muted/40 cursor-not-allowed"
-                                }`}
-                              >
-                                <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                <span>Koreksi transaksi</span>
-                              </button>
-                              <button
-                                type="button"
-                                disabled={tx.status !== "confirmed"}
-                                onClick={() => {
-                                  setMenuOpenTxId(null);
-                                  setVoidingTx(tx);
-                                }}
-                                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors ${
-                                  tx.status === "confirmed"
-                                    ? "text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
-                                    : "text-muted/40 cursor-not-allowed"
-                                }`}
-                              >
-                                <Ban className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                <span>Batalkan transaksi</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenMenu(e, tx)}
+                          className={`p-1.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                            menuAnchor?.tx.id === tx.id
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground"
+                          }`}
+                          title="Lainnya"
+                          aria-label="Menu Lainnya"
+                        >
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -475,52 +459,19 @@ export function TransactionsView({
                         Hapus
                       </button>
                     )}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setMenuOpenTxId(menuOpenTxId === tx.id ? null : tx.id)}
-                        className="p-1 rounded text-xs font-medium border border-border text-muted hover:bg-surface-hover"
-                        title="Lainnya"
-                      >
-                        <MoreHorizontal className="w-3.5 h-3.5" />
-                      </button>
-                      {menuOpenTxId === tx.id && (
-                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-lg border border-border bg-surface p-1 shadow-lg z-30 animate-in fade-in zoom-in-95 duration-100 text-left">
-                          <button
-                            type="button"
-                            disabled={tx.status !== "confirmed"}
-                            onClick={() => {
-                              setMenuOpenTxId(null);
-                              setEditingTx(tx);
-                            }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-colors ${
-                              tx.status === "confirmed"
-                                ? "text-foreground hover:bg-surface-hover cursor-pointer"
-                                : "text-muted/40 cursor-not-allowed"
-                            }`}
-                          >
-                            <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                            <span>Koreksi transaksi</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={tx.status !== "confirmed"}
-                            onClick={() => {
-                              setMenuOpenTxId(null);
-                              setVoidingTx(tx);
-                            }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-colors ${
-                              tx.status === "confirmed"
-                                ? "text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
-                                : "text-muted/40 cursor-not-allowed"
-                            }`}
-                          >
-                            <Ban className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                            <span>Batalkan transaksi</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenMenu(e, tx)}
+                      className={`p-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                        menuAnchor?.tx.id === tx.id
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-surface text-muted hover:bg-surface-hover hover:text-foreground"
+                      }`}
+                      title="Lainnya"
+                      aria-label="Menu Lainnya"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -611,6 +562,127 @@ export function TransactionsView({
           is_default: Boolean(p.is_default),
         }))}
       />
+
+      {/* Action Menu (Lainnya) Backdrop & Menus */}
+      {menuAnchor && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent"
+            onClick={() => setMenuAnchor(null)}
+          />
+
+          {/* Desktop Floating Menu (Viewport-aware fixed positioning, no table clipping) */}
+          <div
+            style={{
+              top: `${menuAnchor.top}px`,
+              right: `${menuAnchor.right}px`,
+            }}
+            className="hidden sm:block fixed w-48 rounded-xl border border-border bg-surface p-1 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 text-left"
+          >
+            <button
+              type="button"
+              disabled={menuAnchor.tx.status !== "confirmed"}
+              onClick={() => {
+                const tx = menuAnchor.tx;
+                setMenuAnchor(null);
+                setEditingTx(tx);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                menuAnchor.tx.status === "confirmed"
+                  ? "text-foreground hover:bg-surface-hover cursor-pointer"
+                  : "text-muted/40 cursor-not-allowed"
+              }`}
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Koreksi transaksi</span>
+            </button>
+            <button
+              type="button"
+              disabled={menuAnchor.tx.status !== "confirmed"}
+              onClick={() => {
+                const tx = menuAnchor.tx;
+                setMenuAnchor(null);
+                setVoidingTx(tx);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                menuAnchor.tx.status === "confirmed"
+                  ? "text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                  : "text-muted/40 cursor-not-allowed"
+              }`}
+            >
+              <Ban className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span>Batalkan transaksi</span>
+            </button>
+          </div>
+
+          {/* Mobile Bottom Action Sheet */}
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-surface border-t border-border rounded-t-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <div className="min-w-0 pr-2">
+                <p className="text-xs font-semibold text-foreground truncate">
+                  {menuAnchor.tx.product_name || "Produk Default"}
+                </p>
+                <p className="text-[11px] text-muted font-mono">
+                  Rp{new Intl.NumberFormat("id-ID").format(menuAnchor.tx.total_amount)} • {menuAnchor.tx.source}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMenuAnchor(null)}
+                className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover"
+                title="Tutup"
+                aria-label="Tutup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                disabled={menuAnchor.tx.status !== "confirmed"}
+                onClick={() => {
+                  const tx = menuAnchor.tx;
+                  setMenuAnchor(null);
+                  setEditingTx(tx);
+                }}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  menuAnchor.tx.status === "confirmed"
+                    ? "bg-surface hover:bg-surface-hover text-foreground border border-border"
+                    : "opacity-40 cursor-not-allowed border border-border"
+                }`}
+              >
+                <RefreshCw className="w-4 h-4 text-amber-500 shrink-0" />
+                <div className="text-left">
+                  <div>Koreksi Transaksi</div>
+                  <div className="text-[11px] text-muted font-normal">Buat jurnal penyesuaian baru</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                disabled={menuAnchor.tx.status !== "confirmed"}
+                onClick={() => {
+                  const tx = menuAnchor.tx;
+                  setMenuAnchor(null);
+                  setVoidingTx(tx);
+                }}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  menuAnchor.tx.status === "confirmed"
+                    ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                    : "opacity-40 cursor-not-allowed border border-border"
+                }`}
+              >
+                <Ban className="w-4 h-4 text-rose-500 shrink-0" />
+                <div className="text-left">
+                  <div>Batalkan Transaksi</div>
+                  <div className="text-[11px] text-muted font-normal">Reversal jurnal dan kembalikan stok</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
