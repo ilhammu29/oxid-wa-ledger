@@ -6,8 +6,9 @@ import {
   MutationGateResult,
   SubscriptionStatus,
   BillingPaymentSetting,
+  PlanFeature,
 } from "./types";
-import { getPlan } from "./plans";
+import { getPlan, hasPlanFeature } from "./plans";
 
 /**
  * Fetches the raw subscription record for a business.
@@ -336,4 +337,32 @@ export async function getBillingPaymentSettings(
   } catch {
     return [];
   }
+}
+
+/**
+ * Authoritative server-side feature entitlement gate.
+ * Checks whether the business's current plan grants access to the specified feature.
+ */
+export async function requirePlanFeature(
+  client: SupabaseClient,
+  businessId: string,
+  feature: PlanFeature,
+  now?: Date
+): Promise<{ allowed: boolean; planCode: string; reason?: string }> {
+  const state = await getBusinessSubscriptionState(client, businessId, now);
+  const planCode = state.plan.code;
+  const isEntitled = hasPlanFeature(planCode, feature);
+
+  if (!isEntitled) {
+    return {
+      allowed: false,
+      planCode,
+      reason: `Fitur ${feature} membutuhkan Paket Pro. Paket saat ini (${state.plan.name}) tidak mencakup fitur ini.`,
+    };
+  }
+
+  return {
+    allowed: true,
+    planCode,
+  };
 }

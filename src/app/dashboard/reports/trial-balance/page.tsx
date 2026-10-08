@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { getTrialBalance } from "@/modules/accounting/reports";
 import { formatRupiah } from "@/modules/transactions/money";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { CheckCircle2, AlertTriangle, FileDown } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,17 @@ export default async function TrialBalancePage({ searchParams }: PageProps) {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "trial_balance")) {
+    return (
+      <UpgradeGateCard
+        featureName="Neraca Saldo (Trial Balance)"
+        description="Neraca Saldo matematis untuk membuktikan keseimbangan seluruh akun debit dan kredit usaha hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const sp = await searchParams;
   const asOfDate = sp.asOfDate || new Date().toISOString().slice(0, 10);

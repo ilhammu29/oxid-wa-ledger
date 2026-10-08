@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/modules/transactions/money";
 import { createCapitalMovementAction, voidCapitalMovementAction } from "@/app/dashboard/actions";
 import { Plus, Coins, ArrowDownLeft, ArrowUpRight, TrendingUp, Ban, Loader2, AlertTriangle, X } from "lucide-react";
@@ -29,6 +30,7 @@ interface CapitalClientViewProps {
 }
 
 export function CapitalClientView({ movements, equity }: CapitalClientViewProps) {
+  const router = useRouter();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [voidingMovement, setVoidingMovement] = useState<CapitalMovementRow | null>(null);
 
@@ -75,6 +77,7 @@ export function CapitalClientView({ movements, equity }: CapitalClientViewProps)
       if (!res.success) {
         setFormError(res.error || "Gagal mencatat mutasi modal.");
       } else {
+        router.refresh();
         setCreateModalOpen(false);
         setAmountStr("");
         setDescription("");
@@ -101,6 +104,7 @@ export function CapitalClientView({ movements, equity }: CapitalClientViewProps)
       if (!res.success) {
         setVoidError(res.error || "Gagal membatalkan mutasi.");
       } else {
+        router.refresh();
         setVoidingMovement(null);
         setVoidReason("");
       }

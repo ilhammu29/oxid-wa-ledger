@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, CheckCircle2, AlertCircle } from "lucide-react";
 import { createManualSaleAction } from "@/app/dashboard/actions";
 
@@ -23,6 +24,7 @@ export function CatatPenjualanModal({
   onClose,
   products,
 }: CatatPenjualanModalProps) {
+  const router = useRouter();
   const defaultProd = products.find((p) => p.is_default) || products[0];
   const [selectedProductId, setSelectedProductId] = useState<string>(
     defaultProd?.id || ""
@@ -77,6 +79,7 @@ export function CatatPenjualanModal({
 
       setSuccessData(d);
       setQuantity("");
+      router.refresh();
 
       // Auto close after 1.5s
       setTimeout(() => {

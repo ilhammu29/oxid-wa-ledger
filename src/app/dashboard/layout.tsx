@@ -54,6 +54,7 @@ export default async function DashboardLayout({
         status: subscriptionState.status,
         daysRemaining: subscriptionState.remainingDays,
         isTrial: subscriptionState.isTrial,
+        planCode: subscriptionState.plan.code,
       }}
       isPlatformAdmin={Boolean(platformAdmin && platformAdmin.active)}
       platformAdminRole={platformAdmin?.role}

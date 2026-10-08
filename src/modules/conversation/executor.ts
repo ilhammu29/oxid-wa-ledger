@@ -44,8 +44,12 @@ import {
   formatAmbiguityInquiry,
 } from "./response-formatter";
 import { formatRupiah } from "../transactions/money";
-import { resolveProductForSale, getActiveProductNames } from "../products";
-import { canCreateFinancialMutation } from "../subscriptions";
+import {
+  canCreateFinancialMutation,
+  getBusinessSubscriptionState,
+  hasPlanFeature,
+  PlanFeature,
+} from "../subscriptions";
 import {
   postExpenseToAccounting,
   postCapitalMovementToAccounting,
@@ -57,6 +61,7 @@ import {
   getCashFlowStatement,
   getTrialBalance,
 } from "../accounting";
+import { resolveProductForSale, getActiveProductNames } from "../products";
 
 /**
  * Safely fetches breakdown of today's sales by product in a single query.
@@ -637,6 +642,36 @@ export async function executeConversationAction(
         parsed,
         data: null,
       };
+    }
+
+    // ------------------------------------------------------------------------
+    // Plan Entitlement Guard for Pro Accounting Reports
+    // ------------------------------------------------------------------------
+    const PRO_ACCOUNTING_INTENTS: Record<string, { feature: PlanFeature; label: string }> = {
+      SHOW_PROFIT_LOSS: { feature: "profit_loss", label: "Laporan Laba Rugi" },
+      SHOW_BALANCE_SHEET: { feature: "balance_sheet", label: "Laporan Neraca" },
+      SHOW_CASH_FLOW: { feature: "cash_flow", label: "Laporan Arus Kas" },
+      SHOW_TRIAL_BALANCE: { feature: "trial_balance", label: "Neraca Saldo" },
+      SHOW_GENERAL_LEDGER: { feature: "general_ledger", label: "Buku Besar" },
+      EXECUTE_EXPORT_REPORT: { feature: "accounting_excel", label: "Ekspor Excel 14 Sheet" },
+    };
+
+    if (evaluated.action in PRO_ACCOUNTING_INTENTS) {
+      const guard = PRO_ACCOUNTING_INTENTS[evaluated.action];
+      const subState = await getBusinessSubscriptionState(client, context.businessId);
+      if (!hasPlanFeature(subState.plan.code, guard.feature)) {
+        return {
+          action: evaluated.action,
+          status: "SUCCESS",
+          replyText:
+            `🔒 Fitur ${guard.label} adalah bagian dari Paket Pro.\n\n` +
+            `Paket Basic Anda saat ini fokus pada pencatatan transaksi & sync Google Sheets.\n\n` +
+            `Untuk membuka Laporan Akuntansi lengkap (Laba Rugi, Neraca, Arus Kas, Buku Besar, dan Ekspor Excel 14 Sheet), silakan upgrade ke Paket Pro di web dashboard:\n` +
+            `👉 https://oxid-wa-ledger.vercel.app/dashboard/subscription`,
+          parsed,
+          data: null,
+        };
+      }
     }
 
     // ------------------------------------------------------------------------

@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { getBalanceSheet } from "@/modules/accounting/reports";
 import { formatRupiah } from "@/modules/transactions/money";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { Wallet, Landmark, ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 
@@ -13,6 +15,17 @@ export default async function CashBankPage() {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "accounting")) {
+    return (
+      <UpgradeGateCard
+        featureName="Kas & Rekening Bank"
+        description="Rekapitulasi likuiditas kas tunai, rekening bank bisnis, dan mutasi saldo berjalan akuntansi hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const bs = await getBalanceSheet(supabase, { businessId: business.id, asOfDate: todayStr });

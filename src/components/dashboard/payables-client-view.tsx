@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/modules/transactions/money";
 import { recordPayablePaymentAction } from "@/app/dashboard/actions";
 import { Scale, CheckCircle, Clock, Banknote, Loader2, AlertTriangle, X } from "lucide-react";
@@ -21,6 +22,7 @@ interface PayablesClientViewProps {
 }
 
 export function PayablesClientView({ payables }: PayablesClientViewProps) {
+  const router = useRouter();
   const [payingPayable, setPayingPayable] = useState<PayableRow | null>(null);
 
   // Form State
@@ -75,6 +77,7 @@ export function PayablesClientView({ payables }: PayablesClientViewProps) {
       if (!res.success) {
         setFormError(res.error || "Gagal mencatat pembayaran hutang.");
       } else {
+        router.refresh();
         setPayingPayable(null);
         setPayAmountStr("");
       }

@@ -3,6 +3,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { formatRupiah } from "@/modules/transactions/money";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { Boxes, AlertTriangle, Layers } from "lucide-react";
 import Link from "next/link";
 
@@ -12,6 +14,17 @@ export default async function InventoryPage() {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "inventory_accounting")) {
+    return (
+      <UpgradeGateCard
+        featureName="Akuntansi Persediaan Gudang"
+        description="Pelacakan mutasi stok otomatis, perhitungan nilai persediaan barang dagangan, dan kartu stok akuntansi hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const [productsRes, movementsRes] = await Promise.all([
     supabase

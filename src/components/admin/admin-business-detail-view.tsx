@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { AdminBusinessDetail } from "@/modules/subscriptions/admin";
-import { SubscriptionPlan } from "@/modules/subscriptions/types";
-import { formatIDR } from "@/modules/subscriptions/plans";
+import { SubscriptionPlan, PlanFeature } from "@/modules/subscriptions/types";
+import { formatIDR, hasPlanFeature } from "@/modules/subscriptions/plans";
 import {
   adminActivateSubscriptionAction,
   adminConfirmPaymentAction,
@@ -20,6 +20,8 @@ import {
   Activity,
   FileSpreadsheet,
   X,
+  Lock,
+  Shield,
 } from "lucide-react";
 
 interface AdminBusinessDetailViewProps {
@@ -204,6 +206,89 @@ export function AdminBusinessDetailView({ detail, plans }: AdminBusinessDetailVi
               {subscriptionState.canCreateMutations ? "Diizinkan (Aktif)" : "Dibatasi"}
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          2b. FEATURE ACCESS MATRIX (Basic vs Pro Entitlement)
+      ────────────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-2xs">
+        <div className="p-4 sm:p-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">Matriks Hak Akses Fitur (Entitlements)</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Status ketersediaan modul akuntansi & analitik berdasarkan paket aktif ({plan.name}).
+            </p>
+          </div>
+          <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-muted border border-border font-semibold text-foreground self-start sm:self-auto">
+            Paket: {plan.name}
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-muted/30 text-muted-foreground border-b border-border font-semibold">
+              <tr>
+                <th className="py-2.5 px-4">Fitur / Modul</th>
+                <th className="py-2.5 px-4">Kategori</th>
+                <th className="py-2.5 px-4">Keterangan</th>
+                <th className="py-2.5 px-4 text-right">Status Hak Akses</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60 text-foreground">
+              {[
+                { key: "recording" as PlanFeature, name: "Pencatatan Operasional", category: "Operasional", description: "Catat penjualan, pengeluaran, pembelian, dan modal" },
+                { key: "telegram" as PlanFeature, name: "Integrasi Telegram Bot", category: "Operasional", description: "Pencatatan natural language melalui bot Telegram" },
+                { key: "google_sheets" as PlanFeature, name: "Sinkronisasi Google Sheets", category: "Operasional", description: "Sync data transaksi ke Google Spreadsheet" },
+                { key: "sales_reports" as PlanFeature, name: "Laporan Penjualan Dasar", category: "Operasional", description: "Ringkasan omzet dan volume penjualan" },
+                { key: "accounting" as PlanFeature, name: "Double-Entry Accounting Core", category: "Akuntansi", description: "Sistem penjurnalan berpasangan debit-kredit otomatis" },
+                { key: "profit_loss" as PlanFeature, name: "Laporan Laba Rugi", category: "Akuntansi", description: "Perhitungan laba kotor, beban operasional, dan laba bersih" },
+                { key: "balance_sheet" as PlanFeature, name: "Laporan Neraca", category: "Akuntansi", description: "Posisi aset, kewajiban, dan ekuitas berimbang" },
+                { key: "cash_flow" as PlanFeature, name: "Laporan Arus Kas", category: "Akuntansi", description: "Aktivitas kas operasional, investasi, dan pendanaan" },
+                { key: "trial_balance" as PlanFeature, name: "Neraca Saldo", category: "Akuntansi", description: "Verifikasi keseimbangan saldo seluruh akun" },
+                { key: "general_ledger" as PlanFeature, name: "Buku Besar (General Ledger)", category: "Akuntansi", description: "Histori mutasi debit/kredit per akun buku besar" },
+                { key: "ar_ap" as PlanFeature, name: "Piutang & Hutang Usaha", category: "Akuntansi", description: "Pelacakan saldo invoice dan pencatatan pelunasan termin" },
+                { key: "inventory_accounting" as PlanFeature, name: "Akuntansi Persediaan & HPP", category: "Akuntansi", description: "Weighted average costing dan mutasi stok otomatis" },
+                { key: "fixed_assets" as PlanFeature, name: "Modul Aset Tetap", category: "Akuntansi", description: "Pencatatan perolehan dan penyusutan aset" },
+                { key: "loans" as PlanFeature, name: "Modul Hutang & Pinjaman", category: "Akuntansi", description: "Pencatatan pencairan dan angsuran pinjaman" },
+                { key: "accounting_excel" as PlanFeature, name: "Ekspor Excel 14 Sheet", category: "Pelaporan", description: "Paket lengkap workbook XLSX audit-ready" },
+                { key: "accounting_analytics" as PlanFeature, name: "Analitik Finansial & Grafik", category: "Pelaporan", description: "10 visual charts tren omzet, margin, dan modal" },
+                { key: "multi_operator" as PlanFeature, name: "Multi Operator", category: "Akses", description: "Dukungan hingga 10 operator untuk kolaborasi tim" },
+                { key: "audit_log" as PlanFeature, name: "Audit Trail Lengkap", category: "Keamanan", description: "Pencatatan riwayat koreksi, pembatalan, dan arsip" },
+              ].map((f) => {
+                const isAvailable = hasPlanFeature(plan.code, f.key);
+                return (
+                  <tr key={f.key} className="hover:bg-muted/30 transition-colors">
+                    <td className="py-2 px-4 font-medium text-foreground whitespace-nowrap">
+                      {f.name}
+                    </td>
+                    <td className="py-2 px-4 text-muted-foreground font-mono text-[11px]">
+                      {f.category}
+                    </td>
+                    <td className="py-2 px-4 text-muted-foreground max-w-sm text-[11px]">
+                      {f.description}
+                    </td>
+                    <td className="py-2 px-4 text-right whitespace-nowrap">
+                      {isAvailable ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Aktif</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          <Lock className="w-3 h-3" />
+                          <span>Terkunci (Khusus Pro)</span>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 

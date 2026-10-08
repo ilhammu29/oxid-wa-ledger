@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, AlertTriangle, ShieldAlert } from "lucide-react";
 import { voidTransactionAction } from "@/app/dashboard/actions";
 import { TransactionRowData } from "./transaction-detail-modal";
@@ -16,6 +17,7 @@ export function VoidTransactionModal({
   onClose,
   onSuccess,
 }: VoidTransactionModalProps) {
+  const router = useRouter();
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function VoidTransactionModal({
     if (!res.success) {
       setError(res.error || "Gagal membatalkan transaksi.");
     } else {
+      router.refresh();
       if (onSuccess) onSuccess();
       onClose();
     }

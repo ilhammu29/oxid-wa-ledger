@@ -53,6 +53,28 @@ export interface SubscriptionPayment {
   updatedAt: string;
 }
 
+export type PlanFeature =
+  | "recording"
+  | "telegram"
+  | "google_sheets"
+  | "sales_reports"
+  | "accounting"
+  | "profit_loss"
+  | "balance_sheet"
+  | "cash_flow"
+  | "trial_balance"
+  | "general_ledger"
+  | "ar_ap"
+  | "inventory_accounting"
+  | "fixed_assets"
+  | "loans"
+  | "accounting_excel"
+  | "accounting_analytics"
+  | "audit_trail"
+  | "multi_operator";
+
+export type PlanFeatureMatrix = Record<PlanFeature, boolean>;
+
 export interface SubscriptionPlan {
   code: SubscriptionPlanCode;
   name: string;

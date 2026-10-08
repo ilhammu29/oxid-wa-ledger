@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/modules/transactions/money";
 import { createExpenseAction, voidExpenseAction } from "@/app/dashboard/actions";
 import { Plus, ArrowDownRight, Ban, Loader2, AlertTriangle, X } from "lucide-react";
@@ -34,6 +35,7 @@ const CATEGORIES = [
 ];
 
 export function ExpensesClientView({ expenses }: ExpensesClientViewProps) {
+  const router = useRouter();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [voidingExpense, setVoidingExpense] = useState<ExpenseRow | null>(null);
 
@@ -90,6 +92,7 @@ export function ExpensesClientView({ expenses }: ExpensesClientViewProps) {
       if (!res.success) {
         setFormError(res.error || "Gagal mencatat pengeluaran.");
       } else {
+        router.refresh();
         setCreateModalOpen(false);
         setDescription("");
         setAmountStr("");
@@ -116,6 +119,7 @@ export function ExpensesClientView({ expenses }: ExpensesClientViewProps) {
       if (!res.success) {
         setVoidError(res.error || "Gagal membatalkan pengeluaran.");
       } else {
+        router.refresh();
         setVoidingExpense(null);
         setVoidReason("");
       }

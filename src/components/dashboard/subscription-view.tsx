@@ -20,6 +20,7 @@ import {
   Building2,
   Info,
   Calendar,
+  Lock,
 } from "lucide-react";
 
 interface SubscriptionViewProps {
@@ -316,6 +317,76 @@ export function SubscriptionView({
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Feature Comparison Table */}
+      <div className="rounded-xl bg-surface border border-border shadow-xs overflow-hidden space-y-0">
+        <div className="p-4 sm:p-5 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">Perbandingan Fitur: Basic vs Pro</h3>
+          <p className="text-xs text-muted mt-0.5">
+            Rincian kapabilitas operasional dan akuntansi pada setiap tingkatan paket.
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead className="bg-surface-hover/50 text-muted border-b border-border text-[11px] font-semibold">
+              <tr>
+                <th className="py-2.5 px-4">Fitur & Modul</th>
+                <th className="py-2.5 px-3 text-center">Pilot Trial</th>
+                <th className="py-2.5 px-3 text-center">Paket Basic</th>
+                <th className="py-2.5 px-3 text-center text-primary font-bold">Paket Pro</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-foreground">
+              {[
+                { name: "Pencatatan Penjualan & Pengeluaran", pilot: true, basic: true, pro: true },
+                { name: "Bot Telegram Natural Language", pilot: true, basic: true, pro: true },
+                { name: "Sinkronisasi Google Sheets Otomatis", pilot: true, basic: true, pro: true },
+                { name: "Laporan Penjualan Dasar", pilot: true, basic: true, pro: true },
+                { name: "Double-Entry Accounting Core", pilot: true, basic: false, pro: true },
+                { name: "Laporan Laba Rugi Real-Time", pilot: true, basic: false, pro: true },
+                { name: "Laporan Neraca Keuangan", pilot: true, basic: false, pro: true },
+                { name: "Laporan Arus Kas (Operating/Investing/Financing)", pilot: true, basic: false, pro: true },
+                { name: "Buku Besar (General Ledger)", pilot: true, basic: false, pro: true },
+                { name: "Neraca Saldo (Trial Balance)", pilot: true, basic: false, pro: true },
+                { name: "Pelacakan Piutang & Hutang Usaha", pilot: true, basic: false, pro: true },
+                { name: "Akuntansi Persediaan (Weighted Average & HPP)", pilot: true, basic: false, pro: true },
+                { name: "Ekspor Workbook Excel 14 Sheet", pilot: true, basic: false, pro: true },
+                { name: "10 Visual Charts Analitik Finansial", pilot: true, basic: false, pro: true },
+                { name: "Multi-Operator (Hingga 10 Kasir)", pilot: true, basic: false, pro: true },
+                { name: "Audit Trail Lengkap & Koreksi Aman", pilot: true, basic: false, pro: true },
+              ].map((row, idx) => (
+                <tr key={idx} className="hover:bg-surface-hover/40 transition-colors">
+                  <td className="py-2.5 px-4 font-medium text-foreground">{row.name}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    {row.pilot ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-muted mx-auto" />
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    {row.basic ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted bg-surface-hover px-1.5 py-0.5 rounded">
+                        <Lock className="w-2.5 h-2.5 text-amber-500/80" /> Terkunci
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-center bg-primary/5">
+                    {row.pro ? (
+                      <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-muted mx-auto" />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

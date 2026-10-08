@@ -3,6 +3,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { formatRupiah } from "@/modules/transactions/money";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { Building2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,17 @@ export default async function AssetsPage() {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "fixed_assets")) {
+    return (
+      <UpgradeGateCard
+        featureName="Aset Tetap & Depresiasi"
+        description="Inventarisasi aset peralatan jangka panjang, penyusutan akumulasi berkala, dan nilai buku aset hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const { data: assets } = await supabase
     .from("fixed_assets")

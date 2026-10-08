@@ -599,7 +599,7 @@ export async function processIncomingTelegramWebhook(
   // 10. Send Outbound Telegram Reply
   let sendResult: TelegramSendResult | undefined;
   if (options.sendOutbound !== false) {
-    if (executionResult.action === "EXECUTE_EXPORT_REPORT") {
+    if (executionResult.action === "EXECUTE_EXPORT_REPORT" && !executionResult.replyText?.startsWith("🔒")) {
       try {
         const timezone = await getBusinessTimezone(client, businessId);
         const range = getMonthUtcRange(messageDate, timezone);

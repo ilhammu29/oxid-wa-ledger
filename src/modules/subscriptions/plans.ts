@@ -3,7 +3,80 @@
  * Step 9.1: Hardened subscription tiers with integer IDR money semantics.
  * Note: These pricing tiers serve as system defaults and can be configured as needed.
  */
-import { SubscriptionPlan, SubscriptionPlanCode } from "./types";
+import { SubscriptionPlan, SubscriptionPlanCode, PlanFeature, PlanFeatureMatrix } from "./types";
+
+export const PLAN_FEATURE_MATRIX: Record<SubscriptionPlanCode, PlanFeatureMatrix> = {
+  pilot: {
+    recording: true,
+    telegram: true,
+    google_sheets: true,
+    sales_reports: true,
+    accounting: true,
+    profit_loss: true,
+    balance_sheet: true,
+    cash_flow: true,
+    trial_balance: true,
+    general_ledger: true,
+    ar_ap: true,
+    inventory_accounting: true,
+    fixed_assets: true,
+    loans: true,
+    accounting_excel: true,
+    accounting_analytics: true,
+    audit_trail: true,
+    multi_operator: true,
+  },
+  basic: {
+    recording: true,
+    telegram: true,
+    google_sheets: true,
+    sales_reports: true,
+    accounting: false,
+    profit_loss: false,
+    balance_sheet: false,
+    cash_flow: false,
+    trial_balance: false,
+    general_ledger: false,
+    ar_ap: false,
+    inventory_accounting: false,
+    fixed_assets: false,
+    loans: false,
+    accounting_excel: false,
+    accounting_analytics: false,
+    audit_trail: false,
+    multi_operator: false,
+  },
+  pro: {
+    recording: true,
+    telegram: true,
+    google_sheets: true,
+    sales_reports: true,
+    accounting: true,
+    profit_loss: true,
+    balance_sheet: true,
+    cash_flow: true,
+    trial_balance: true,
+    general_ledger: true,
+    ar_ap: true,
+    inventory_accounting: true,
+    fixed_assets: true,
+    loans: true,
+    accounting_excel: true,
+    accounting_analytics: true,
+    audit_trail: true,
+    multi_operator: true,
+  },
+};
+
+export function hasPlanFeature(planCode: string | null | undefined, feature: PlanFeature): boolean {
+  const code = (planCode && planCode in PLAN_FEATURE_MATRIX ? planCode : "pilot") as SubscriptionPlanCode;
+  return Boolean(PLAN_FEATURE_MATRIX[code]?.[feature]);
+}
+
+export function getPlanFeatureMatrix(planCode: string | null | undefined): PlanFeatureMatrix {
+  const code = (planCode && planCode in PLAN_FEATURE_MATRIX ? planCode : "pilot") as SubscriptionPlanCode;
+  return { ...PLAN_FEATURE_MATRIX[code] };
+}
 
 export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanCode, SubscriptionPlan> = {
   pilot: {

@@ -6,6 +6,8 @@ import { getCashFlowStatement } from "@/modules/accounting/reports";
 import { formatRupiah } from "@/modules/transactions/money";
 import { getBusinessTimezone } from "@/modules/transactions/service";
 import { getMonthUtcRange } from "@/modules/transactions/timezone";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { FileDown } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,17 @@ export default async function CashFlowPage({ searchParams }: PageProps) {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "cash_flow")) {
+    return (
+      <UpgradeGateCard
+        featureName="Laporan Arus Kas (Cash Flow)"
+        description="Laporan Arus Kas terperinci yang mengelompokkan aktivitas operasional, investasi, dan pendanaan hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const sp = await searchParams;
   let startDate = sp.startDate;

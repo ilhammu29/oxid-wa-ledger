@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Package,
   Plus,
@@ -42,6 +43,7 @@ interface ProductsViewProps {
 }
 
 export function ProductsView({ products, canManage }: ProductsViewProps) {
+  const router = useRouter();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductRecord | null>(null);
   const [aliasModalProduct, setAliasModalProduct] = useState<ProductRecord | null>(null);
@@ -101,6 +103,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal menambah produk.", true);
     } else {
+      router.refresh();
       showNotification("Produk baru berhasil ditambahkan!");
       setAddModalOpen(false);
     }
@@ -122,6 +125,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal memperbarui produk.", true);
     } else {
+      router.refresh();
       showNotification("Data produk berhasil diperbarui!");
       setEditingProduct(null);
     }
@@ -135,6 +139,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal mengatur produk default.", true);
     } else {
+      router.refresh();
       showNotification("Produk default berhasil diperbarui!");
     }
   };
@@ -150,6 +155,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal menambah alias produk.", true);
     } else {
+      router.refresh();
       showNotification(`Alias '${newAliasText.trim()}' berhasil ditambahkan!`);
       setNewAliasText("");
       setAliasModalProduct(null);
@@ -165,6 +171,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal menghapus alias.", true);
     } else {
+      router.refresh();
       showNotification("Alias berhasil dihapus.");
     }
   };
@@ -176,6 +183,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal mengubah status produk.", true);
     } else {
+      router.refresh();
       showNotification(`Produk berhasil di${!currentActive ? "aktifkan" : "nonaktifkan"}!`);
     }
   };
@@ -191,6 +199,7 @@ export function ProductsView({ products, canManage }: ProductsViewProps) {
     if (!res.success) {
       showNotification(res.error || "Gagal memperbarui alias.", true);
     } else {
+      router.refresh();
       showNotification("Alias produk berhasil diperbarui!");
       setEditingAlias(null);
       setEditAliasText("");

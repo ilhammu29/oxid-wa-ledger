@@ -6,6 +6,8 @@ import type { AdminBusinessListItem } from "@/modules/subscriptions/admin";
 import {
   Search,
   ArrowRight,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 import { formatShortId } from "@/lib/admin-utils";
 
@@ -148,8 +150,21 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 font-medium capitalize text-foreground">
-                        {b.planName}
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="font-semibold capitalize text-foreground">
+                            {b.planName}
+                          </span>
+                          {b.planCode === "basic" ? (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 px-1.5 py-0.5 rounded font-medium">
+                              <Lock className="w-2.5 h-2.5" /> Basic (Terkunci)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-1.5 py-0.5 rounded font-medium">
+                              <CheckCircle2 className="w-2.5 h-2.5" /> Pro Accounting
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-4">
@@ -273,7 +288,18 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
               <div className="grid grid-cols-2 gap-2 text-xs py-2 border-y border-border/60">
                 <div>
                   <span className="text-[11px] text-muted-foreground block">Paket:</span>
-                  <span className="font-semibold text-foreground capitalize">{b.planName}</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-foreground capitalize">{b.planName}</span>
+                    {b.planCode === "basic" ? (
+                      <span className="text-[9px] font-mono bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 px-1 py-0.2 rounded">
+                        Basic
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-1 py-0.2 rounded font-semibold">
+                        Pro
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <span className="text-[11px] text-muted-foreground block">Sisa Aktif:</span>

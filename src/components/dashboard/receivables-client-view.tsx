@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/modules/transactions/money";
 import { recordReceivablePaymentAction } from "@/app/dashboard/actions";
 import { Users, CheckCircle, Clock, Banknote, Loader2, AlertTriangle, X } from "lucide-react";
@@ -21,6 +22,7 @@ interface ReceivablesClientViewProps {
 }
 
 export function ReceivablesClientView({ receivables }: ReceivablesClientViewProps) {
+  const router = useRouter();
   const [payingReceivable, setPayingReceivable] = useState<ReceivableRow | null>(null);
 
   // Form State
@@ -75,6 +77,7 @@ export function ReceivablesClientView({ receivables }: ReceivablesClientViewProp
       if (!res.success) {
         setFormError(res.error || "Gagal mencatat pelunasan piutang.");
       } else {
+        router.refresh();
         setPayingReceivable(null);
         setPayAmountStr("");
       }

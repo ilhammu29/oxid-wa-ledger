@@ -37,6 +37,7 @@ import {
   CheckSquare,
   BookOpen,
   FileDown,
+  Lock,
 } from "lucide-react";
 import { logoutAction } from "@/app/dashboard/actions";
 import { CatatPenjualanModal } from "./catat-penjualan-modal";
@@ -65,6 +66,7 @@ interface DashboardShellProps {
     status: string;
     daysRemaining: number;
     isTrial: boolean;
+    planCode?: string;
   } | null;
   isPlatformAdmin?: boolean;
   platformAdminRole?: string;
@@ -128,33 +130,34 @@ export function DashboardShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Navigation Items
+  const isBasic = subscriptionState?.planCode === "basic";
+
   // Navigation Items
   const primaryNavItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Analitik", href: "/dashboard/analytics", icon: TrendingUp },
+    { name: "Analitik", href: "/dashboard/analytics", icon: TrendingUp, isProOnly: true },
   ];
 
   const bookkeepingNavItems = [
     { name: "Penjualan", href: "/dashboard/transactions", icon: Receipt },
     { name: "Pengeluaran", href: "/dashboard/accounting/expenses", icon: CreditCard },
     { name: "Pembelian", href: "/dashboard/accounting/purchases", icon: ShoppingCart },
-    { name: "Kas & Bank", href: "/dashboard/accounting/cash-bank", icon: Wallet },
+    { name: "Kas & Bank", href: "/dashboard/accounting/cash-bank", icon: Wallet, isProOnly: true },
     { name: "Modal Pemilik", href: "/dashboard/accounting/capital", icon: Coins },
-    { name: "Piutang Usaha", href: "/dashboard/accounting/receivables", icon: Users },
-    { name: "Hutang Usaha", href: "/dashboard/accounting/payables", icon: Scale },
-    { name: "Persediaan", href: "/dashboard/accounting/inventory", icon: Boxes },
-    { name: "Aset Tetap", href: "/dashboard/accounting/assets", icon: Building2 },
+    { name: "Piutang Usaha", href: "/dashboard/accounting/receivables", icon: Users, isProOnly: true },
+    { name: "Hutang Usaha", href: "/dashboard/accounting/payables", icon: Scale, isProOnly: true },
+    { name: "Persediaan", href: "/dashboard/accounting/inventory", icon: Boxes, isProOnly: true },
+    { name: "Aset Tetap", href: "/dashboard/accounting/assets", icon: Building2, isProOnly: true },
   ];
 
   const reportsNavItems = [
-    { name: "Laba Rugi", href: "/dashboard/reports/profit-loss", icon: TrendingUp },
-    { name: "Neraca", href: "/dashboard/reports/balance-sheet", icon: Scale },
-    { name: "Arus Kas", href: "/dashboard/reports/cash-flow", icon: ArrowLeftRight },
-    { name: "Perubahan Ekuitas", href: "/dashboard/reports/equity", icon: PieChart },
-    { name: "Neraca Saldo", href: "/dashboard/reports/trial-balance", icon: CheckSquare },
-    { name: "Buku Besar", href: "/dashboard/reports/general-ledger", icon: BookOpen },
-    { name: "Ekspor Excel", href: "/dashboard/reports/export", icon: FileDown },
+    { name: "Laba Rugi", href: "/dashboard/reports/profit-loss", icon: TrendingUp, isProOnly: true },
+    { name: "Neraca", href: "/dashboard/reports/balance-sheet", icon: Scale, isProOnly: true },
+    { name: "Arus Kas", href: "/dashboard/reports/cash-flow", icon: ArrowLeftRight, isProOnly: true },
+    { name: "Perubahan Ekuitas", href: "/dashboard/reports/equity", icon: PieChart, isProOnly: true },
+    { name: "Neraca Saldo", href: "/dashboard/reports/trial-balance", icon: CheckSquare, isProOnly: true },
+    { name: "Buku Besar", href: "/dashboard/reports/general-ledger", icon: BookOpen, isProOnly: true },
+    { name: "Ekspor Excel", href: "/dashboard/reports/export", icon: FileDown, isProOnly: true },
   ];
 
   const operationsNavItems = [
@@ -334,9 +337,9 @@ export function DashboardShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      title={isCollapsed ? item.name : undefined}
+                      title={isCollapsed ? (isBasic && item.isProOnly ? `${item.name} (Fitur Pro)` : item.name) : undefined}
                       aria-label={isCollapsed ? item.name : undefined}
-                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`group relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
                               isActive
@@ -358,6 +361,15 @@ export function DashboardShell({
                         }`}
                       />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      {!isCollapsed && isBasic && item.isProOnly && (
+                        <span className="ml-auto shrink-0 inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>PRO</span>
+                        </span>
+                      )}
+                      {isCollapsed && isBasic && item.isProOnly && (
+                        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      )}
                     </Link>
                   );
                 })}
@@ -377,9 +389,9 @@ export function DashboardShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      title={isCollapsed ? item.name : undefined}
+                      title={isCollapsed ? (isBasic && item.isProOnly ? `${item.name} (Fitur Pro)` : item.name) : undefined}
                       aria-label={isCollapsed ? item.name : undefined}
-                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`group relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
                               isActive
@@ -401,6 +413,15 @@ export function DashboardShell({
                         }`}
                       />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      {!isCollapsed && isBasic && item.isProOnly && (
+                        <span className="ml-auto shrink-0 inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>PRO</span>
+                        </span>
+                      )}
+                      {isCollapsed && isBasic && item.isProOnly && (
+                        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      )}
                     </Link>
                   );
                 })}
@@ -420,9 +441,9 @@ export function DashboardShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      title={isCollapsed ? item.name : undefined}
+                      title={isCollapsed ? (isBasic && item.isProOnly ? `${item.name} (Fitur Pro)` : item.name) : undefined}
                       aria-label={isCollapsed ? item.name : undefined}
-                      className={`group flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`group relative flex items-center gap-2.5 rounded-lg text-xs font-medium transition-all ${
                         isCollapsed
                           ? `justify-center px-2 py-2 ${
                               isActive
@@ -444,6 +465,15 @@ export function DashboardShell({
                         }`}
                       />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      {!isCollapsed && isBasic && item.isProOnly && (
+                        <span className="ml-auto shrink-0 inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>PRO</span>
+                        </span>
+                      )}
+                      {isCollapsed && isBasic && item.isProOnly && (
+                        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      )}
                     </Link>
                   );
                 })}
@@ -575,7 +605,13 @@ export function DashboardShell({
               <div className="p-2.5 rounded-lg border border-border/80 bg-surface-hover/40 text-[11px] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] text-muted uppercase tracking-wider">
-                    {subscriptionState.isTrial ? "Pilot Trial" : "Langganan"}
+                    {subscriptionState.planCode === "pro"
+                      ? "Paket Pro"
+                      : subscriptionState.planCode === "basic"
+                      ? "Paket Basic"
+                      : subscriptionState.isTrial
+                      ? "Pilot Trial"
+                      : "Langganan"}
                   </span>
                   <span className="font-mono text-[11px] font-medium text-primary tabular-nums">
                     {subscriptionState.daysRemaining} hari
@@ -850,7 +886,10 @@ export function DashboardShell({
                       className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
                     >
                       <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
-                      <span className="truncate">{item.name}</span>
+                      <span className="truncate flex-1">{item.name}</span>
+                      {isBasic && item.isProOnly && (
+                        <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                      )}
                     </Link>
                   );
                 })}
@@ -876,7 +915,12 @@ export function DashboardShell({
                   className="flex items-center gap-2 p-2 rounded-lg border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-medium col-span-2"
                 >
                   <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span className="truncate">Analitik & Performa Usaha</span>
+                  <span className="truncate flex-1">Analitik & Performa Usaha</span>
+                  {isBasic && (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.5 rounded shrink-0">
+                      <Lock className="w-2.5 h-2.5" /> PRO
+                    </span>
+                  )}
                 </Link>
                 {reportsNavItems.map((item) => {
                   const Icon = item.icon;
@@ -888,7 +932,10 @@ export function DashboardShell({
                       className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface-hover"
                     >
                       <Icon className="w-3.5 h-3.5 text-muted shrink-0" />
-                      <span className="truncate">{item.name}</span>
+                      <span className="truncate flex-1">{item.name}</span>
+                      {isBasic && item.isProOnly && (
+                        <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                      )}
                     </Link>
                   );
                 })}

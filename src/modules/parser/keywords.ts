@@ -196,14 +196,16 @@ export const CASH_FLOW_PATTERNS: RegExp[] = [
  * Patterns for Trial Balance (Neraca Saldo) inquiries.
  */
 export const TRIAL_BALANCE_PATTERNS: RegExp[] = [
-  /\b(?:neraca\s+saldo(?:\s+bulan\s+ini)?)\b/,
+  /\b(?:neraca[\s_]?saldo(?:\s+bulan\s+ini)?)\b/,
+  /^neracasaldo$/,
 ];
 
 /**
  * Patterns for General Ledger (Buku Besar) inquiries.
  */
 export const GENERAL_LEDGER_PATTERNS: RegExp[] = [
-  /\b(?:buku\s+besar(?:\s+kas|\s+bank)?)\b/,
+  /\b(?:buku[\s_]?besar(?:\s+kas|\s+bank)?)\b/,
+  /^bukubesar$/,
 ];
 
 /**

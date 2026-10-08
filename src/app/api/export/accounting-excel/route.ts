@@ -4,6 +4,7 @@ import { getAuthenticatedBusiness } from "@/modules/auth/server";
 import { generateAccountingExcelWorkbook } from "@/modules/export/accounting-excel";
 import { getBusinessTimezone } from "@/modules/transactions/service";
 import { getMonthUtcRange } from "@/modules/transactions/timezone";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,18 @@ export async function GET(request: NextRequest) {
 
     const business = session.business;
     const supabase = await createClient();
+
+    // Authoritative Feature Entitlement Check
+    const subState = await getBusinessSubscriptionState(supabase, business.id);
+    if (!hasPlanFeature(subState.plan.code, "accounting_excel")) {
+      return NextResponse.json(
+        {
+          error: "PLAN_UPGRADE_REQUIRED",
+          message: "Export Excel 14-sheet komprehensif adalah fitur eksklusif Paket Pro. Silakan upgrade paket langganan Anda di menu Langganan.",
+        },
+        { status: 403 }
+      );
+    }
 
     const searchParams = request.nextUrl.searchParams;
     let startDate = searchParams.get("startDate");

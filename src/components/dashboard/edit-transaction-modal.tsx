@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, RefreshCw, AlertCircle } from "lucide-react";
 import { correctTransactionAction } from "@/app/dashboard/actions";
 import { TransactionRowData } from "./transaction-detail-modal";
@@ -16,6 +17,7 @@ export function EditTransactionModal({
   onClose,
   onSuccess,
 }: EditTransactionModalProps) {
+  const router = useRouter();
   const [newQtyStr, setNewQtyStr] = useState(
     transaction ? String(transaction.quantity) : ""
   );
@@ -52,6 +54,7 @@ export function EditTransactionModal({
     if (!res.success) {
       setError(res.error || "Gagal mengoreksi transaksi.");
     } else {
+      router.refresh();
       if (onSuccess) onSuccess();
       onClose();
     }

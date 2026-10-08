@@ -2,6 +2,8 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedBusiness } from "@/modules/auth/server";
+import { getBusinessSubscriptionState, hasPlanFeature } from "@/modules/subscriptions";
+import { UpgradeGateCard } from "@/components/dashboard/upgrade-gate-card";
 import { ReceivablesClientView, ReceivableRow } from "@/components/dashboard/receivables-client-view";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +12,17 @@ export default async function ReceivablesPage() {
   const session = await getAuthenticatedBusiness();
   const business = session.business!;
   const supabase = await createClient();
+
+  // Authoritative Feature Entitlement Check
+  const subState = await getBusinessSubscriptionState(supabase, business.id);
+  if (!hasPlanFeature(subState.plan.code, "ar_ap")) {
+    return (
+      <UpgradeGateCard
+        featureName="Manajemen Piutang Usaha (AR)"
+        description="Pencatatan invoice penjualan tempo, riwayat pelunasan pelanggan, dan kontrol piutang macet hanya tersedia pada Paket Pro."
+      />
+    );
+  }
 
   const { data: receivables } = await supabase
     .from("receivables")

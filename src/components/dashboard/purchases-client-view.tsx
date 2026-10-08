@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatRupiah } from "@/modules/transactions/money";
 import { createPurchaseAction, voidPurchaseAction } from "@/app/dashboard/actions";
 import { Plus, ShoppingCart, Ban, Loader2, AlertTriangle, X } from "lucide-react";
@@ -26,6 +27,7 @@ interface PurchasesClientViewProps {
 }
 
 export function PurchasesClientView({ purchases }: PurchasesClientViewProps) {
+  const router = useRouter();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [voidingPurchase, setVoidingPurchase] = useState<PurchaseRow | null>(null);
 
@@ -90,6 +92,7 @@ export function PurchasesClientView({ purchases }: PurchasesClientViewProps) {
       if (!res.success) {
         setFormError(res.error || "Gagal mencatat pembelian.");
       } else {
+        router.refresh();
         setCreateModalOpen(false);
         setItemName("");
         setQuantityStr("");
@@ -118,6 +121,7 @@ export function PurchasesClientView({ purchases }: PurchasesClientViewProps) {
       if (!res.success) {
         setVoidError(res.error || "Gagal membatalkan pembelian.");
       } else {
+        router.refresh();
         setVoidingPurchase(null);
         setVoidReason("");
       }

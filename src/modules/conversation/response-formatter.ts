@@ -135,36 +135,38 @@ export function formatPeriodReport(period: "week" | "month", report: ReportResul
  */
 export function formatHelp(activeProducts?: string[]): string {
   let text =
-    `📖 Panduan Penggunaan OXID Ledger\n\n` +
-    `🛒 PENJUALAN\n` +
-    `• Kejual lele 15kg\n` +
-    `• Nila laku 5 kilo\n\n` +
-    `💸 BEBAN & PENGELUARAN\n` +
-    `• Listrik 150rb\n` +
-    `• Bensin operasional 50rb\n` +
-    `• Gaji karyawan 1.5jt\n\n` +
-    `📦 PENGADAAN & STOK\n` +
-    `• Beli stok lele 100kg 2jt\n` +
-    `• stok (atau /stok) — Cek persediaan gudang\n\n` +
-    `💼 MODAL & PRIVE\n` +
-    `• Modal masuk 5jt (Setoran pemilik)\n` +
-    `• Prive 500rb (Tarik uang keperluan pribadi)\n\n` +
-    `👥 PIUTANG & HUTANG\n` +
-    `• piutang (atau /piutang) — Cek tagihan pelanggan\n` +
-    `• hutang (atau /hutang) — Cek kewajiban supplier\n` +
-    `• Budi bayar piutang 500rb\n` +
-    `• Bayar hutang supplier 1jt\n\n` +
-    `📊 LAPORAN KEUANGAN\n` +
-    `• saldo (atau /saldo) — Kas & Bank terkini\n` +
-    `• laba rugi (atau /laba) — Omzet, HPP & Net Profit\n` +
-    `• neraca (atau /neraca) — Posisi Aset vs Kewajiban\n` +
-    `• arus kas — Ringkasan kas operasi/investasi\n` +
-    `• laporan hari ini / minggu ini / bulan ini\n` +
-    `• export excel (atau /export) — Download buku besar\n\n` +
-    `↩️ KOREKSI & STATUS\n` +
-    `• batal terakhir — Batalkan transaksi terakhir\n` +
-    `• ubah terakhir jadi 20kg\n` +
-    `• gak ada penjualan hari ini / libur hari ini`;
+    `📖 Panduan Operator OXID Ledger\n\n` +
+    `✍️ CATAT TRANSAKSI:\n` +
+    `• Kejual lele 10kg (Penjualan)\n` +
+    `• Listrik 150rb (Pengeluaran operasional)\n` +
+    `• Beli stok lele 50kg 1jt (Pembelian persediaan)\n` +
+    `• Modal masuk 5jt (Setoran modal pemilik)\n` +
+    `• Prive 500rb (Penarikan dana pribadi)\n` +
+    `• Budi bayar piutang 500rb (Pelunasan piutang)\n` +
+    `• Bayar hutang supplier 1jt (Pelunasan hutang)\n\n` +
+    `🔍 CEK SALDO & OPERASIONAL:\n` +
+    `• /saldo — Saldo kas & bank terkini\n` +
+    `• /stok — Sisa stok persediaan gudang\n` +
+    `• /piutang — Tagihan pelanggan belum lunas\n` +
+    `• /hutang — Kewajiban supplier belum dibayar\n\n` +
+    `📊 LAPORAN KEUANGAN (Paket Pro):\n` +
+    `• /laba — Laporan Laba Rugi (Omzet, HPP, Laba Bersih)\n` +
+    `• /neraca — Laporan Neraca (Aset, Kewajiban, Ekuitas)\n` +
+    `• /aruskas — Laporan Arus Kas (Operasi, Investasi, Pendanaan)\n` +
+    `• /bukubesar — Ringkasan mutasi Buku Besar\n` +
+    `• /neracasaldo — Neraca Saldo pembukuan\n\n` +
+    `📥 EKSPOR LAPORAN (Paket Pro):\n` +
+    `• /export — Unduh file workbook Excel (14 Sheet)\n\n` +
+    `↩️ KOREKSI & PEMBATALAN:\n` +
+    `• Batal terakhir — Batalkan transaksi terakhir\n` +
+    `• Ubah terakhir jadi 20kg — Koreksi kuantitas transaksi\n\n` +
+    `📅 STATUS OPERASIONAL:\n` +
+    `• Gak ada penjualan hari ini — Tandai nihil penjualan\n` +
+    `• Hari ini libur — Tandai hari libur operasional\n\n` +
+    `💡 Tips Operator:\n` +
+    `• Kirim 1 transaksi per pesan\n` +
+    `• Gunakan nama produk sesuai katalog atau produk default\n` +
+    `• Nominal rupiah dapat disingkat: 150rb, 1.5jt, 500k`;
 
   if (activeProducts && activeProducts.length > 0) {
     text += `\n\n🏷️ Produk aktif:\n` + activeProducts.map((p) => `• ${p}`).join("\n");
