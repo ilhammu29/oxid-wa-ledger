@@ -83,6 +83,9 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-subtle: var(--primary-subtle);
   --color-primary-fg: var(--primary-fg);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted);
   --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-mono), monospace;
 }

@@ -262,12 +262,20 @@ export default async function DashboardOverviewPage() {
               Posisi keuangan terverifikasi double-entry ledger periode bulan ini
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
-              href="/dashboard/reports/profit-loss"
+              href="/dashboard/analytics"
               className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              <span>Laporan Laba Rugi</span>
+              <span>Analitik Lengkap</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+            <span className="text-border">|</span>
+            <Link
+              href="/dashboard/reports/profit-loss"
+              className="text-xs font-medium text-muted hover:text-foreground inline-flex items-center gap-1"
+            >
+              <span>Laba Rugi</span>
               <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
@@ -373,7 +381,14 @@ export default async function DashboardOverviewPage() {
                 Perkembangan omzet 14 hari terakhir ({business.timezone})
               </p>
             </div>
-            <div className="flex items-center gap-1.5 self-start sm:self-center">
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <Link
+                href="/dashboard/analytics"
+                className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <span>Lihat Analitik Lengkap</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
               <span className="px-2.5 py-1 rounded-md bg-surface-hover border border-border text-foreground text-xs font-medium font-mono">
                 14 Hari
               </span>

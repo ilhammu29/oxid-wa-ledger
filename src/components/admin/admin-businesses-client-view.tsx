@@ -123,14 +123,21 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
                   return (
                     <tr key={b.id} className="hover:bg-muted/30 transition-colors">
                       <td className="py-3 px-4 max-w-xs min-w-0">
-                        <Link
-                          href={`/admin/businesses/${b.id}`}
-                          className="font-semibold text-foreground hover:text-primary transition-colors block truncate"
-                          title={b.name}
-                        >
-                          {b.name}
-                        </Link>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground truncate">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Link
+                            href={`/admin/businesses/${b.id}`}
+                            className="font-semibold text-foreground hover:text-primary transition-colors truncate"
+                            title={b.name}
+                          >
+                            {b.name}
+                          </Link>
+                          {(b.name.startsWith("E2E-TEST-") || b.name.startsWith("TEST-")) && (
+                            <span className="text-[9px] font-mono uppercase bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 px-1 py-0.2 rounded shrink-0">
+                              Test E2E
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted truncate">
                           {b.category && (
                             <span className="capitalize">{b.category}</span>
                           )}
@@ -233,14 +240,21 @@ export function AdminBusinessesClientView({ businesses }: AdminBusinessesClientV
             >
               <div className="flex items-start justify-between gap-2 min-w-0">
                 <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/admin/businesses/${b.id}`}
-                    className="font-bold text-sm text-foreground hover:text-primary transition-colors block truncate"
-                    title={b.name}
-                  >
-                    {b.name}
-                  </Link>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 truncate">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Link
+                      href={`/admin/businesses/${b.id}`}
+                      className="font-bold text-sm text-foreground hover:text-primary transition-colors truncate"
+                      title={b.name}
+                    >
+                      {b.name}
+                    </Link>
+                    {(b.name.startsWith("E2E-TEST-") || b.name.startsWith("TEST-")) && (
+                      <span className="text-[9px] font-mono uppercase bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 px-1 py-0.2 rounded shrink-0">
+                        Test E2E
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted mt-0.5 truncate">
                     {b.category && <span className="capitalize">{b.category}</span>}
                     <span>·</span>
                     <span className="font-mono text-[11px]" title={b.id}>{formatShortId(b.id)}</span>

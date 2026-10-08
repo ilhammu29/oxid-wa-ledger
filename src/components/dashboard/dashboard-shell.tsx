@@ -132,6 +132,7 @@ export function DashboardShell({
   // Navigation Items
   const primaryNavItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Analitik", href: "/dashboard/analytics", icon: TrendingUp },
   ];
 
   const bookkeepingNavItems = [
@@ -178,6 +179,7 @@ export function DashboardShell({
 
   const getBreadcrumbTitle = () => {
     if (pathname === "/dashboard") return "Overview";
+    if (pathname.startsWith("/dashboard/analytics")) return "Analitik & Performa";
     if (pathname.startsWith("/dashboard/transactions")) return "Penjualan";
     if (pathname.startsWith("/dashboard/accounting/expenses")) return "Pengeluaran";
     if (pathname.startsWith("/dashboard/accounting/purchases")) return "Pembelian";
@@ -811,6 +813,31 @@ export function DashboardShell({
               </button>
             </div>
 
+            {/* Platform Admin Shortcut (Only for authorized platform admins) */}
+            {isPlatformAdmin && (
+              <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-amber-500 font-semibold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Platform Admin</span>
+                  </span>
+                  {platformAdminRole && (
+                    <span className="text-[9px] font-mono uppercase bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-semibold">
+                      {platformAdminRole.replace("_admin", "")}
+                    </span>
+                  )}
+                </div>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="w-full flex items-center justify-between p-2 rounded-lg bg-surface text-amber-500 hover:bg-surface-hover text-xs font-semibold border border-amber-500/20 transition-colors"
+                >
+                  <span>Admin Control Center</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
+
             {/* Mobile Pembukuan */}
             <div className="space-y-1.5">
               <div className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Pembukuan</div>
@@ -832,10 +859,27 @@ export function DashboardShell({
               </div>
             </div>
 
-            {/* Mobile Laporan */}
+            {/* Mobile Laporan & Analitik */}
             <div className="space-y-1.5 pt-2 border-t border-border/50">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Laporan Keuangan</div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-muted font-semibold">Laporan & Analitik</span>
+                <Link
+                  href="/dashboard/analytics"
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="text-[11px] text-primary hover:underline font-medium inline-flex items-center gap-0.5"
+                >
+                  <span>Lihat Analitik →</span>
+                </Link>
+              </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
+                <Link
+                  href="/dashboard/analytics"
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="flex items-center gap-2 p-2 rounded-lg border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-medium col-span-2"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="truncate">Analitik & Performa Usaha</span>
+                </Link>
                 {reportsNavItems.map((item) => {
                   const Icon = item.icon;
                   return (

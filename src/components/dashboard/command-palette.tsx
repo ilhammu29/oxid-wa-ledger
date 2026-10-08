@@ -19,6 +19,7 @@ import {
   Laptop,
   X,
   ArrowRight,
+  TrendingUp,
 } from "lucide-react";
 import { useTheme } from "@/components/theme/theme-provider";
 
@@ -61,6 +62,15 @@ export function CommandPalette({
         keywords: ["dashboard", "home", "beranda", "ringkasan", "omzet"],
         action: () => router.push("/dashboard"),
         active: pathname === "/dashboard",
+      },
+      {
+        id: "nav-analytics",
+        title: "Analitik & Performa Usaha",
+        category: "Halaman",
+        icon: TrendingUp,
+        keywords: ["analitik", "analytics", "grafik", "chart", "tren", "performa", "laba", "profit", "omzet", "hpp", "kas"],
+        action: () => router.push("/dashboard/analytics"),
+        active: pathname === "/dashboard/analytics",
       },
       {
         id: "nav-transactions",
