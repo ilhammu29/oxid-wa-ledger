@@ -18,6 +18,8 @@ export type DomainErrorCode =
   | "TRANSACTION_ALREADY_CANCELLED"
   | "TRANSACTION_ALREADY_CORRECTED"
   | "TRANSACTION_NOT_FOUND"
+  | "TRANSACTION_ALREADY_ARCHIVED"
+  | "TRANSACTION_NOT_ARCHIVED"
   | "CANNOT_CANCEL_CORRECTED"
   | "CANNOT_CORRECT_CANCELLED"
   | "DATABASE_OPERATION_FAILED"
@@ -76,6 +78,10 @@ export function getUserFriendlyErrorMessage(code: DomainErrorCode): string {
       return "Transaksi ini sudah dikoreksi sebelumnya.";
     case "TRANSACTION_NOT_FOUND":
       return "Transaksi tidak ditemukan.";
+    case "TRANSACTION_ALREADY_ARCHIVED":
+      return "Transaksi ini sudah diarsipkan sebelumnya.";
+    case "TRANSACTION_NOT_ARCHIVED":
+      return "Transaksi ini belum diarsipkan.";
     case "CANNOT_CANCEL_CORRECTED":
       return "Transaksi historis ini sudah pernah dikoreksi dan tidak dapat dibatalkan langsung.";
     case "CANNOT_CORRECT_CANCELLED":

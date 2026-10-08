@@ -8,6 +8,8 @@ import {
   setDefaultProduct,
   voidTransaction,
   correctTransaction,
+  archiveTransaction,
+  unarchiveTransaction,
 } from "@/modules/transactions";
 import {
   postExpenseToAccounting,
@@ -245,6 +247,90 @@ export async function correctTransactionAction(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: `Gagal mengoreksi transaksi: ${msg}` };
+  }
+}
+
+/**
+ * Non-destructively archives a transaction, hiding it from default operational views.
+ * Accounting totals, journals, inventory, and audit records remain untouched.
+ */
+export async function archiveTransactionAction(
+  transactionId: string,
+  reason?: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!transactionId) {
+    return { success: false, error: "ID transaksi wajib disertakan." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const result = await archiveTransaction(
+      supabase,
+      {
+        businessId: session.business.id,
+        authenticatedUserId: session.user.id,
+        source: "dashboard",
+      },
+      {
+        transactionId,
+        archiveReason: reason?.trim() || undefined,
+      }
+    );
+
+    revalidatePath("/dashboard/transactions");
+
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("ALREADY_ARCHIVED")) {
+      return { success: false, error: "Transaksi ini sudah diarsipkan sebelumnya." };
+    }
+    return { success: false, error: `Gagal mengarsipkan transaksi: ${msg}` };
+  }
+}
+
+/**
+ * Restores an archived transaction back to operational visibility.
+ */
+export async function unarchiveTransactionAction(
+  transactionId: string
+): Promise<ActionResult> {
+  const session = await getAuthenticatedBusiness();
+  if (session.status !== "OK" || !session.business) {
+    return { success: false, error: "Akses bisnis tidak valid." };
+  }
+
+  if (!transactionId) {
+    return { success: false, error: "ID transaksi wajib disertakan." };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const result = await unarchiveTransaction(
+      supabase,
+      {
+        businessId: session.business.id,
+        authenticatedUserId: session.user.id,
+        source: "dashboard",
+      },
+      {
+        transactionId,
+      }
+    );
+
+    revalidatePath("/dashboard/transactions");
+
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: `Gagal memulihkan transaksi: ${msg}` };
   }
 }
 

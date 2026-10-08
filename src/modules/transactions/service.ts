@@ -833,3 +833,138 @@ export async function correctTransaction(
   };
 }
 
+/**
+ * Non-destructively archives (hides) a transaction from the operational list.
+ * Accounting totals, journal entries, inventory movements, and financial statements remain untouched.
+ */
+export async function archiveTransaction(
+  client: SupabaseClient,
+  context: ExecutionContext,
+  params: {
+    transactionId: string;
+    archiveReason?: string;
+  }
+): Promise<{ transactionId: string; archivedAt: string }> {
+  const { transactionId, archiveReason } = params;
+
+  // 1. Fetch target transaction with business isolation
+  const { data: tx, error: fetchErr } = await client
+    .from("transactions")
+    .select("id, business_id, status, total_amount, quantity, archived_at")
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId)
+    .single();
+
+  if (fetchErr || !tx) {
+    throw new DomainError("TRANSACTION_NOT_FOUND", "Transaksi tidak ditemukan.");
+  }
+
+  if (tx.archived_at) {
+    throw new DomainError("TRANSACTION_ALREADY_ARCHIVED", "Transaksi ini sudah diarsipkan sebelumnya.");
+  }
+
+  const nowIso = new Date().toISOString();
+
+  // 2. Mark archived non-destructively
+  const { error: updateErr } = await client
+    .from("transactions")
+    .update({
+      archived_at: nowIso,
+      archived_by: context.authenticatedUserId || null,
+      archive_reason: archiveReason || null,
+      updated_at: nowIso,
+    })
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId);
+
+  if (updateErr) {
+    throw mapDatabaseError(updateErr);
+  }
+
+  // 3. Record in accounting audit logs (Non-destructive operational archive)
+  try {
+    await client.from("accounting_audit_logs").insert({
+      business_id: context.businessId,
+      actor_user_id: context.authenticatedUserId || null,
+      action: "TRANSACTION_ARCHIVE",
+      entity_type: "transactions",
+      entity_id: transactionId,
+      details: {
+        archived_at: nowIso,
+        archive_reason: archiveReason || null,
+        status: tx.status,
+        total_amount: tx.total_amount,
+        quantity: tx.quantity,
+      },
+    });
+  } catch (auditErr) {
+    console.warn(`[archiveTransaction] Audit log warning: ${auditErr}`);
+  }
+
+  return { transactionId, archivedAt: nowIso };
+}
+
+/**
+ * Restores an archived transaction back to the operational list.
+ */
+export async function unarchiveTransaction(
+  client: SupabaseClient,
+  context: ExecutionContext,
+  params: {
+    transactionId: string;
+  }
+): Promise<{ transactionId: string; unarchivedAt: string }> {
+  const { transactionId } = params;
+
+  const { data: tx, error: fetchErr } = await client
+    .from("transactions")
+    .select("id, business_id, status, archived_at")
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId)
+    .single();
+
+  if (fetchErr || !tx) {
+    throw new DomainError("TRANSACTION_NOT_FOUND", "Transaksi tidak ditemukan.");
+  }
+
+  if (!tx.archived_at) {
+    throw new DomainError("TRANSACTION_NOT_ARCHIVED", "Transaksi ini belum diarsipkan.");
+  }
+
+  const nowIso = new Date().toISOString();
+
+  const { error: updateErr } = await client
+    .from("transactions")
+    .update({
+      archived_at: null,
+      archived_by: null,
+      archive_reason: null,
+      updated_at: nowIso,
+    })
+    .eq("id", transactionId)
+    .eq("business_id", context.businessId);
+
+  if (updateErr) {
+    throw mapDatabaseError(updateErr);
+  }
+
+  try {
+    await client.from("accounting_audit_logs").insert({
+      business_id: context.businessId,
+      actor_user_id: context.authenticatedUserId || null,
+      action: "TRANSACTION_UNARCHIVE",
+      entity_type: "transactions",
+      entity_id: transactionId,
+      details: {
+        unarchived_at: nowIso,
+        previous_status: tx.status,
+      },
+    });
+  } catch (auditErr) {
+    console.warn(`[unarchiveTransaction] Audit log warning: ${auditErr}`);
+  }
+
+  return { transactionId, unarchivedAt: nowIso };
+}
+
+

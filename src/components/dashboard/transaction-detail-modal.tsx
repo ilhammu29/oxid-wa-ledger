@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Clock, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
+import { X, Clock, CheckCircle2, XCircle, RefreshCw, Archive } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export interface TransactionRowData {
@@ -16,6 +16,9 @@ export interface TransactionRowData {
   source: string;
   status: "confirmed" | "cancelled" | "corrected";
   raw_message?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
 }
 
 interface AuditEvent {
@@ -158,8 +161,29 @@ export function TransactionDetailModal({
                   Rp{new Intl.NumberFormat("id-ID").format(transaction.total_amount)}
                 </p>
               </div>
-              <div>{statusBadge()}</div>
+              <div className="flex items-center gap-1.5">
+                {transaction.archived_at && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20">
+                    <Archive className="w-3.5 h-3.5 text-zinc-500" />
+                    Diarsipkan
+                  </span>
+                )}
+                {statusBadge()}
+              </div>
             </div>
+
+            {transaction.archived_at && (
+              <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs space-y-1">
+                <p className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <Archive className="w-3.5 h-3.5" />
+                  Status: Diarsipkan dari daftar operasional
+                </p>
+                <p className="text-muted text-[11px]">
+                  Waktu arsip: {formatDate(transaction.archived_at)}
+                  {transaction.archive_reason ? ` • Alasan: "${transaction.archive_reason}"` : ""}
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border text-xs">
               <div>

@@ -14,6 +14,7 @@ interface TransactionsPageProps {
     status?: string;
     productId?: string;
     q?: string;
+    view?: string;
   }>;
 }
 
@@ -54,10 +55,19 @@ export default async function TransactionsPage({
   let query = supabase
     .from("transactions")
     .select(
-      "id, product_id, transaction_at, source, quantity, unit, unit_price, total_amount, status, raw_message",
+      "id, product_id, transaction_at, source, quantity, unit, unit_price, total_amount, status, raw_message, archived_at, archived_by, archive_reason",
       { count: "exact" }
     )
     .eq("business_id", business.id);
+
+  // Archive filter: default to 'active' (hide archived)
+  const viewFilter = params.view || "active";
+  if (viewFilter === "active") {
+    query = query.is("archived_at", null);
+  } else if (viewFilter === "archived") {
+    query = query.not("archived_at", "is", null);
+  }
+  // 'all' includes both active and archived
 
   if (params.source && params.source !== "all") {
     query = query.eq("source", params.source);
@@ -93,6 +103,9 @@ export default async function TransactionsPage({
     source: t.source,
     status: t.status as "confirmed" | "cancelled" | "corrected",
     raw_message: t.raw_message,
+    archived_at: t.archived_at,
+    archived_by: t.archived_by,
+    archive_reason: t.archive_reason,
   }));
 
   return (
